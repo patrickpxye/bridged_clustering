@@ -15,12 +15,16 @@ def calculate_purity(df, cluster_label, true_label):
         total_correct += correct_predictions
     return total_correct / df.shape[0]
 
+def format_data(data, I, drop=True):
+    scaler = StandardScaler()
+    if drop:
+        return scaler.fit_transform(pd.get_dummies(data.drop(I, axis=1)))
+    return scaler.fit_transform(pd.get_dummies(data))
 
 def perform_kmeans(data, I, output=False):
     if output: print(data.head())
-    scaler = StandardScaler()
     print("Number of clusters: ", len(data[I].unique()))
-    features_scaled = scaler.fit_transform(pd.get_dummies(data.drop(I, axis=1)))
+    features_scaled = format_data(data, I)
     kmeans = KMeans(n_clusters=len(data[I].unique()), random_state=0)
     kmeans.fit(features_scaled)
     cluster_labels = kmeans.predict(features_scaled)
