@@ -96,7 +96,7 @@ def plot_clusters(X, clusters, centroids, title='Clusters Visualization'):
 
 
 import numpy as np
-from bkm_utils_2d import *
+from bkm.ss_tests.bkm_utils_2d import *
 
 # Example usage
 X = np.random.rand(1000, 5)  # 100 samples, 5 features
