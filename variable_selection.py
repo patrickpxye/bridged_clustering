@@ -14,7 +14,7 @@ df["spp"] = df["Putative_spp"].apply(lambda x: "A" if x == "Quercus shumardii va
                                       "S" if x in ["Quercus shumardii var. acerifolia first, Quercus shumardii later", "Quercus shumardii"] else 
                                       "Other")
 
-feature_list = ["Lobe.number","BL","PL","BW","TLIW","TLL","TLDW","TEL","BLL","LLL","BSR","LSR","LLDW","LLIW","MidVeinD","BL_PL"]
+feature_list = ["Lobe.number","PL","TLIW","TLL","TLDW","TEL","BLL","BSR","LSR","LLIW","MidVeinD","BL_PL"]
 data = df[feature_list].dropna()
 
 best_ari = 0
