@@ -1,3 +1,7 @@
+###
+# This script demonstrates the use of pseudo-cost branching for feature selection.
+###
+
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
