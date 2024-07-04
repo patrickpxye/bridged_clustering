@@ -1,3 +1,5 @@
+# This script is the executable version of the Experiment 3 Notebook.
+
 import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import FunctionTransformer
