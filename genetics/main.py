@@ -22,7 +22,6 @@ def decision(matrix):
     return max_indices
 
 
-
 df = pd.read_csv('herb_data_filtered.csv')
 #feature_list_1 =["Lobe.number","BW","TLIW","LLL","LSR","LLDW","LLIW"]
 feature_list_1 = ["Lobe.number","PL","TLIW","TLL","TLDW","BLL","LSR","LLIW"]
