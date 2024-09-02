@@ -156,3 +156,4 @@ print("Error Reduction: ", (neighbour_mean - distances_mean) / neighbour_mean)
 
 #Accuracy:  0.9354
 #Error Reduction:  0.3076861605157626
+#Error Reduction:  0.3076861605157626
