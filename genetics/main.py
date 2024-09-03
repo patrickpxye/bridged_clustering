@@ -155,9 +155,7 @@ def plotDensityGraph(result_bkm, result_knn):
     plt.axvline(mean_knn, color='red', linestyle='dashed', linewidth=1)
     plt.text(mean_knn, max(density) * 0.9, f'Mean: {mean_knn:.2f}', color='red', ha='center')
 
-
-    plt.title('Loss in Distance Prediction')
-    plt.xlabel('Normalized Loss')
+    plt.title('Average Deviation in Distance Prediction')
     plt.ylabel('Density')
     plt.legend()
     plt.savefig('density_graph.png')
@@ -166,7 +164,7 @@ def plotDensityGraph(result_bkm, result_knn):
 
 result_bkm, result_knn = [], []
 for i in range(100):
-    bkm, knn = simgleExperiment(1, 20)
+    bkm, knn = simgleExperiment(10, 1)
     result_bkm.extend(bkm)
     result_knn.extend(knn)
 plotDensityGraph(result_bkm, result_knn)
