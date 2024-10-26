@@ -14,9 +14,9 @@ def identify_spec(label):
     return label[q_index: q_index + 2]
 
 
-def generate_pca_plot(data, species_labels, cluster_labels, unique_species, n_clusters):
+def generate_pca_plot(data, species_labels, cluster_labels, unique_species, n_clusters, title='PCA Plot'):
 
-    markers = ['o', 'x', '+', 's', 'd', '*', 'p', '^', '<', '>']
+    markers = ['o', 'x', 's', 'd', '*', 'p', '^', '<', '>']
     species_to_marker = {species: markers[i % len(markers)] for i, species in enumerate(unique_species)}
 
     pca = PCA(n_components=2)
@@ -38,10 +38,12 @@ def generate_pca_plot(data, species_labels, cluster_labels, unique_species, n_cl
     plt.ylabel('Principal Component 2')
     plt.legend(title='Species')
     plt.colorbar(label='Cluster')
-    plt.show()
+    # plt.show()
+
+    plt.savefig(title + '.png')
 
 
-def generate_proportion_plot(species_labels, cluster_labels):
+def generate_proportion_plot(species_labels, cluster_labels, title='Proportion Plot'):
 
     # Create a DataFrame for plotting
     plot_data = pd.DataFrame({'species': species_labels, 'cluster': cluster_labels})
@@ -56,7 +58,8 @@ def generate_proportion_plot(species_labels, cluster_labels):
     plt.xlabel('Species')
     plt.ylabel('Cluster Assignments')
     plt.legend(title='Cluster', labels=[f'Cluster {x}' for x in range(1, 5)])
-    plt.show()
+    # plt.show()
+    plt.savefig(title + '.png')
 
     species_labels = species_labels.to_numpy()
     print("Adjusted Rand Index:", adjusted_rand_score(species_labels, cluster_labels))
