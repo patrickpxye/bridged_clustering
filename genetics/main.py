@@ -111,19 +111,31 @@ def plotDensityGraph(result_bkm, result_knn):
 
     mean_bkm = np.mean(result_bkm)
     plt.axvline(mean_bkm, color='blue', linestyle='dashed', linewidth=1)
-    plt.text(mean_bkm, max(density) * 0.9, f'Mean: {mean_bkm:.2f}', color='blue', ha='center')
+    # plt.text(mean_bkm, max(density) * 0.9, f'Mean: {mean_bkm:.2f}', color='blue', ha='center')
+
+    colors = ['green', 'orange', 'yellow', 'pink', 'white']
+    for n_neighbors, color in zip(range(1, 6), colors):
+        kde = gaussian_kde(result_knn[n_neighbors])
+        x = np.linspace(min(result_knn[n_neighbors]), max(result_knn[n_neighbors]), 2000)
+        density = kde(x)
+
+        plt.plot(x, density, label=f'KNN (k={n_neighbors})', color=color)
+        plt.fill_between(x, density, alpha=0.1)
+
+        mean_knn = np.mean(result_knn[n_neighbors])
+        plt.axvline(mean_knn, color=color, linestyle='dashed', linewidth=1)
 
 
-    kde = gaussian_kde(result_knn)
-    x = np.linspace(min(result_knn), max(result_knn), 2000)
-    density = kde(x)
+    # kde = gaussian_kde(result_knn)
+    # x = np.linspace(min(result_knn), max(result_knn), 2000)
+    # density = kde(x)
 
-    plt.plot(x, density, label='KNN')
-    plt.fill_between(x, density, alpha=0.5)  # Fill under the curve for better visualization
+    # plt.plot(x, density, label='KNN')
+    # plt.fill_between(x, density, alpha=0.5)  # Fill under the curve for better visualization
 
-    mean_knn = np.mean(result_knn)
-    plt.axvline(mean_knn, color='red', linestyle='dashed', linewidth=1)
-    plt.text(mean_knn, max(density) * 0.9, f'Mean: {mean_knn:.2f}', color='red', ha='center')
+    # mean_knn = np.mean(result_knn)
+    # plt.axvline(mean_knn, color='red', linestyle='dashed', linewidth=1)
+    # # plt.text(mean_knn, max(density) * 0.9, f'Mean: {mean_knn:.2f}', color='red', ha='center')
 
     plt.title('Average Deviation in Distance Prediction')
     plt.ylabel('Density')
@@ -144,16 +156,17 @@ def bridgedClustering(super_df, gene_df, test_morph_df, test_gene_df):
 
     test_gene_df['gene_coordinates'] = test_gene_df[['PC1', 'PC2', 'PC3']].values.tolist()
     test_joined_df = test_morph_df.merge(test_gene_df[['TreeNo', 'gene_coordinates']], on='TreeNo').drop(['morph_cluster'], axis=1)
-    final_df = test_joined_df.merge(average_gene, on='gene_cluster')
+    test_joined_df = test_joined_df.merge(average_gene, on='gene_cluster')
 
     def euclidean_distance(row):
         return np.linalg.norm(np.array(row['gene_coordinates']) - np.array(row['gene_centroids']))
-    final_df['bkm_distance'] = final_df.apply(euclidean_distance, axis=1)
+    test_joined_df['bkm_distance'] = test_joined_df.apply(euclidean_distance, axis=1)
+    result_bkm = list(test_joined_df['bkm_distance'])
 
-    return final_df
+    return result_bkm
 
 
-def baselineKNN(super_df, n_neighbors, final_df, test_morph_df):
+def baselineKNN(super_df, n_neighbors, test_morph_df, test_gene_df):
 
     super_df['gene_coordinates'] = super_df[['PC1', 'PC2', 'PC3']].values.tolist()
 
@@ -164,25 +177,27 @@ def baselineKNN(super_df, n_neighbors, final_df, test_morph_df):
     knn_regressor.fit(X, y)
 
     test_morph_df['knn_gene_predictions'] = test_morph_df['morph_coordinates'].apply(lambda x: knn_regressor.predict([x])[0])
+    test_gene_df['gene_coordinates'] = test_gene_df[['PC1', 'PC2', 'PC3']].values.tolist()
     test_morph_df = test_morph_df[['TreeNo', 'knn_gene_predictions']]
 
-    final_df = test_morph_df.merge(final_df, on='TreeNo')
+    test_joined_df = test_morph_df.merge(test_gene_df[['TreeNo', 'gene_coordinates']], on='TreeNo')
 
     def euclidean_distance(row):
         return np.linalg.norm(np.array(row['gene_coordinates']) - np.array(row['knn_gene_predictions']))
-    final_df['knn_distance'] = final_df.apply(euclidean_distance, axis=1)
+    test_joined_df['knn_distance'] = test_joined_df.apply(euclidean_distance, axis=1)
+    result_knn = list(test_joined_df['knn_distance'])
 
-    return final_df
+    return result_knn
 
 
-def simgleExperiment(sample_size, n_neighbors):
+def simgleExperiment(super_size, n_neighbors, test_size=20):
 
     gene_df = preprocessGeneData()
     morph_df = preprocessMorphologicalData()
 
     common_treenos = set(gene_df['TreeNo']).intersection(set(morph_df['TreeNo']))
-    test_treenos = list(common_treenos)[int(len(common_treenos)*0.7):]
-    super_treenos = np.random.choice(list(common_treenos), size=sample_size, replace=False)
+    test_treenos = np.random.choice(list(common_treenos), size=test_size, replace=False)
+    super_treenos = np.random.choice(list(common_treenos - set(test_treenos)), size=super_size, replace=False)
     test_morph_df = morph_df[morph_df['TreeNo'].isin(test_treenos)]
     test_gene_df = gene_df[gene_df['TreeNo'].isin(test_treenos)]
     train_morph_df = morph_df[~morph_df['TreeNo'].isin(test_treenos)]
@@ -196,21 +211,22 @@ def simgleExperiment(sample_size, n_neighbors):
 
     joined_df = morph_df.merge(gene_df, on='TreeNo')
     super_df = joined_df[joined_df['TreeNo'].isin(super_treenos)]
-    final_df = bridgedClustering(super_df, gene_df, test_morph_df, test_gene_df)
-    final_df = baselineKNN(super_df, n_neighbors, final_df, test_morph_df)
-
-    final_df = final_df[['TreeNo', 'bkm_distance', 'knn_distance']]
-
-    result_bkm = list(final_df['bkm_distance'])
-    result_knn = list(final_df['knn_distance'])
+    result_bkm = bridgedClustering(super_df, gene_df, test_morph_df, test_gene_df)
+    # result_knn = baselineKNN(super_df, n_neighbors, test_morph_df, test_gene_df)
+    result_knn = {}
+    for n_neighbors in range(1, 6):
+        result = baselineKNN(super_df, n_neighbors, test_morph_df, test_gene_df)
+        result_knn[n_neighbors] = result
 
     return result_bkm, result_knn
 
 
 
-result_bkm, result_knn = [], []
-for i in range(100):
-    bkm, knn = simgleExperiment(10, 2)
+result_bkm = []
+result_knn = {n: [] for n in range(1, 6)}
+for i in range(1):
+    bkm, knn = simgleExperiment(10,1)
     result_bkm.extend(bkm)
-    result_knn.extend(knn)
+    for n_neighbors in range(1, 6):
+        result_knn[n_neighbors].extend(knn[n_neighbors])
 plotDensityGraph(result_bkm, result_knn)
