@@ -33,7 +33,7 @@ def generate_pca_plot(data, species_labels, cluster_labels, unique_species, n_cl
         
         plt.scatter(species_data[:, 0], species_data[:, 1], c=species_cluster_labels, marker=marker, label=species, edgecolor='k', alpha=0.7, cmap='viridis')
 
-    plt.title('Cluster Assignment by Species')
+    plt.title(title)
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
     plt.legend(title='Species')
@@ -54,7 +54,7 @@ def generate_proportion_plot(species_labels, cluster_labels, title='Proportion P
 
     # Plotting
     cluster_proportions.plot(kind='bar', stacked=True, colormap='viridis', figsize=(5, 3))
-    plt.title('Cluster Assignment by Species')
+    plt.title(title)
     plt.xlabel('Species')
     plt.ylabel('Cluster Assignments')
     plt.legend(title='Cluster', labels=[f'Cluster {x}' for x in range(1, 5)])
