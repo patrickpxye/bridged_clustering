@@ -33,14 +33,18 @@ def generate_pca_plot(data, species_labels, cluster_labels, unique_species, n_cl
         
         plt.scatter(species_data[:, 0], species_data[:, 1], c=species_cluster_labels, marker=marker, label=species, edgecolor='k', alpha=0.7, cmap='viridis')
 
-    plt.title(title)
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.legend(title='Species')
-    plt.colorbar(label='Cluster')
+    legend_handles = [
+        plt.Line2D([0], [0], marker=species_to_marker[species], color='black', linestyle='None', label=species)
+        for species in unique_species
+    ]
+
+    plt.xlabel('Principal Component 1', fontsize=16)
+    plt.ylabel('Principal Component 2', fontsize=16)
+    # plt.legend(handles=legend_handles, title='Ground-Truth Species', fontsize=16)
+    # plt.colorbar(label='Cluster')
     # plt.show()
 
-    plt.savefig(title + '.png')
+    plt.savefig(title + '.pdf')
 
 
 def generate_proportion_plot(species_labels, cluster_labels, title='Proportion Plot'):
@@ -53,13 +57,14 @@ def generate_proportion_plot(species_labels, cluster_labels, title='Proportion P
     cluster_proportions = cluster_counts.div(cluster_counts.sum(axis=1), axis=0)
 
     # Plotting
-    cluster_proportions.plot(kind='bar', stacked=True, colormap='viridis', figsize=(5, 3))
-    plt.title(title)
-    plt.xlabel('Species')
-    plt.ylabel('Cluster Assignments')
-    plt.legend(title='Cluster', labels=[f'Cluster {x}' for x in range(1, 5)])
+    ax = cluster_proportions.plot(kind='bar', stacked=True, colormap='viridis', figsize=(5, 3))
+    # plt.title(title, fontsize=16)
+    # plt.xlabel('Species', fontsize=16)
+    # plt.ylabel('Clusters', fontsize=16)
+    # plt.legend(title='Cluster', labels=[f'Cluster {x}' for x in range(1, 5)])
     # plt.show()
-    plt.savefig(title + '.png')
+    ax.legend().remove()
+    plt.savefig(title + '.pdf')
 
     species_labels = species_labels.to_numpy()
     print("Adjusted Rand Index:", adjusted_rand_score(species_labels, cluster_labels))
