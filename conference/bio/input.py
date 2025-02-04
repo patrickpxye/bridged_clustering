@@ -3,6 +3,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
 
+# feature_list = [0,16,5]
+feature_list = [0, 7, 11, 12, 16]
+
 # Reads csv file and return preprocessed dataframe with only numerical columns
 def preprocessMorphData():
     morph_df = pd.read_csv('data/morph.csv')
@@ -18,7 +21,8 @@ def fitMorphClusters(morph_df, n_families, full_feat=False):
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
     if not full_feat:
-        data = data[:, [0, 7, 11, 12, 16]]
+        # data = data[:, [0, 7, 11, 12, 16]]
+        data = data[:, feature_list]
 
     kmeans = KMeans(n_clusters=n_families, random_state=0)
     cluster_labels = kmeans.fit_predict(data)
@@ -35,7 +39,8 @@ def predictMorphClusters(morph_df, kmeans, full_feat=False):
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
     if not full_feat:
-        data = data[:, [0, 7, 11, 12, 16]]
+        # data = data[:, [0, 7, 11, 12, 16]]
+        data = data[:, feature_list]
 
     cluster_labels = kmeans.predict(data)
 

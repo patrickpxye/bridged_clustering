@@ -3,6 +3,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
 
+# feature_list = [0,4]
+feature_list = [0]
+
 # Reads csv file and return preprocessed dataframe with only numerical columns
 def preprocessGeneData():
     gene_df = pd.read_csv('data/gene_spec.csv')
@@ -17,7 +20,8 @@ def fitGeneClusters(gene_df, n_families, full_feat=False):
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
     if not full_feat:
-        data = data[:, [0,1,2]]
+        # data = data[:, [0,1,2]]
+        data = data[:, feature_list]
 
     kmeans = KMeans(n_clusters=n_families, random_state=0)
     cluster_labels = kmeans.fit_predict(data)
@@ -32,7 +36,8 @@ def predictGeneClusters(gene_df, kmeans, full_feat=False):
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
     if not full_feat:
-        data = data[:, [0,1,2]]
+        # data = data[:, [0,1,2]]
+        data = data[:, feature_list]
     cluster_labels = kmeans.predict(data)
 
     gene_df['gene_coordinates'] = data.tolist()
