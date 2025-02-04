@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 from utils import decisionVector, plotDensityGraph
@@ -112,6 +113,9 @@ def simgleExperiment(super_size, n_families, n_neighbors, test_size=20):
 
     # build cluster associations through supervised set, and run bridged clustering on test set
     joined_df = morph_df.merge(gene_df, on='TreeNo')
+    save_joined_df = joined_df
+    save_joined_df = save_joined_df.drop(['morph_cluster', 'gene_cluster','morph_coordinates','gene_coordinates'], axis=1)
+    save_joined_df.to_csv('data/joined_df.csv', index=False)
     super_df = joined_df[joined_df['TreeNo'].isin(super_nos)]
     result_bkm = bridgedClustering(super_df, gene_df, test_morph_df, test_gene_df)
 
@@ -173,8 +177,8 @@ result_knn_1, result_knn_2, result_knn_3 = [], [], []
 samplesize = [6, 11, 17, 22, 28, 33]
 n_families = 3
 outputfeaturelist = ['PC1', 'PC2', 'PC3']
-for i in range(1000):
-    for super_size in [samplesize[0]]:
+for i in range(500):
+    for super_size in [samplesize[2]]:
         bkm, _, lin = simgleExperiment(super_size,n_families,1)
         _, knn, _ = addExperiment(super_size,n_families,1)
         result_bkm.extend(bkm)
