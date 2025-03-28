@@ -3,8 +3,8 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 from utils import decisionVector, plotDensityGraph
-from bio.input import preprocessMorphData, fitMorphClusters, predictMorphClusters
-from bio.output import preprocessGeneData, fitGeneClusters, predictGeneClusters
+from quercus.input import preprocessMorphData, fitMorphClusters, predictMorphClusters
+from quercus.output import preprocessGeneData, fitGeneClusters, predictGeneClusters
 
 import warnings
 warnings.filterwarnings("ignore")
