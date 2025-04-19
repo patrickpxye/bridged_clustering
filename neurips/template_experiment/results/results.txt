@@ -1,0 +1,68 @@
+==========================================================================
+n_families=3, n_samples=30, supervised=0.01, trial=1:
+Bridged Clustering Errors Average: 5.658635460467776
+KNN Errors Average: 5.83300934918265
+Mean Teacher Errors Average: 5.648392677307129
+GCN Errors Average: nan
+AGDN Errors Average: 6.324211597442627
+Bridged AGDN Errors Average: 6.09716796875
+Success Rate of Bridged Clustering: 0.0
+
+==========================================================================
+==========================================================================
+n_families=3, n_samples=30, supervised=0.05, trial=1:
+Bridged Clustering Errors Average: 7.5276832146342985
+KNN Errors Average: 13.55777203302358
+Mean Teacher Errors Average: 9.500452041625977
+GCN Errors Average: nan
+AGDN Errors Average: 8.378266334533691
+Bridged AGDN Errors Average: 9.964160919189453
+Success Rate of Bridged Clustering: 1.0
+
+==========================================================================
+==========================================================================
+n_families=3, n_samples=30, supervised=0.1, trial=1:
+Bridged Clustering Errors Average: 2.9750202066555427
+KNN Errors Average: 4.977246684988434
+Mean Teacher Errors Average: 4.478801727294922
+GCN Errors Average: nan
+AGDN Errors Average: 4.76438570022583
+Bridged AGDN Errors Average: 5.738226890563965
+Success Rate of Bridged Clustering: 1.0
+
+==========================================================================
+==========================================================================
+n_families=3, n_samples=30, supervised=0.01, trial=1:
+Bridged Clustering Errors Average: 5.863162227372681
+KNN Errors Average: 7.106005905723336
+Mean Teacher Errors Average: 6.345820903778076
+AGDN Errors Average: 8.6566743850708
+Success Rate of Bridged Clustering: 1.0
+
+==========================================================================
+==========================================================================
+n_families=3, n_samples=30, supervised=0.01, trial=1:
+Bridged Clustering Errors Average: 6.131743169611953
+KNN Errors Average: 0.2077135643268322
+Mean Teacher Errors Average: 0.20451690256595612
+AGDN Errors Average: 8.427369117736816
+Success Rate of Bridged Clustering: 0.0
+
+==========================================================================
+==========================================================================
+n_families=3, n_samples=30, supervised=0.01, trial=1:
+Bridged Clustering Errors Average: 0.3680510043384414
+KNN Errors Average: 0.33182208591183
+Mean Teacher Errors Average: 0.282766193151474
+AGDN Errors Average: 12.738506317138672
+Success Rate of Bridged Clustering: 0.0
+
+==========================================================================
+==========================================================================
+n_families=3, n_samples=30, supervised=0.01, trial=1:
+Bridged Clustering Errors Average: 0.11493059453737352
+KNN Errors Average: 0.13695540017075505
+Mean Teacher Errors Average: 0.14955547451972961
+Success Rate of Bridged Clustering: 1.0
+
+==========================================================================
