@@ -7,7 +7,7 @@ from transformers import AutoTokenizer, AutoModel
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KNeighborsRegressor
 import torchvision
-from torchvision import transforms
+from torchvision import models, transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
@@ -847,7 +847,7 @@ if __name__ == '__main__':
     supervised_values = [0.01]
     models = ['BKM', 'KNN', 'Mean Teacher', 'XGBoost', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'RankUp']
 
-    n_trials = 10
+    n_trials = 30
     
 
     # Initialize a 5D matrix to store results for each experiment
@@ -875,6 +875,9 @@ if __name__ == '__main__':
                     # Store results in the matrix
                     for model_idx, model_name in enumerate(models):
                         results_matrix[n_families_idx, n_samples_idx, supervised_idx, model_idx, trial] = results[model_name]
+
+                    # Save the results matrix to a file
+                    np.save('results/total_results_matrix.npy', results_matrix)
                 
                 # Compute average errors for each model
                 average_errors = {model: cumulative_errors[model] / n_trials for model in models}
