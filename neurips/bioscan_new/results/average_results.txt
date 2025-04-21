@@ -1,0 +1,25 @@
+
+# 001
+
+Experiment Setting: n_families=3, n_samples=150, supervised=0.01
+BKM: 0.2938
+KNN: 0.4474
+Mean Teacher: 0.3396
+XGBoost: 0.3084
+Laplacian RLS: 0.3495
+TSVR: 0.3579
+TNNR: 0.3137
+UCVME: 0.2969
+RankUp: 0.3017
+
+Experiment Setting: n_families=3, n_samples=150, supervised=0.01
+BKM: 0.3113
+KNN: 0.4324
+Mean Teacher: 0.3456
+XGBoost: 0.3385
+Laplacian RLS: 0.3577
+TSVR: 0.3660
+TNNR: 0.3309
+UCVME: 0.2994
+RankUp: 0.3036
+
