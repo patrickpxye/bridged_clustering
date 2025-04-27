@@ -685,30 +685,6 @@ def laprls_regression(sup_df, inf_df, lam=1e-2, gamma=1.0, k=10, sigma=None):
     return preds, actuals
 
 
-# ---- 3.  Transductive SVR (TSVR proxy) --------------------
-def tsvr_regression(sup_df, inf_df, C=10.0, epsilon=0.1, kernel='rbf'):
-    """
-    Practical proxy: train SVR on supervised data, then
-    selftrain on unlabeled points with pseudolabels that
-    have small residuals, mimicking transductive finetuning.
-    """
-    Xs = np.vstack(sup_df['morph_coordinates'])
-    ys = np.vstack(sup_df['gene_coordinates'])
-    Xu = np.vstack(inf_df['morph_coordinates'])
-    yu = np.vstack(inf_df['gene_coordinates'])
-
-    base = MultiOutputRegressor(SVR(C=C, epsilon=epsilon, kernel=kernel, gamma='scale'))
-    base.fit(Xs, ys)
-    # single self‑training iteration
-    pseudo = base.predict(Xu)
-    conf_mask = np.linalg.norm(pseudo - yu, axis=1) < np.median(np.linalg.norm(pseudo - yu, axis=1))
-    if conf_mask.any():
-        X_aug = np.vstack([Xs, Xu[conf_mask]])
-        y_aug = np.vstack([ys, pseudo[conf_mask]])
-        base.fit(X_aug, y_aug)
-    preds = base.predict(Xu)
-    return preds, yu
-
 ############################################################
 # Model F: Twin‑Neural‑Network Regression (TNNR)
 ############################################################
@@ -1495,7 +1471,6 @@ def agdn_regression(supervised_df, inference_df, morph_col='morph_coordinates', 
     inf_pred = big_out[N_sup:, :]  # shape [N_inf, out_channels]
 
     return inf_pred.numpy(), inf_gene_t.numpy()
-
 
 
 ###################################
