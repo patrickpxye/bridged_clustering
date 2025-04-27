@@ -24,7 +24,7 @@ from torch_geometric.data import Data
 from torch.optim import Adam
 import torch_geometric
 import torch_geometric.utils
-
+from sklearn.metrics import r2_score
 
 #########################################
 # Data Loading and Splitting Functions  #
@@ -177,7 +177,7 @@ def split_family_samples(family_data, supervised=0.05, random_state=42):
       tuple: Four DataFrames corresponding to image_samples, gene_samples, supervised_samples, inference_samples.
     """
     # Set default proportions if none provided
-    proportions = {'gene': 0.4, 'supervised': supervised, 'inference': 1.0 - 0.4 - supervised}
+    proportions = {'gene': 0.5, 'supervised': supervised, 'inference': 1.0 - 0.5 - supervised}
     
     # Verify the proportions sum to 1
     total = sum(proportions.values())
@@ -540,7 +540,54 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
 import warnings
 
-# ---- 1.  Gradient‑Boosted Trees  (XGBoost) ----------------
+
+############################################################
+# Model D: Gradient‑Boosted Trees  (XGBoost)
+############################################################
+from sklearn.multioutput import MultiOutputRegressor
+from xgboost import XGBRegressor
+import numpy as np
+
+# def xgboost_regression(supervised_df, inference_df, **xgb_params):
+#     """
+#     Train a multi-output XGBoost regressor on the supervised split 
+#     and evaluate on the inference split.
+
+#     Returns:
+#         preds: ndarray of shape (n_inference, output_dim)
+#         actuals: ndarray of shape (n_inference, output_dim)
+#     """
+#     # 1) Prepare data
+#     X_train = np.vstack(supervised_df['morph_coordinates'])
+#     y_train = np.vstack(supervised_df['gene_coordinates'])
+#     X_test  = np.vstack(inference_df['morph_coordinates'])
+#     y_test  = np.vstack(inference_df['gene_coordinates'])
+
+#     # 2) Default hyperparameters (including regularization from :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3})
+#     defaults = {
+#         'n_estimators':        300,
+#         'learning_rate':       0.05,
+#         'max_depth':           6,
+#         'subsample':           0.8,
+#         'colsample_bytree':    0.8,
+#         'objective':          'reg:squarederror',
+#         # 'gamma':               0.0,    # min loss reduction to make a split (Eq 7) 
+#         # 'reg_lambda':          1.0,    # L2 regularization term on leaf weights (Eq 2)
+#         'verbosity':           0,
+#         'n_jobs':             -1,
+#         'random_state':       42,      # ensure reproducible trees
+#     }
+#     # 3) Merge overrides
+#     params = {**defaults, **xgb_params}
+
+#     # 4) Train with a one-model-per-output wrapper
+#     model = MultiOutputRegressor(XGBRegressor(**params))
+#     model.fit(X_train, y_train)
+
+#     # 5) Predict
+#     preds = model.predict(X_test)
+#     return preds, y_test
+
 def xgboost_regression(sup_df, inf_df,
                        **xgb_params):               # e.g. n_estimators=200, max_depth=6
     if not xgb_params:                              # sensible defaults
@@ -563,135 +610,371 @@ def xgboost_regression(sup_df, inf_df,
     preds = model.predict(Xte)
     return preds, yte
 
+############################################################
+# Model E: Laplacian‑Regularised Least‑Squares (LapRLS)
+############################################################
 
-# ---- 2.  Laplacian‑Regularised Least‑Squares (LapRLS) ----
-def _laprls_closed_form(Xs, ys, Xu, lam=1e-2, gamma=1.0, k=10):
+import numpy as np
+from sklearn.metrics import pairwise_distances
+
+def laprls_closed_form(Xs, ys, Xu, lam=1e-2, gamma=1.0, k=10, sigma=None):
     """
-    Closed‑form solution for LapRLS:
-        W = (X_sᵀ X_s + λI + γ Xᵀ L X)⁻¹ X_sᵀ y_s
+    Laplacian-Regularized Least Squares (linear model)
+
+    Solves:
+       w = argmin_w  ||Xs w - ys||^2  +  lam ||w||^2  +  gamma * w^T (X^T L X) w
+
+    where L is the graph Laplacian on the concatenated data [Xs; Xu].
+    Note: in Belkin et al., the Laplacian term is gamma_I/(l+u)^2 * f^T L f;
+    here we absorb 1/(l+u)^2 into `gamma`.
+
+    Params
+    ------
+    Xs : array (l × d)    labeled inputs
+    ys : array (l × m)    labeled targets
+    Xu : array (u × d)    unlabeled inputs
+    lam: float            Tikhonov weight λ
+    gamma: float          Laplacian weight γ (already includes any 1/(l+u)^2)
+    k: int                number of nearest neighbors
+    sigma: float or None  RBF kernel width (if None, set to median pairwise distance)
+
+    Returns
+    -------
+    w : array (d × m)      regression weights
     """
+    # Stack all inputs
     X = np.vstack([Xs, Xu])
-    # build k‑NN graph (symmetrised) on *all* inputs
-    dists = rbf_kernel(X, X, gamma=1.0 / (np.median(np.linalg.norm(X[:,None]-X[None,:],axis=2))**2 + 1e-9))
-    idx = np.argsort(-dists, axis=1)[:, 1:k+1]
-    W = np.zeros_like(dists)
-    rows = np.repeat(np.arange(X.shape[0]), k)
+    n = X.shape[0]
+
+    # Estimate sigma if needed
+    if sigma is None:
+        # median of pairwise Euclidean distances
+        dists = pairwise_distances(X, metric='euclidean')
+        sigma = np.median(dists[dists>0])
+
+    # Build adjacency with RBF similarities
+    gamma_rbf = 1.0 / (2 * sigma**2)
+    S = np.exp(- pairwise_distances(X, X, squared=True) * gamma_rbf)
+
+    # kNN sparsification
+    idx = np.argsort(-S, axis=1)[:, 1:k+1]
+    W = np.zeros_like(S)
+    rows = np.repeat(np.arange(n), k)
     cols = idx.ravel()
-    W[rows, cols] = dists[rows, cols]
-    W = np.maximum(W, W.T)                      # symmetrise
-    D = np.diag(W.sum(1))
-    L = D - W                                   # unnormalised Laplacian
+    W[rows, cols] = S[rows, cols]
+    W = np.maximum(W, W.T)  # symmetrize
 
-    A = Xs.T @ Xs + lam*np.eye(X.shape[1]) + gamma * X.T @ L @ X
-    B = Xs.T @ ys
-    W_coef = np.linalg.solve(A, B)
-    return W_coef
+    # Normalized Laplacian L = I - D^{-1/2} W D^{-1/2}
+    deg = W.sum(axis=1)
+    D_inv_sqrt = np.diag(1.0 / np.sqrt(deg + 1e-12))
+    L = np.eye(n) - D_inv_sqrt.dot(W).dot(D_inv_sqrt)
 
-def laprls_regression(sup_df, inf_df, lam=1e-2, gamma=1.0, k=10):
+    # Closed-form solve
+    # A = Xs^T Xs + lam I + gamma * X^T L X
+    A = Xs.T.dot(Xs) + lam*np.eye(X.shape[1]) + gamma * X.T.dot(L).dot(X)
+    B = Xs.T.dot(ys)
+    w = np.linalg.solve(A, B)
+    return w
+
+def laprls_regression(sup_df, inf_df, lam=1e-2, gamma=1.0, k=10, sigma=None):
     Xs = np.vstack(sup_df['morph_coordinates'])
     ys = np.vstack(sup_df['gene_coordinates'])
     Xu = np.vstack(inf_df['morph_coordinates'])
-    W_coef = _laprls_closed_form(Xs, ys, Xu, lam, gamma, k)
-    preds = Xu @ W_coef
+    w = laprls_closed_form(Xs, ys, Xu, lam, gamma, k, sigma)
+    preds = Xu.dot(w)
     actuals = np.vstack(inf_df['gene_coordinates'])
     return preds, actuals
 
 
-# ---- 3.  Transductive SVR (TSVR proxy) --------------------
-def tsvr_regression(sup_df, inf_df, C=10.0, epsilon=0.1, kernel='rbf'):
-    """
-    Practical proxy: train SVR on supervised data, then
-    selftrain on unlabeled points with pseudolabels that
-    have small residuals, mimicking transductive finetuning.
-    """
-    Xs = np.vstack(sup_df['morph_coordinates'])
-    ys = np.vstack(sup_df['gene_coordinates'])
-    Xu = np.vstack(inf_df['morph_coordinates'])
-    yu = np.vstack(inf_df['gene_coordinates'])
+############################################################
+# Model F: Twin‑Neural‑Network Regression (TNNR)
+############################################################
 
-    base = MultiOutputRegressor(SVR(C=C, epsilon=epsilon, kernel=kernel, gamma='scale'))
-    base.fit(Xs, ys)
-    # single self‑training iteration
-    pseudo = base.predict(Xu)
-    conf_mask = np.linalg.norm(pseudo - yu, axis=1) < np.median(np.linalg.norm(pseudo - yu, axis=1))
-    if conf_mask.any():
-        X_aug = np.vstack([Xs, Xu[conf_mask]])
-        y_aug = np.vstack([ys, pseudo[conf_mask]])
-        base.fit(X_aug, y_aug)
-    preds = base.predict(Xu)
-    return preds, yu
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+import numpy as np
+import itertools
 
-
-# ---- 4.  Twin‑Neural‑Network Regression (TNNR) ------------
-class _TwinBlock(nn.Module):
-    def __init__(self, in_dim, rep_dim=64):
-        super().__init__()
-        self.net = nn.Sequential(nn.Linear(in_dim,128), nn.ReLU(),
-                                 nn.Linear(128,rep_dim), nn.ReLU())
-    def forward(self,x): return self.net(x)
+class TwinDataset(Dataset):
+    """Dataset of all (i,j) pairs from X, y -> targets y_i - y_j."""
+    def __init__(self, X, y):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y, dtype=torch.float32)
+        self.pairs = list(itertools.combinations(range(len(X)), 2))
+    
+    def __len__(self):
+        return len(self.pairs)
+    
+    def __getitem__(self, idx):
+        i, j = self.pairs[idx]
+        xi, xj = self.X[i], self.X[j]
+        dy = self.y[i] - self.y[j]
+        return xi, xj, dy
 
 class TwinRegressor(nn.Module):
-    def __init__(self, in_dim, out_dim, rep_dim=64):
+    def __init__(self, in_dim, rep_dim=64, out_dim=1):
         super().__init__()
-        self.f = _TwinBlock(in_dim, rep_dim)
+        # shared representation
+        self.h = nn.Sequential(
+            nn.Linear(in_dim, 128), nn.ReLU(),
+            nn.Linear(128, rep_dim), nn.ReLU()
+        )
+        # difference head
         self.g = nn.Linear(rep_dim, out_dim)
-    def forward(self,x): return self.g(self.f(x))
+    
+    def forward(self, x1, x2):
+        h1, h2 = self.h(x1), self.h(x2)
+        return self.g(h1 - h2)  # predict y1 - y2
 
-def _train_tnn(model, X, y, lr=1e-3, epochs=200):
+def tnnr_regression(supervised_df, inference_df,
+                    rep_dim=64, lr=1e-3, epochs=200, batch_size=256,
+                    device=None):
+    # 1) Prepare data
+    Xs = np.vstack(supervised_df['morph_coordinates'])
+    ys = np.vstack(supervised_df['gene_coordinates'])
+    Xte = np.vstack(inference_df['morph_coordinates'])
+    yte = np.vstack(inference_df['gene_coordinates'])
+    
+    device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    ds = TwinDataset(Xs, ys)
+    loader = DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
+    
+    # 2) Build model
+    in_dim = Xs.shape[1]
+    out_dim = ys.shape[1]
+    model = TwinRegressor(in_dim, rep_dim, out_dim).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
-    X_t = torch.tensor(X, dtype=torch.float32)
-    y_t = torch.tensor(y, dtype=torch.float32)
-    for _ in range(epochs):
-        perm = torch.randperm(X_t.size(0))
-        Xb, yb = X_t[perm], y_t[perm]
-        preds = model(Xb)
-        # squared error + pairwise consistency
-        mse = F.mse_loss(preds, yb)
-        # contrastive: distance between f(x_i) & f(x_j)
-        rep = model.f(Xb)
-        pair_loss = ((rep[:-1]-rep[1:]).pow(2).sum(1)).mean()
-        loss = mse + 1e-3*pair_loss
-        opt.zero_grad(); loss.backward(); opt.step()
-
-def tnnr_regression(sup_df, inf_df):
-    Xs = np.vstack(sup_df['morph_coordinates']); ys = np.vstack(sup_df['gene_coordinates'])
-    Xu = np.vstack(inf_df['morph_coordinates']); yu = np.vstack(inf_df['gene_coordinates'])
-    model = TwinRegressor(in_dim=Xs.shape[1], out_dim=ys.shape[1])
-    _train_tnn(model, Xs, ys)
+    
+    # 3) Train on pairwise differences
+    for epoch in range(epochs):
+        total_loss = 0.0
+        for x1, x2, dy in loader:
+            x1, x2, dy = x1.to(device), x2.to(device), dy.to(device)
+            pred = model(x1, x2)
+            loss = F.mse_loss(pred, dy)
+            opt.zero_grad(); loss.backward(); opt.step()
+            total_loss += loss.item() * x1.size(0)
+        # print(f"Epoch {epoch+1}/{epochs}, loss={total_loss/len(ds):.4f}")
+    
+    # 4) Inference by ensembling differences to all anchors
+    model.eval()
+    Xs_t = torch.tensor(Xs, dtype=torch.float32, device=device)
+    ys_t = torch.tensor(ys, dtype=torch.float32, device=device)
+    Xq_t = torch.tensor(Xte, dtype=torch.float32, device=device)
+    preds = []
     with torch.no_grad():
-        preds = model(torch.tensor(Xu, dtype=torch.float32)).numpy()
-    return preds, yu
+        for xq in Xq_t:
+            # shape: (m, out_dim)
+            diffs = model(xq.unsqueeze(0).repeat(len(Xs_t),1), Xs_t)
+            estimates = ys_t + diffs
+            mean_est = estimates.mean(dim=0)
+            preds.append(mean_est.cpu().numpy())
+    preds = np.vstack(preds)
+    return preds, yte
 
 
-# ---- 5.  UCVME proxy: Deep ensemble w/ consistency --------
+##############################################
+#  Model G: Transductive SVM‑Regression (TSVR)
+##############################################
+from sklearn.svm import SVR
+from copy import deepcopy
+
+from sklearn.svm import SVR
+from sklearn.multioutput import MultiOutputRegressor
+import numpy as np
+
+def tsvr_regression(
+    supervised_df,
+    inference_df,
+    C=1.0,
+    epsilon=0.1,
+    kernel='rbf',
+    gamma='scale',
+    max_iter=10,
+    self_training_frac=0.2
+):
+    """
+    Transductive SVR via iterative self-training:
+      1. fit SVR on supervised data
+      2. predict pseudolabels on unlabeled data
+      3. for up to max_iter:
+         – include all pseudolabels in first pass,
+           then only the self_training_frac fraction with smallest change
+         – refit on supervised + selected unlabeled
+         – stop if pseudolabels converge
+    """
+    # 1) Prepare data
+    X_sup = np.vstack(supervised_df['morph_coordinates'])
+    y_sup = np.vstack(supervised_df['gene_coordinates'])
+    X_unl = np.vstack(inference_df['morph_coordinates'])
+    y_unl = np.vstack(inference_df['gene_coordinates'])  # for evaluation
+
+    # 2) Base SVR wrapped for multi-output
+    base_svr = SVR(C=C, epsilon=epsilon, kernel=kernel, gamma=gamma)
+    model = MultiOutputRegressor(base_svr)
+
+    # 3) Initial fit on supervised only
+    model.fit(X_sup, y_sup)
+    pseudo = model.predict(X_unl)
+
+    for it in range(max_iter):
+        if it == 0:
+            # first self-training round: include all unlabeled
+            X_aug = np.vstack([X_sup, X_unl])
+            y_aug = np.vstack([y_sup, pseudo])
+        else:
+            # measure stability of each pseudolabel
+            diffs = np.linalg.norm(pseudo - prev_pseudo, axis=1)
+            # pick the fraction with smallest change
+            thresh = np.percentile(diffs, self_training_frac * 100)
+            mask = diffs <= thresh
+            X_aug = np.vstack([X_sup, X_unl[mask]])
+            y_aug = np.vstack([y_sup, pseudo[mask]])
+
+        # 4) Refit on augmented data
+        model.fit(X_aug, y_aug)
+
+        # 5) Check convergence
+        prev_pseudo = pseudo
+        pseudo = model.predict(X_unl)
+        if np.allclose(pseudo, prev_pseudo, atol=1e-3):
+            break
+
+    # final predictions on unlabeled
+    return pseudo, y_unl
+
+
+##############################################
+# Model H: Uncertainty‑Consistent VME (UCVME) 
+##############################################
+import math
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+class UCVMEModel(nn.Module):
+    """
+    A Bayesian-style regressor that jointly predicts a mean and a log-variance.
+    """
+    def __init__(self, in_dim, out_dim, hidden=128, p_dropout=0.3):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(in_dim, hidden), nn.ReLU(),
+            nn.Dropout(p_dropout),
+            nn.Linear(hidden, hidden), nn.ReLU(),
+            nn.Dropout(p_dropout),
+        )
+        self.mean_head   = nn.Linear(hidden, out_dim)
+        self.logvar_head = nn.Linear(hidden, out_dim)
+
+    def forward(self, x):
+        h = self.encoder(x)
+        return self.mean_head(h), self.logvar_head(h)
+
+
+def ucvme_regression(
+    supervised_df,
+    inference_df,
+    T=5,                  # MC dropout samples
+    lr=1e-3,
+    epochs=200,
+    w_unl=10.0,           # weight for unlabeled losses (wulb in Eq 11) :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}
+    device=None
+):
+    # — Prepare tensors —
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    X_sup = torch.tensor(np.vstack(supervised_df['morph_coordinates']), dtype=torch.float32, device=device)
+    y_sup = torch.tensor(np.vstack(supervised_df['gene_coordinates']),    dtype=torch.float32, device=device)
+    X_unl = torch.tensor(np.vstack(inference_df['morph_coordinates']),   dtype=torch.float32, device=device)
+    y_unl_np = np.vstack(inference_df['gene_coordinates'])
+
+    # — Instantiate two co-trained BNNs :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3} —
+    in_dim, out_dim = X_sup.shape[1], y_sup.shape[1]
+    model_a = UCVMEModel(in_dim, out_dim).to(device)
+    model_b = UCVMEModel(in_dim, out_dim).to(device)
+    optimizer = torch.optim.Adam(
+        list(model_a.parameters()) + list(model_b.parameters()),
+        lr=lr
+    )
+
+    for ep in range(epochs):
+        model_a.train(); model_b.train()
+
+        # — Supervised heteroscedastic regression loss (Eq 1) :contentReference[oaicite:4]{index=4}&#8203;:contentReference[oaicite:5]{index=5} —
+        y_a_sup, z_a_sup = model_a(X_sup)
+        y_b_sup, z_b_sup = model_b(X_sup)
+        L_sup_reg = (
+            ((y_a_sup - y_sup)**2 / (2*torch.exp(z_a_sup)) + z_a_sup/2).mean()
+          + ((y_b_sup - y_sup)**2 / (2*torch.exp(z_b_sup)) + z_b_sup/2).mean()
+        )
+
+        # — Aleatoric uncertainty consistency on labeled data (Eq 2) :contentReference[oaicite:6]{index=6}&#8203;:contentReference[oaicite:7]{index=7} —
+        L_sup_unc = ((z_a_sup - z_b_sup)**2).mean()
+
+        # — Variational model ensembling for unlabeled pseudo-labels (Eqs 7–8) :contentReference[oaicite:8]{index=8}&#8203;:contentReference[oaicite:9]{index=9} —
+        y_a_list, z_a_list, y_b_list, z_b_list = [], [], [], []
+        for _ in range(T):
+            # keep dropout active
+            y_a_t, z_a_t = model_a(X_unl)
+            y_b_t, z_b_t = model_b(X_unl)
+            y_a_list.append(y_a_t); z_a_list.append(z_a_t)
+            y_b_list.append(y_b_t); z_b_list.append(z_b_t)
+
+        y_a_stack = torch.stack(y_a_list)  # (T, N_unl, D)
+        z_a_stack = torch.stack(z_a_list)
+        y_b_stack = torch.stack(y_b_list)
+        z_b_stack = torch.stack(z_b_list)
+
+        # average over runs and models
+        y_tilde = (y_a_stack.mean(0) + y_b_stack.mean(0)) / 2  # Eq 7 :contentReference[oaicite:10]{index=10}&#8203;:contentReference[oaicite:11]{index=11}
+        z_tilde = (z_a_stack.mean(0) + z_b_stack.mean(0)) / 2  # Eq 8 :contentReference[oaicite:12]{index=12}&#8203;:contentReference[oaicite:13]{index=13}
+
+        # — Unlabeled heteroscedastic loss (Eq 10) :contentReference[oaicite:14]{index=14}&#8203;:contentReference[oaicite:15]{index=15} —
+        L_unl_reg = (
+            ((y_a_stack.mean(0) - y_tilde)**2 / (2*torch.exp(z_tilde)) + z_tilde/2).mean()
+          + ((y_b_stack.mean(0) - y_tilde)**2 / (2*torch.exp(z_tilde)) + z_tilde/2).mean()
+        )
+
+        # — Unlabeled uncertainty consistency (Eq 9) :contentReference[oaicite:16]{index=16}&#8203;:contentReference[oaicite:17]{index=17} —
+        L_unl_unc = (
+            ((z_a_stack.mean(0) - z_tilde)**2).mean()
+          + ((z_b_stack.mean(0) - z_tilde)**2).mean()
+        )
+
+        # — Total loss (Eq 11) :contentReference[oaicite:18]{index=18}&#8203;:contentReference[oaicite:19]{index=19} —
+        loss = L_sup_reg + L_sup_unc + w_unl * (L_unl_reg + L_unl_unc)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    # — Inference: ensemble means over T dropout runs :contentReference[oaicite:20]{index=20}&#8203;:contentReference[oaicite:21]{index=21} —
+    model_a.eval(); model_b.eval()
+    preds_list = []
+    with torch.no_grad():
+        for _ in range(T):
+            y_a_u, _ = model_a(X_unl)
+            y_b_u, _ = model_b(X_unl)
+            preds_list.append((y_a_u + y_b_u) / 2)
+        preds = torch.stack(preds_list).mean(0).cpu().numpy()
+
+    return preds, y_unl_np
+
+
+##############################################
+#  Model I: RankUp-simplified                #
+##############################################
+
 def _simple_mlp(in_dim, out_dim):
     return nn.Sequential(nn.Linear(in_dim,256), nn.ReLU(),
                          nn.Linear(256,128), nn.ReLU(),
                          nn.Linear(128,out_dim))
 
-def ucvme_regression(sup_df, inf_df, n_models=5, lr=1e-3, epochs=150):
-    Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32)
-    ys = torch.tensor(np.vstack(sup_df['gene_coordinates']), dtype=torch.float32)
-    Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']), dtype=torch.float32)
-    yu = np.vstack(inf_df['gene_coordinates'])
-
-    preds_ensemble = []
-    for m in range(n_models):
-        net = _simple_mlp(Xs.size(1), ys.size(1))
-        opt = torch.optim.Adam(net.parameters(), lr=lr)
-        for _ in range(epochs):
-            perm = torch.randperm(Xs.size(0))
-            xb, yb = Xs[perm], ys[perm]
-            out = net(xb)
-            loss = F.mse_loss(out, yb)
-            opt.zero_grad(); loss.backward(); opt.step()
-        with torch.no_grad():
-            preds_ensemble.append(net(Xu).numpy())
-    preds = np.mean(preds_ensemble, axis=0)
-    return preds, yu
-
-
-# ---- 6.  RankUp‑style auxiliary‑ranking SSL proxy ---------
 def _pairwise_rank_loss(pred, y):
     # hinge on pairwise orderings
     dif_pred = pred[:,None]-pred[None,:]
@@ -701,7 +984,7 @@ def _pairwise_rank_loss(pred, y):
     loss = np.maximum(0, margin - sign_true*dif_pred)
     return loss.mean()
 
-def rankup_regression(sup_df, inf_df, lr=1e-3, epochs=150, alpha=0.3):
+def rankup_regression(sup_df, inf_df, lr=1e-3, epochs=200, alpha=0.3):
     Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32)
     ys = torch.tensor(np.vstack(sup_df['gene_coordinates']), dtype=torch.float32)
     Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']), dtype=torch.float32)
@@ -727,6 +1010,474 @@ def rankup_regression(sup_df, inf_df, lr=1e-3, epochs=150, alpha=0.3):
     return preds, yu
 
 
+##################################################
+# Model J: AGDN - one-hop GAT
+##################################################
+
+# agdn.py
+
+# import torch
+# import torch.nn as nn
+# import torch.nn.functional as F
+# from torch_geometric.nn import MessagePassing
+# from torch_geometric.utils import softmax
+
+# class HopWiseAGDNConv(MessagePassing):
+#     """
+#     Single-layer multi-hop AGDN convolution with Hop-wise Attention (HA).
+#     Implements K-hop diffusion in one pass.
+#     """
+#     def __init__(self,
+#                  in_channels: int,
+#                  out_channels: int,
+#                  heads: int = 1,
+#                  K: int = 3,
+#                  negative_slope: float = 0.2,
+#                  dropout: float = 0.0,
+#                  residual: bool = True,
+#                  **kwargs):
+#         super().__init__(aggr='add', node_dim=0)
+#         self.in_channels = in_channels
+#         self.out_channels = out_channels
+#         self.heads = heads
+#         self.K = K
+#         self.negative_slope = negative_slope
+#         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+#         self.residual = residual
+
+#         # 0-hop linear projection
+#         self.linear = nn.Linear(in_channels, heads * out_channels, bias=False)
+#         # hop-wise attention vector: [1, heads, 2*out_channels]
+#         self.hop_att = nn.Parameter(torch.Tensor(1, heads, 2 * out_channels))
+
+#         # optional residual projection
+#         if residual and in_channels != heads * out_channels:
+#             self.res_fc = nn.Linear(in_channels, heads * out_channels, bias=False)
+#         else:
+#             self.res_fc = None
+
+#         # bias term
+#         self.bias = nn.Parameter(torch.Tensor(heads * out_channels))
+#         self.reset_parameters()
+
+#     def reset_parameters(self):
+#         nn.init.xavier_uniform_(self.linear.weight)
+#         nn.init.xavier_uniform_(self.hop_att)
+#         if self.res_fc is not None:
+#             nn.init.xavier_uniform_(self.res_fc.weight)
+#         nn.init.zeros_(self.bias)
+
+#     def forward(self, x: torch.Tensor, edge_index: torch.LongTensor) -> torch.Tensor:
+#         # x: [N, in_channels]
+#         N = x.size(0)
+#         # 1) compute 0-hop features
+#         h0 = self.linear(x).view(N, self.heads, self.out_channels)  # [N, heads, out_ch]
+
+#         # 2) recursively get hops 1..K
+#         h_list = [h0]
+#         for _ in range(self.K):
+#             h_prev = h_list[-1]
+#             h_k = self.propagate(edge_index, x=h_prev)  # [N, heads, out_ch]
+#             h_list.append(h_k)
+
+#         # 3) stack into [N, heads, K+1, out_ch]
+#         h_stack = torch.stack(h_list, dim=2)
+
+#         # 4) compute hop-wise attention
+#         h0_exp = h0.unsqueeze(2).expand(-1, -1, self.K+1, -1)
+#         cat = torch.cat([h0_exp, h_stack], dim=-1)            # [N, heads, K+1, 2*out_ch]
+#         scores = (cat * self.hop_att).sum(dim=-1)              # [N, heads, K+1]
+#         scores = F.leaky_relu(scores, self.negative_slope)
+#         attn = F.softmax(scores, dim=2)[..., None]            # [N, heads, K+1, 1]
+#         attn = self.dropout(attn)
+
+#         # 5) weighted sum over hops
+#         h_out = (h_stack * attn).sum(dim=2)                    # [N, heads, out_ch]
+
+#         # 6) flatten heads
+#         h_out = h_out.view(N, self.heads * self.out_channels)
+
+#         # 7) residual
+#         if self.residual:
+#             if self.res_fc is not None:
+#                 res = self.res_fc(x)
+#             else:
+#                 res = h0.view(N, self.heads * self.out_channels)
+#             h_out = h_out + res
+
+#         # 8) add bias
+#         return h_out + self.bias
+
+#     def message(self, x_j: torch.Tensor, index: torch.Tensor) -> torch.Tensor:
+#         # simple sum aggregation of neighbor embeddings
+#         return x_j
+
+#     def update(self, aggr_out: torch.Tensor) -> torch.Tensor:
+#         return aggr_out
+# class AGDN(nn.Module):
+#     """
+#     Stacks multiple HopWiseAGDNConv layers.
+#     """
+#     def __init__(self,
+#                  in_channels: int,
+#                  hidden_channels: int,
+#                  out_channels: int,
+#                  num_layers: int = 2,
+#                  heads: int = 1,
+#                  K: int = 3,
+#                  dropout: float = 0.0):
+#         super().__init__()
+#         self.convs = nn.ModuleList()
+
+#         # first layer
+#         self.convs.append(
+#             HopWiseAGDNConv(in_channels, hidden_channels,
+#                              heads=heads, K=K, dropout=dropout)
+#         )
+#         # middle layers
+#         for _ in range(num_layers - 2):
+#             self.convs.append(
+#                 HopWiseAGDNConv(hidden_channels * heads,
+#                                  hidden_channels,
+#                                  heads=heads, K=K, dropout=dropout)
+#             )
+#         # last layer (single head, optionally still with multi-hop)
+#         self.convs.append(
+#             HopWiseAGDNConv(hidden_channels * heads,
+#                              out_channels,
+#                              heads=1, K=K, dropout=dropout)
+#         )
+
+#         self.dropout = dropout
+
+#     def forward(self, x: torch.Tensor, edge_index: torch.LongTensor) -> torch.Tensor:
+#         for i, conv in enumerate(self.convs):
+#             x = conv(x, edge_index)
+#             if i < len(self.convs) - 1:
+#                 x = F.elu(x)
+#                 x = F.dropout(x, p=self.dropout, training=self.training)
+#         return x
+
+# def agdn_regression(supervised_df, inference_df, morph_col='morph_coordinates', gene_col='gene_coordinates',
+#                     hidden=64, num_layers=2, heads=1, dropout=0.1,
+#                     epochs=1000, lr=1e-3):
+#     """
+#     Train an AGDN to map morphological embeddings -> gene embeddings,
+#     using 'supervised_df' as labeled data, then predict gene embeddings
+#     for 'inference_df'. Return the per-sample Euclidean distance.
+    
+#     :param supervised_df: DataFrame with columns [morph_col, gene_col]
+#     :param inference_df:  DataFrame with columns [morph_col, gene_col]
+#     :param morph_col:     Name of the morphological embedding column in the DataFrame
+#     :param gene_col:      Name of the gene embedding column in the DataFrame
+#     :param hidden:        Hidden dimension
+#     :param num_layers:    Number of AGDN layers
+#     :param heads:         Number of heads
+#     :param dropout:       Dropout rate
+#     :param epochs:        Training epochs
+#     :param lr:            Learning rate
+#     :return: Numpy array of distances for each row in inference_df
+#     """
+
+#     # 1) Extract morphological & gene embeddings as arrays
+#     sup_morph = np.stack(supervised_df[morph_col].values, axis=0)
+#     sup_gene  = np.stack(supervised_df[gene_col].values, axis=0)
+#     inf_morph = np.stack(inference_df[morph_col].values, axis=0)
+#     inf_gene  = np.stack(inference_df[gene_col].values, axis=0)
+
+#     sup_morph_t = torch.FloatTensor(sup_morph)
+#     sup_gene_t  = torch.FloatTensor(sup_gene)
+#     inf_morph_t = torch.FloatTensor(inf_morph)
+#     inf_gene_t  = torch.FloatTensor(inf_gene)
+
+#     N_sup = sup_morph.shape[0]
+#     N_inf = inf_morph.shape[0]
+
+#     # 2) Build adjacency for supervised portion
+#     #    For demonstration, we do a full mesh among supervised nodes
+#     srcs, dsts = [], []
+#     for i in range(N_sup):
+#         for j in range(N_sup):
+#             if i != j:
+#                 srcs.append(i)
+#                 dsts.append(j)
+#     edge_index_sup = torch.tensor([srcs, dsts], dtype=torch.long)
+
+#     data_sup = Data(x=sup_morph_t, edge_index=edge_index_sup)
+
+#     # 3) Build the AGDN
+#     in_channels  = sup_morph.shape[1]
+#     out_channels = sup_gene.shape[1]
+#     model = AGDN(in_channels, hidden, out_channels, num_layers=num_layers, heads=heads, dropout=dropout)
+
+#     # 4) Loss & optimizer
+#     criterion = nn.MSELoss()
+#     optimizer = Adam(model.parameters(), lr=lr)
+
+#     # 5) Train on supervised
+#     model.train()
+#     for epoch in range(epochs):
+#         optimizer.zero_grad()
+#         out = model(data_sup.x, data_sup.edge_index)   # [N_sup, out_channels]
+#         loss = criterion(out, sup_gene_t)
+#         loss.backward()
+#         optimizer.step()
+
+#     # 6) Build a combined graph that includes inference nodes,
+#     #    so that we can propagate morphological info from sup->inf
+#     #    We'll label the new nodes from [N_sup..N_sup+N_inf-1]
+#     srcs_inf, dsts_inf = [], []
+#     for i in range(N_inf):
+#         inf_node_id = N_sup + i
+#         # Connect to all supervised nodes (bidirectional):
+#         for j in range(N_sup):
+#             srcs_inf.append(inf_node_id)
+#             dsts_inf.append(j)
+#             srcs_inf.append(j)
+#             dsts_inf.append(inf_node_id)
+#     edge_index_inf = torch.tensor([srcs_inf, dsts_inf], dtype=torch.long)
+
+#     big_x = torch.cat([sup_morph_t, inf_morph_t], dim=0)
+#     big_edge = torch.cat([edge_index_sup, edge_index_inf], dim=1)
+#     data_inf = Data(x=big_x, edge_index=big_edge)
+
+#     # 7) Infer for the last portion
+#     model.eval()
+#     with torch.no_grad():
+#         big_out = model(data_inf.x, data_inf.edge_index) # shape [N_sup+N_inf, out_channels]
+#     inf_pred = big_out[N_sup:, :]  # shape [N_inf, out_channels]
+
+#     return inf_pred.numpy(), inf_gene_t.numpy()
+
+class AGDNConv(MessagePassing):
+    """
+    A simplified AGDN-like convolution layer, in PyTorch Geometric style.
+    """
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        negative_slope=0.2,
+        dropout=0.0,
+        residual=True,
+        **kwargs
+    ):
+        super().__init__(aggr='add', node_dim=0)  # Force node_dim=0
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.heads = heads
+        self.negative_slope = negative_slope
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+        self.residual = residual
+
+        # Linear transformation for inputs
+        self.linear = nn.Linear(in_channels, heads * out_channels, bias=False)
+
+        # Attention parameters
+        self.att_l = nn.Parameter(torch.Tensor(1, heads, out_channels))
+        self.att_r = nn.Parameter(torch.Tensor(1, heads, out_channels))
+
+        # Residual connection
+        if residual and in_channels != heads * out_channels:
+            self.res_fc = nn.Linear(in_channels, heads * out_channels, bias=False)
+        else:
+            self.res_fc = None
+
+        # Bias
+        self.bias = nn.Parameter(torch.Tensor(heads * out_channels))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.linear.weight, gain=1.0)
+        nn.init.xavier_uniform_(self.att_l, gain=1.0)
+        nn.init.xavier_uniform_(self.att_r, gain=1.0)
+        if self.res_fc is not None:
+            nn.init.xavier_uniform_(self.res_fc.weight, gain=1.0)
+        nn.init.zeros_(self.bias)
+
+    def forward(self, x, edge_index):
+        """
+        x: [N, in_channels]
+        edge_index: [2, E]
+        """
+        # Transform input
+        x_lin = self.linear(x).view(-1, self.heads, self.out_channels)
+
+        # Residual part (optional)
+        if self.res_fc is not None:
+            x_res = self.res_fc(x).view(-1, self.heads, self.out_channels)
+        else:
+            x_res = x_lin if self.residual else None
+
+        # Compute alpha_l and alpha_r per node
+        alpha_l = (x_lin * self.att_l).sum(dim=-1, keepdim=True)  # shape: [N, heads, 1]
+        alpha_r = (x_lin * self.att_r).sum(dim=-1, keepdim=True)  # shape: [N, heads, 1]
+
+        # Propagate messages; the target indices are passed as "index" to the message function.
+        out = self.propagate(edge_index, x=x_lin, alpha_l=alpha_l, alpha_r=alpha_r)
+
+        # Flatten heads
+        out = out.view(-1, self.heads * self.out_channels)
+
+        # Add residual if available
+        if self.residual and (x_res is not None):
+            out += x_res.view(-1, self.heads * self.out_channels)
+
+        # Add bias
+        out = out + self.bias
+        return out
+
+    def message(self, x_j, alpha_l_j, alpha_r_i, index):
+        """
+        x_j: Neighbor features [E, heads, out_channels]
+        alpha_l_j: Attention term from neighbor [E, heads, 1]
+        alpha_r_i: Attention term from center node [E, heads, 1]
+        index:   Target indices for each edge from propagate
+        """
+        alpha = alpha_l_j + alpha_r_i
+        alpha = F.leaky_relu(alpha, self.negative_slope)
+        # Use the provided "index" for softmax computation.
+        alpha = torch_geometric.utils.softmax(alpha, index, num_nodes=x_j.size(0))
+        alpha = self.dropout(alpha)
+        return x_j * alpha
+
+    def update(self, aggr_out):
+        return aggr_out
+
+class AGDN(nn.Module):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        out_channels,
+        num_layers=2,
+        heads=1,
+        dropout=0.0
+    ):
+        super().__init__()
+        self.num_layers = num_layers
+        self.heads = heads
+        self.dropout = dropout
+
+        self.convs = nn.ModuleList()
+        # First layer
+        self.convs.append(
+            AGDNConv(in_channels, hidden_channels, heads=heads, dropout=dropout)
+        )
+        # Middle layers
+        for _ in range(num_layers - 2):
+            self.convs.append(
+                AGDNConv(hidden_channels * heads, hidden_channels, heads=heads, dropout=dropout)
+            )
+        # Last layer
+        self.convs.append(
+            AGDNConv(hidden_channels * heads, out_channels, heads=1, dropout=dropout)
+        )
+
+    def forward(self, x, edge_index):
+        for i, conv in enumerate(self.convs):
+            x = conv(x, edge_index)
+            if i < len(self.convs) - 1:
+                x = F.elu(x)
+                x = F.dropout(x, p=self.dropout, training=self.training)
+        return x
+
+def agdn_regression(supervised_df, inference_df, morph_col='morph_coordinates', gene_col='gene_coordinates',
+                    hidden=64, num_layers=2, heads=1, dropout=0.1,
+                    epochs=500, lr=1e-3):
+    """
+    Train an AGDN to map morphological embeddings -> gene embeddings,
+    using 'supervised_df' as labeled data, then predict gene embeddings
+    for 'inference_df'. Return the per-sample Euclidean distance.
+    
+    :param supervised_df: DataFrame with columns [morph_col, gene_col]
+    :param inference_df:  DataFrame with columns [morph_col, gene_col]
+    :param morph_col:     Name of the morphological embedding column in the DataFrame
+    :param gene_col:      Name of the gene embedding column in the DataFrame
+    :param hidden:        Hidden dimension
+    :param num_layers:    Number of AGDN layers
+    :param heads:         Number of heads
+    :param dropout:       Dropout rate
+    :param epochs:        Training epochs
+    :param lr:            Learning rate
+    :return: Numpy array of distances for each row in inference_df
+    """
+
+    # 1) Extract morphological & gene embeddings as arrays
+    sup_morph = np.stack(supervised_df[morph_col].values, axis=0)
+    sup_gene  = np.stack(supervised_df[gene_col].values, axis=0)
+    inf_morph = np.stack(inference_df[morph_col].values, axis=0)
+    inf_gene  = np.stack(inference_df[gene_col].values, axis=0)
+
+    sup_morph_t = torch.FloatTensor(sup_morph)
+    sup_gene_t  = torch.FloatTensor(sup_gene)
+    inf_morph_t = torch.FloatTensor(inf_morph)
+    inf_gene_t  = torch.FloatTensor(inf_gene)
+
+    N_sup = sup_morph.shape[0]
+    N_inf = inf_morph.shape[0]
+
+    # 2) Build adjacency for supervised portion
+    #    For demonstration, we do a full mesh among supervised nodes
+    srcs, dsts = [], []
+    for i in range(N_sup):
+        for j in range(N_sup):
+            if i != j:
+                srcs.append(i)
+                dsts.append(j)
+    edge_index_sup = torch.tensor([srcs, dsts], dtype=torch.long)
+
+    data_sup = Data(x=sup_morph_t, edge_index=edge_index_sup)
+
+    # 3) Build the AGDN
+    in_channels  = sup_morph.shape[1]
+    out_channels = sup_gene.shape[1]
+    model = AGDN(in_channels, hidden, out_channels, num_layers=num_layers, heads=heads, dropout=dropout)
+
+    # 4) Loss & optimizer
+    criterion = nn.MSELoss()
+    optimizer = Adam(model.parameters(), lr=lr)
+
+    # 5) Train on supervised
+    model.train()
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        out = model(data_sup.x, data_sup.edge_index)   # [N_sup, out_channels]
+        loss = criterion(out, sup_gene_t)
+        loss.backward()
+        optimizer.step()
+
+        if (epoch+1) % 10 == 0:
+            print(f"AGDN epoch={epoch+1}, MSE={loss.item():.4f}")
+
+    # 6) Build a combined graph that includes inference nodes,
+    #    so that we can propagate morphological info from sup->inf
+    #    We'll label the new nodes from [N_sup..N_sup+N_inf-1]
+    srcs_inf, dsts_inf = [], []
+    for i in range(N_inf):
+        inf_node_id = N_sup + i
+        # Connect to all supervised nodes (bidirectional):
+        for j in range(N_sup):
+            srcs_inf.append(inf_node_id)
+            dsts_inf.append(j)
+            srcs_inf.append(j)
+            dsts_inf.append(inf_node_id)
+    edge_index_inf = torch.tensor([srcs_inf, dsts_inf], dtype=torch.long)
+
+    big_x = torch.cat([sup_morph_t, inf_morph_t], dim=0)
+    big_edge = torch.cat([edge_index_sup, edge_index_inf], dim=1)
+    data_inf = Data(x=big_x, edge_index=big_edge)
+
+    # 7) Infer for the last portion
+    model.eval()
+    with torch.no_grad():
+        big_out = model(data_inf.x, data_inf.edge_index) # shape [N_sup+N_inf, out_channels]
+    inf_pred = big_out[N_sup:, :]  # shape [N_inf, out_channels]
+
+    return inf_pred.numpy(), inf_gene_t.numpy()
+
+
 
 ###################################
 # Metrics #
@@ -737,7 +1488,15 @@ def evaluate_loss(predictions, actuals):
     Evaluate the loss between predictions and actual values.
     For now, just return MAE.
     """
-    return np.mean(np.abs(predictions - actuals))
+    # return np.mean(np.abs(predictions - actuals))
+
+    # Mean Absolute Error
+    mae = np.mean(np.abs(predictions - actuals))
+    
+    # R^2 Score
+    r2 = r2_score(actuals, predictions)
+    
+    return mae, r2
 
     # Another Option: Calculate Euclidean distance for each sample (row-wise distance)
     distances = np.linalg.norm(predictions - actuals, axis=1)  # Euclidean distance for each sample
@@ -788,25 +1547,25 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
     ### Unlike BKM, we don't call a series of functions for the basline models, instead we put them in the helper "regression" functions
     mt_predictions, mt_actuals = mean_teacher_regression(supervised_samples, inference_samples)
     knn_predictions, knn_actuals = knn_regression(supervised_samples, inference_samples, n_neighbors=max(1, int(n_samples * supervised)))
-    
     xgb_preds, xgb_actuals = xgboost_regression(supervised_samples, inference_samples)
     lap_preds, lap_actuals = laprls_regression(supervised_samples, inference_samples)
     tsvr_preds, tsvr_actuals = tsvr_regression(supervised_samples, inference_samples)
     tnnr_preds, tnnr_actuals = tnnr_regression(supervised_samples, inference_samples)
     ucv_preds, ucv_actuals = ucvme_regression(supervised_samples, inference_samples)
     rank_preds, rank_actuals = rankup_regression(supervised_samples, inference_samples)
+    agdn_preds, agdn_actuals = agdn_regression(supervised_samples, inference_samples)
 
     # Compute errors
-    bkm_error = evaluate_loss(bkm_predictions, bkm_actuals)
-    knn_error = evaluate_loss(knn_predictions, knn_actuals)
-    mean_teacher_error = evaluate_loss(mt_predictions, mt_actuals)
-    xgb_error = evaluate_loss(xgb_preds, xgb_actuals)
-    lap_error = evaluate_loss(lap_preds, lap_actuals)
-    tsvr_error = evaluate_loss(tsvr_preds, tsvr_actuals)
-    tnnr_error = evaluate_loss(tnnr_preds, tnnr_actuals)
-    ucv_error = evaluate_loss(ucv_preds, ucv_actuals)
-    rank_error = evaluate_loss(rank_preds, rank_actuals)
-
+    bkm_error, bkm_r2 = evaluate_loss(bkm_predictions, bkm_actuals)
+    knn_error, knn_r2 = evaluate_loss(knn_predictions, knn_actuals)
+    mean_teacher_error, mean_teacher_r2 = evaluate_loss(mt_predictions, mt_actuals)
+    xgb_error, xgb_r2 = evaluate_loss(xgb_preds, xgb_actuals)
+    lap_error, lap_r2 = evaluate_loss(lap_preds, lap_actuals)
+    tsvr_error, tsvr_r2 = evaluate_loss(tsvr_preds, tsvr_actuals)
+    tnnr_error, tnnr_r2 = evaluate_loss(tnnr_preds, tnnr_actuals)
+    ucv_error, ucv_r2 = evaluate_loss(ucv_preds, ucv_actuals)
+    rank_error, rank_r2 = evaluate_loss(rank_preds, rank_actuals)
+    agdn_error, agdn_r2 = evaluate_loss(agdn_preds, agdn_actuals)
 
     # Print results
     print(f"Bridged Clustering Error: {bkm_error}")
@@ -818,9 +1577,10 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
     print(f"TNNR Error: {tnnr_error}")
     print(f"UCVME Error: {ucv_error}")
     print(f"RankUp Error: {rank_error}")
+    print(f"AGDN Error: {agdn_error}")
     # Store results in a dictionary
 
-    results = {
+    errors = {
         'BKM': bkm_error,
         'KNN': knn_error,
         'Mean Teacher': mean_teacher_error,
@@ -829,11 +1589,25 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
         'TSVR': tsvr_error,
         'TNNR': tnnr_error,
         'UCVME': ucv_error,
-        'RankUp': rank_error
+        'RankUp': rank_error,
+        'AGDN': agdn_error
+    }
+
+    rs = {
+        'BKM': bkm_r2,
+        'KNN': knn_r2,
+        'Mean Teacher': mean_teacher_r2,
+        'XGBoost': xgb_r2,
+        'Laplacian RLS': lap_r2,
+        'TSVR': tsvr_r2,
+        'TNNR': tnnr_r2,
+        'UCVME': ucv_r2,
+        'RankUp': rank_r2,
+        'AGDN': agdn_r2
     }
     
 
-    return results
+    return errors, rs
 
 
 
@@ -843,19 +1617,22 @@ if __name__ == '__main__':
     image_folder = '../bioscan5m/test_images'
 
     n_families_values = [3]
-    n_samples_values = [150]
-    supervised_values = [0.01]
-    models = ['BKM', 'KNN', 'Mean Teacher', 'XGBoost', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'RankUp']
+    n_samples_values = [200]
+    supervised_values = [1, 2, 3]
+    models = ['BKM', 'KNN', 'Mean Teacher', 'XGBoost', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'RankUp', 'AGDN']
+    models = ['BKM', 'XGBoost', 'RankUp', 'AGDN']
 
-    n_trials = 30
+    n_trials = 10
     
 
     # Initialize a 5D matrix to store results for each experiment
     # Dimensions: [n_families, n_samples, supervised, models, trials]
     results_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(models), n_trials))
+    rs_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(models), n_trials))
 
     # Initialize a dictionary to store average results for each experiment setting
     average_results = {}
+    average_rs_results = {}
 
     # Run experiments
     for n_families_idx, n_families in enumerate(n_families_values):
@@ -863,28 +1640,34 @@ if __name__ == '__main__':
             for supervised_idx, supervised in enumerate(supervised_values):
                 # Initialize a dictionary to store cumulative errors for each model
                 cumulative_errors = {model: 0 for model in models}
+                cumulative_rs = {model: 0 for model in models}
                 
                 for trial in range(n_trials):
-                    print(f"Running trial {trial + 1} for n_families={n_families}, n_samples={n_samples}, supervised={supervised}")
-                    results = run_experiment(csv_path, image_folder, n_families=n_families, n_samples=n_samples, supervised=supervised)
+                    print(f"Running trial {trial + 1} for n_families={n_families}, n_samples={n_samples}, supervised={supervised/n_samples}")
+                    errors,rs = run_experiment(csv_path, image_folder, n_families=n_families, n_samples=n_samples, supervised=supervised/n_samples)
                     
                     # Accumulate errors for each model
                     for model_name in models:
-                        cumulative_errors[model_name] += results[model_name]
+                        cumulative_errors[model_name] += errors[model_name]
+                        cumulative_rs[model_name] += rs[model_name]
                         
                     # Store results in the matrix
                     for model_idx, model_name in enumerate(models):
-                        results_matrix[n_families_idx, n_samples_idx, supervised_idx, model_idx, trial] = results[model_name]
+                        results_matrix[n_families_idx, n_samples_idx, supervised_idx, model_idx, trial] = errors[model_name]
+                        rs_matrix[n_families_idx, n_samples_idx, supervised_idx, model_idx, trial] = rs[model_name]
 
                     # Save the results matrix to a file
                     np.save('results/total_results_matrix.npy', results_matrix)
+                    np.save('results/rs_matrix.npy', rs_matrix)
                 
                 # Compute average errors for each model
                 average_errors = {model: cumulative_errors[model] / n_trials for model in models}
+                average_rs = {model: cumulative_rs[model] / n_trials for model in models}
                 
                 # Store average results for this experiment setting
                 experiment_key = (n_families, n_samples, supervised)
                 average_results[experiment_key] = average_errors
+                average_rs_results[experiment_key] = average_rs
 
                 # Write the average results to a file
                 with open('results/average_results.txt', 'a') as f:
@@ -894,5 +1677,6 @@ if __name__ == '__main__':
                     f.write("\n")
 
     # Save the results matrix to a file
-    np.save('results/total_results_matrix.npy', results_matrix)
+    np.save('results/total_results_matrix_009.npy', results_matrix)
+    np.save('results/rs_matrix_009.npy', rs_matrix)
     print("Experiment completed.")
