@@ -1,0 +1,2 @@
+commodity_desc,reference_period_desc,year,state_ansi,state_name,county_ansi,county_name,asd_code,asd_desc,domain_desc,source_desc,agg_level_desc,"PRODUCTION, MEASURED IN BU","YIELD, MEASURED IN BU / ACRE"
+SOYBEANS,YEAR,2022,10,DELAWARE,003,NEW CASTLE,20,NORTHERN,TOTAL,SURVEY,COUNTY,782000.0,36.9
