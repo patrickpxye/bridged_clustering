@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import random
 import warnings
+from sklearn.manifold import TSNE
+
 warnings.filterwarnings("ignore")
 
 # Set seeds for reproducibility
@@ -23,11 +25,24 @@ random.seed(42)
 #############################
 # Parameters
 #############################
-N_CLUSTERS = 3              # Latent T space (3: Abstract Exp, Realism, Cubism)
-SUPERVISED_VALUES = [0.01, 0.05, 0.1]  # Percent of labeled (image, year) pairs
-N_TRIALS = 5
+# TODO: ELLIE: 
+# CHANGE TO 3 CLUSTERS 
+# RUN WITH NEW BASELINES 
+N_CLUSTERS = 2              # Latent T space (3: Abstract Exp, Realism, Cubism)
+SUPERVISED_VALUES = [0.0015] #, 0.01, 0.05, 0.1]  # Percent of labeled (image, year) pairs
+N_TRIALS = 3
 IMAGE_SIZE = 224
 
+# TODO ELLIE: pick first 50 (or 150) paintings that fit the genre description 
+# beats knn on algorithm / mean teachers by a large margin -- ie a percentage on average 
+# if doesn't work; tweak supervised_values, number of clusters (both go down) 
+# if it doesn't work, manually make sure cluster selection is good (choose smallest and largest year) 
+# try artists as latent if gneres doesn't work 
+
+# TODO ELLIE: ASK FOR STYLE EXTRACTOR MODEL... PRODUCES ACCURATE CLASSIFICATION LOGITS 
+# IF ORIGINAL THING DOESN'T WORK: take the logits (ie the last layer of the embedding) as the embedding for the painting 
+# this INSTEAD of resnet-50 encoder 
+# YAYAYAYAY 
 #############################
 # Image Preprocessing
 #############################
@@ -96,14 +111,14 @@ def predict_years(x_clusters, mapping, centroids):
 # Baseline: KNN
 #############################
 def knn_baseline(train_X, train_y, test_X):
-    knn = KNeighborsRegressor(n_neighbors=3)
+    knn = KNeighborsRegressor(n_neighbors=1)
     knn.fit(train_X, train_y)
     return knn.predict(test_X)
 
 #############################
 # Experiment Loop
 #############################
-def run_experiment(df, image_folder, supervised_fraction):
+def run_experiment(df, image_folder, supervised_fraction, trial_num=0, supervised_value=0.01):
     df = df.sample(frac=1).reset_index(drop=True)
     image_features = encode_images(df, image_folder)
 
@@ -115,9 +130,22 @@ def run_experiment(df, image_folder, supervised_fraction):
     y_clusters, _ = cluster_years(df['year'][:len(image_features)], N_CLUSTERS)
 
     # Supervised set
-    n_total = len(image_features)
-    n_supervised = max(1, int(supervised_fraction * n_total))
-    supervised_indices = np.random.choice(n_total, n_supervised, replace=False)
+   # Uniform per movement supervised sampling
+    supervised_indices = []
+
+    for style in df['style'].unique():
+        style_indices = df.index[df['style'] == style].tolist()
+        n_supervised_style = max(1, int(supervised_fraction * len(style_indices)))
+        sampled = np.random.choice(style_indices, n_supervised_style, replace=False)
+        supervised_indices.extend(sampled)
+
+    supervised_indices = np.array(supervised_indices)
+
+    # ✨ Add sanity print
+    print(f"Sanity Check (Trial {trial_num+1}): Supervised samples per style:")
+    for style in df['style'].unique():
+        count = np.sum(df.iloc[supervised_indices]['style'] == style)
+        print(f"  {style}: {count} supervised points")
 
     mapping = learn_bridge(x_clusters, y_clusters, supervised_indices, N_CLUSTERS)
     centroids = compute_centroids(df['year'][:len(image_features)].values, y_clusters, N_CLUSTERS)
@@ -131,6 +159,37 @@ def run_experiment(df, image_folder, supervised_fraction):
     knn_preds = knn_baseline(X_train, y_train, X_test)
     knn_mae = mean_absolute_error(df['year'][:len(image_features)], knn_preds)
 
+    #############################################
+    # ✨ ADD VISUALIZATION BELOW ✨
+    #############################################
+    tsne = TSNE(n_components=2, random_state=42)
+    X_2d = tsne.fit_transform(image_features)
+
+    plt.figure(figsize=(16, 4))
+
+    # Plot 1: Color by true movement (style)
+    plt.subplot(1, 3, 1)
+    for style in df['style'].unique():
+        idx = (df['style'][:len(image_features)] == style).values
+        plt.scatter(X_2d[idx, 0], X_2d[idx, 1], label=style, alpha=0.7)
+    plt.title(f'Trial {trial_num+1} — Movement')
+    plt.legend()
+
+    # Plot 2: Color by year
+    plt.subplot(1, 3, 2)
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=df['year'][:len(image_features)], cmap='viridis', alpha=0.7)
+    plt.colorbar(label='Year')
+    plt.title(f'Trial {trial_num+1} — Year')
+
+    # Plot 3: Color by cluster assignment
+    plt.subplot(1, 3, 3)
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=x_clusters, cmap='tab10', alpha=0.7)
+    plt.title(f'Trial {trial_num+1} — X Clusters')
+
+    plt.suptitle(f'Supervised {supervised_value:.0%} — Trial {trial_num+1}', fontsize=16)
+    plt.tight_layout()
+    plt.show()
+
     return bridged_mae, knn_mae
 
 #############################
@@ -143,9 +202,13 @@ def run_all_trials(df, image_folder):
         print(f"Supervised fraction: {s}")
         for trial in range(N_TRIALS):
             print(f"Trial {trial + 1}...")
-            bkm_mae, knn_mae = run_experiment(df.copy(), image_folder, s)
+            bkm_mae, knn_mae = run_experiment(df.copy(), image_folder, s, trial_num=trial, supervised_value=s)
             results[s]['BKM'].append(bkm_mae)
             results[s]['KNN'].append(knn_mae)
+            bkm_mean = results[s]['BKM'][trial]
+            knn_mean = results[s]['KNN'][trial]
+            print(f"Supervised {s:.2%} — BKM MAE: {bkm_mean:.2f}, KNN MAE: {knn_mean:.2f}")
+
 
     return results
 
@@ -153,11 +216,11 @@ def run_all_trials(df, image_folder):
 # Main
 #############################
 if __name__ == '__main__':
-    metadata_csv = "wikiart_metadata.csv"
+    metadata_csv = "filtered_styles.csv"
     image_folder = "wikiart"
 
     df = pd.read_csv(metadata_csv)
-    df = df[df['style'].isin(['Cubism', 'Realism', 'Abstract Expressionism'])]
+    df = df[df['style'].isin(['Early_Renaissance', 'Naive_Art_Primitivism'])]
     df = df.dropna(subset=['year'])
     df['year'] = df['year'].astype(int)
 
