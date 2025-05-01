@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import mean_absolute_error
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.random_projection import GaussianRandomProjection
+from sklearn.metrics import normalized_mutual_info_score
 from torchvision import models, transforms
 import torch
 from tqdm import tqdm
@@ -30,9 +31,9 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = 3
+N_CLUSTERS      = 4
 SUP_FRACS       = [0.0205, 0.05, 0.1]
-OUT_FRAC        = 0.4    # fraction of "output-only" samples for Y-clustering
+OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 3
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
@@ -151,6 +152,19 @@ def stratified_split_masks(x_lab, sup_frac, out_frac):
 #############################
 # Clustering + Bridging
 #############################
+def purity_score(true_labels, cluster_labels):
+    # true_labels: array-like of length N (e.g. cuisine names)
+    # cluster_labels: array-like of length N
+    total = len(true_labels)
+    score = 0
+    for c in np.unique(cluster_labels):
+        mask = (cluster_labels == c)
+        if mask.sum() == 0: 
+            continue
+        most_common = Counter(true_labels[mask]).most_common(1)[0][1]
+        score += most_common
+    return score / total
+
 def cluster_features(X, n_clusters):
     return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(X)
 
@@ -199,6 +213,21 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     # cluster Y on sup+out
     y_lab = np.empty(len(Y_proj), int)
     y_lab[sup_mask|out_mask] = cluster_ingredients(Y_proj[sup_mask|out_mask], N_CLUSTERS)
+
+    true = df['cuisine_type'].values
+
+    # 1) Purity of X-clusters (on *all* samples)
+    x_p = purity_score(true, x_lab)
+    nmi_x = normalized_mutual_info_score(true, x_lab)
+
+    # 2) Purity of Y-clusters (only on sup+out)
+    mask = sup_mask | out_mask
+    true_y = true[mask]
+    y_p   = purity_score(true_y, y_lab[mask])
+    nmi_y = normalized_mutual_info_score(true_y, y_lab[mask])
+
+    print(f"  → X-cluster purity: {x_p:.3f},  NMI: {nmi_x:.3f}")
+    print(f"  → Y-cluster purity: {y_p:.3f},  NMI: {nmi_y:.3f}")
 
     # learn mapping
     mapping   = learn_bridge(x_lab, y_lab, sup_mask, N_CLUSTERS)
@@ -255,7 +284,7 @@ if __name__ == '__main__':
     df['recipe_id']    = pd.read_csv(ALL_LABELS_FILE,header=None).iloc[:,0]
     df['ingredient_vec'] = df['recipe_id'].apply(lambda r: make_multihot(r, recipes, ing2idx, D))
     df['cuisine_type']  = df['img_path'].str.split('/').str[0]
-    df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen'})].reset_index(drop=True)
+    df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen', 'apple_pie'})].reset_index(drop=True)
 
     model, tfm = get_image_encoder()
     summary = run_all_trials(df, model, tfm, recipes, ing2idx, D)
