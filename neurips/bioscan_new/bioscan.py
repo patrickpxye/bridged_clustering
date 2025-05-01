@@ -12,7 +12,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from torchvision.models.resnet import ResNet50_Weights
-from sklearn.metrics import normalized_mutual_info_score, mean_squared_error
+from sklearn.metrics import normalized_mutual_info_score, mean_squared_error, mean_absolute_error
 from scipy.stats import gaussian_kde
 from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
@@ -462,29 +462,32 @@ def mean_teacher_loss(student_preds, teacher_preds, labels, consistency_weight=0
     consistency_loss = nn.MSELoss()(student_preds, teacher_preds)
     return supervised_loss + consistency_weight * consistency_loss
 
-def train_mean_teacher(model, train_loader, unlabeled_loader, optimizer, device, alpha=0.99):
+# --- Mean Teacher (Tarvainen & Valpola 2017) ---------------------------  # 
+def train_mean_teacher(model, sup_loader, unlab_loader, optim, device,
+                       alpha=0.99, w_max=30., ramp_len=80):
     model.train()
-    for (x_l, y_l), (x_u, _) in zip(train_loader, unlabeled_loader):
-        # Convert to float and move to the correct device
-        x_l, y_l = x_l.float().to(device), y_l.float().to(device)
-        x_u = x_u.float().to(device)
+    step = 0
+    for (x_l,y_l),(x_u,_) in zip(sup_loader, unlab_loader):
+        step += 1
+        x_l,y_l = x_l.to(device), y_l.to(device)
+        x_u      = x_u.to(device)
 
-        # Forward pass (student)
-        student_preds = model(x_l)
+        # forward
+        s_l = model(x_l)                    # student labeled
+        t_l = model(x_l, use_teacher=True)  # teacher labeled (no-grad implicit)
+        s_u = model(x_u)
+        t_u = model(x_u, use_teacher=True)
 
-        # Forward pass (teacher) on labeled data
-        teacher_preds = model(x_l, use_teacher=True)
+        # losses
+        sup_loss = F.mse_loss(s_l, y_l)
+        cons_loss = F.mse_loss(s_u, t_u)
 
-        # Supervised loss + Consistency loss
-        loss = mean_teacher_loss(student_preds, teacher_preds, y_l)
+        # ramp-up as in original paper
+        w = w_max * np.exp(-5*(1 - min(1., step/ramp_len))**2)
+        loss = sup_loss + w*cons_loss
 
-        # Backward and optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        # Update teacher weights using EMA
-        model._update_teacher_weights(alpha=alpha)
+        optim.zero_grad(); loss.backward(); optim.step()
+        model._update_teacher_weights(alpha)
 
 def evaluate_mean_teacher(model, test_loader, device):
     model.eval()
@@ -548,46 +551,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from xgboost import XGBRegressor
 import numpy as np
 
-# def xgboost_regression(supervised_df, inference_df, **xgb_params):
-#     """
-#     Train a multi-output XGBoost regressor on the supervised split 
-#     and evaluate on the inference split.
-
-#     Returns:
-#         preds: ndarray of shape (n_inference, output_dim)
-#         actuals: ndarray of shape (n_inference, output_dim)
-#     """
-#     # 1) Prepare data
-#     X_train = np.vstack(supervised_df['morph_coordinates'])
-#     y_train = np.vstack(supervised_df['gene_coordinates'])
-#     X_test  = np.vstack(inference_df['morph_coordinates'])
-#     y_test  = np.vstack(inference_df['gene_coordinates'])
-
-#     # 2) Default hyperparameters (including regularization from :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3})
-#     defaults = {
-#         'n_estimators':        300,
-#         'learning_rate':       0.05,
-#         'max_depth':           6,
-#         'subsample':           0.8,
-#         'colsample_bytree':    0.8,
-#         'objective':          'reg:squarederror',
-#         # 'gamma':               0.0,    # min loss reduction to make a split (Eq 7) 
-#         # 'reg_lambda':          1.0,    # L2 regularization term on leaf weights (Eq 2)
-#         'verbosity':           0,
-#         'n_jobs':             -1,
-#         'random_state':       42,      # ensure reproducible trees
-#     }
-#     # 3) Merge overrides
-#     params = {**defaults, **xgb_params}
-
-#     # 4) Train with a one-model-per-output wrapper
-#     model = MultiOutputRegressor(XGBRegressor(**params))
-#     model.fit(X_train, y_train)
-
-#     # 5) Predict
-#     preds = model.predict(X_test)
-#     return preds, y_test
-
+# Paper: XGBoost – A Scalable Tree-Boosting System :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3}
 def xgboost_regression(sup_df, inf_df,
                        **xgb_params):               # e.g. n_estimators=200, max_depth=6
     if not xgb_params:                              # sensible defaults
@@ -617,6 +581,7 @@ def xgboost_regression(sup_df, inf_df,
 import numpy as np
 from sklearn.metrics import pairwise_distances
 
+# Laplacian-RLS (linear kernel variant) :contentReference[oaicite:4]{index=4}&#8203;:contentReference[oaicite:5]{index=5}
 def laprls_closed_form(Xs, ys, Xu, lam=1e-2, gamma=1.0, k=10, sigma=None):
     """
     Laplacian-Regularized Least Squares (linear model)
@@ -697,82 +662,232 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import itertools
 
-class TwinDataset(Dataset):
-    """Dataset of all (i,j) pairs from X, y -> targets y_i - y_j."""
+# --- Supervised pairwise differences ---------------------------
+class PairwiseDataset(Dataset):
+    """
+    Supervised dataset of all (i, j) pairs from (X, y),
+    with targets y_i - y_j.
+    """
     def __init__(self, X, y):
         self.X = torch.tensor(X, dtype=torch.float32)
         self.y = torch.tensor(y, dtype=torch.float32)
         self.pairs = list(itertools.combinations(range(len(X)), 2))
-    
+
     def __len__(self):
         return len(self.pairs)
-    
+
     def __getitem__(self, idx):
         i, j = self.pairs[idx]
         xi, xj = self.X[i], self.X[j]
         dy = self.y[i] - self.y[j]
         return xi, xj, dy
 
+# --- Unsupervised loop‐consistency triples ----------------------
+class LoopConsistencyDataset(Dataset):
+    """
+    Unlabeled dataset of random triples (i, j, k) from X,
+    for enforcing f(x_i,x_j) + f(x_j,x_k) + f(x_k,x_i) ≈ 0.
+    """
+    def __init__(self, X, n_loops=5):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        n = len(X)
+        # generate n_loops * n random triples
+        self.triples = [
+            tuple(np.random.choice(n, 3, replace=False))
+            for _ in range(n_loops * n)
+        ]
+
+    def __len__(self):
+        return len(self.triples)
+
+    def __getitem__(self, idx):
+        i, j, k = self.triples[idx]
+        return self.X[i], self.X[j], self.X[k]
+
+# --- Twin-Neural-Network Regression Model -----------------------
 class TwinRegressor(nn.Module):
+    """
+    Shared encoder h, difference head g:
+      f(x1, x2) = g(h(x1) - h(x2))
+    """
     def __init__(self, in_dim, rep_dim=64, out_dim=1):
         super().__init__()
-        # shared representation
         self.h = nn.Sequential(
-            nn.Linear(in_dim, 128), nn.ReLU(),
-            nn.Linear(128, rep_dim), nn.ReLU()
+            nn.Linear(in_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, rep_dim),
+            nn.ReLU()
         )
-        # difference head
         self.g = nn.Linear(rep_dim, out_dim)
-    
-    def forward(self, x1, x2):
-        h1, h2 = self.h(x1), self.h(x2)
-        return self.g(h1 - h2)  # predict y1 - y2
 
-def tnnr_regression(supervised_df, inference_df,
-                    rep_dim=64, lr=1e-3, epochs=200, batch_size=256,
-                    device=None):
-    # 1) Prepare data
-    Xs = np.vstack(supervised_df['morph_coordinates'])
-    ys = np.vstack(supervised_df['gene_coordinates'])
-    Xte = np.vstack(inference_df['morph_coordinates'])
-    yte = np.vstack(inference_df['gene_coordinates'])
-    
+    def forward(self, x1, x2):
+        h1 = self.h(x1)
+        h2 = self.h(x2)
+        return self.g(h1 - h2)
+
+# --- Revised tnnr_regression ------------------------------------
+def tnnr_regression(
+    sup_df,
+    inf_df,
+    rep_dim=64,
+    beta=0.1,           # loop-consistency weight
+    lr=1e-3,
+    epochs=200,
+    batch_size=256,
+    n_loops=2,
+    device=None
+):
+    """
+    Twin-NN regression with loop consistency (Sec. 3.2, TNNR paper).
+    Trains on supervised pairwise differences + unlabeled loops.
+    """
+    # Prepare data arrays
+    Xs = np.vstack(sup_df['morph_coordinates'])
+    ys = np.vstack(sup_df['gene_coordinates'])
+    Xu = np.vstack(inf_df['morph_coordinates'])
+    y_inf = np.vstack(inf_df['gene_coordinates'])
+
     device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    ds = TwinDataset(Xs, ys)
-    loader = DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
-    
-    # 2) Build model
-    in_dim = Xs.shape[1]
+
+    # Datasets and loaders
+    pair_ds = PairwiseDataset(Xs, ys)
+    loop_ds = LoopConsistencyDataset(Xu, n_loops=n_loops)
+    pair_loader = DataLoader(pair_ds, batch_size=batch_size, shuffle=True, drop_last=True)
+    loop_loader = DataLoader(loop_ds, batch_size=batch_size, shuffle=True, drop_last=True)
+
+    # Model, optimizer, loss
+    in_dim  = Xs.shape[1]
     out_dim = ys.shape[1]
     model = TwinRegressor(in_dim, rep_dim, out_dim).to(device)
-    opt = torch.optim.Adam(model.parameters(), lr=lr)
-    
-    # 3) Train on pairwise differences
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    mse = nn.MSELoss()
+
+    # Training loop
     for epoch in range(epochs):
-        total_loss = 0.0
-        for x1, x2, dy in loader:
+        for (x1, x2, dy), (xu1, xu2, xu3) in zip(pair_loader, loop_loader):
             x1, x2, dy = x1.to(device), x2.to(device), dy.to(device)
-            pred = model(x1, x2)
-            loss = F.mse_loss(pred, dy)
-            opt.zero_grad(); loss.backward(); opt.step()
-            total_loss += loss.item() * x1.size(0)
-        # print(f"Epoch {epoch+1}/{epochs}, loss={total_loss/len(ds):.4f}")
-    
-    # 4) Inference by ensembling differences to all anchors
+            xu1, xu2, xu3 = xu1.to(device), xu2.to(device), xu3.to(device)
+
+            # Supervised pairwise loss
+            pred_sup = model(x1, x2)
+            loss_sup = mse(pred_sup, dy)
+
+            # Loop‐consistency loss
+            lo_ij = model(xu1, xu2)
+            lo_jk = model(xu2, xu3)
+            lo_ki = model(xu3, xu1)
+            loss_loop = mse(lo_ij + lo_jk + lo_ki, torch.zeros_like(lo_ij))
+
+            # Combine and optimize
+            loss = loss_sup + beta * loss_loop
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+    # Inference: ensemble differences to all supervised anchors
     model.eval()
     Xs_t = torch.tensor(Xs, dtype=torch.float32, device=device)
     ys_t = torch.tensor(ys, dtype=torch.float32, device=device)
-    Xq_t = torch.tensor(Xte, dtype=torch.float32, device=device)
+    Xq_t = torch.tensor(Xu, dtype=torch.float32, device=device)
+
     preds = []
     with torch.no_grad():
         for xq in Xq_t:
-            # shape: (m, out_dim)
-            diffs = model(xq.unsqueeze(0).repeat(len(Xs_t),1), Xs_t)
-            estimates = ys_t + diffs
-            mean_est = estimates.mean(dim=0)
-            preds.append(mean_est.cpu().numpy())
-    preds = np.vstack(preds)
-    return preds, yte
+            diffs = model(
+                xq.unsqueeze(0).repeat(len(Xs_t), 1),
+                Xs_t
+            )                             # shape (n_sup, out_dim)
+            estimates = ys_t + diffs       # shape (n_sup, out_dim)
+            preds.append(estimates.mean(dim=0).cpu().numpy())
+
+    return np.vstack(preds), y_inf
+
+
+# import torch
+# import torch.nn as nn
+# import torch.nn.functional as F
+# from torch.utils.data import Dataset, DataLoader
+# import numpy as np
+# import itertools
+
+# class TwinDataset(Dataset):
+#     """Dataset of all (i,j) pairs from X, y -> targets y_i - y_j."""
+#     def __init__(self, X, y):
+#         self.X = torch.tensor(X, dtype=torch.float32)
+#         self.y = torch.tensor(y, dtype=torch.float32)
+#         self.pairs = list(itertools.combinations(range(len(X)), 2))
+    
+#     def __len__(self):
+#         return len(self.pairs)
+    
+#     def __getitem__(self, idx):
+#         i, j = self.pairs[idx]
+#         xi, xj = self.X[i], self.X[j]
+#         dy = self.y[i] - self.y[j]
+#         return xi, xj, dy
+
+
+# class TwinRegressor(nn.Module):
+#     def __init__(self, in_dim, rep_dim=64, out_dim=1):
+#         super().__init__()
+#         # shared representation
+#         self.h = nn.Sequential(
+#             nn.Linear(in_dim, 128), nn.ReLU(),
+#             nn.Linear(128, rep_dim), nn.ReLU()
+#         )
+#         # difference head
+#         self.g = nn.Linear(rep_dim, out_dim)
+    
+#     def forward(self, x1, x2):
+#         h1, h2 = self.h(x1), self.h(x2)
+#         return self.g(h1 - h2)  # predict y1 - y2
+
+# def tnnr_regression(supervised_df, inference_df,
+#                     rep_dim=64, lr=1e-3, epochs=200, batch_size=256,
+#                     device=None):
+#     # 1) Prepare data
+#     Xs = np.vstack(supervised_df['morph_coordinates'])
+#     ys = np.vstack(supervised_df['gene_coordinates'])
+#     Xte = np.vstack(inference_df['morph_coordinates'])
+#     yte = np.vstack(inference_df['gene_coordinates'])
+    
+#     device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#     ds = TwinDataset(Xs, ys)
+#     loader = DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
+    
+#     # 2) Build model
+#     in_dim = Xs.shape[1]
+#     out_dim = ys.shape[1]
+#     model = TwinRegressor(in_dim, rep_dim, out_dim).to(device)
+#     opt = torch.optim.Adam(model.parameters(), lr=lr)
+    
+#     # 3) Train on pairwise differences
+#     for epoch in range(epochs):
+#         total_loss = 0.0
+#         for x1, x2, dy in loader:
+#             x1, x2, dy = x1.to(device), x2.to(device), dy.to(device)
+#             pred = model(x1, x2)
+#             loss = F.mse_loss(pred, dy)
+#             opt.zero_grad(); loss.backward(); opt.step()
+#             total_loss += loss.item() * x1.size(0)
+#         # print(f"Epoch {epoch+1}/{epochs}, loss={total_loss/len(ds):.4f}")
+    
+#     # 4) Inference by ensembling differences to all anchors
+#     model.eval()
+#     Xs_t = torch.tensor(Xs, dtype=torch.float32, device=device)
+#     ys_t = torch.tensor(ys, dtype=torch.float32, device=device)
+#     Xq_t = torch.tensor(Xte, dtype=torch.float32, device=device)
+#     preds = []
+#     with torch.no_grad():
+#         for xq in Xq_t:
+#             # shape: (m, out_dim)
+#             diffs = model(xq.unsqueeze(0).repeat(len(Xs_t),1), Xs_t)
+#             estimates = ys_t + diffs
+#             mean_est = estimates.mean(dim=0)
+#             preds.append(mean_est.cpu().numpy())
+#     preds = np.vstack(preds)
+#     return preds, yte
+
 
 
 ##############################################
@@ -967,515 +1082,289 @@ def ucvme_regression(
 
 
 ##############################################
-#  Model I: RankUp-simplified                #
+#  Model I: RankUp               #
 ##############################################
 
-def _simple_mlp(in_dim, out_dim):
-    return nn.Sequential(nn.Linear(in_dim,256), nn.ReLU(),
-                         nn.Linear(256,128), nn.ReLU(),
-                         nn.Linear(128,out_dim))
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
 
-def _pairwise_rank_loss(pred, y):
-    # hinge on pairwise orderings
-    dif_pred = pred[:,None]-pred[None,:]
-    dif_true = y[:,None]-y[None,:]
-    sign_true = np.sign(dif_true)
-    margin = 0.1
-    loss = np.maximum(0, margin - sign_true*dif_pred)
-    return loss.mean()
+class RankUpNet(nn.Module):
+    """
+    Fully-faithful RankUp network:
+      - shared backbone f(x; θ)
+      - regression head h(f) → y
+      - Auxiliary Ranking Classifier (ARC) g(f) → {0,1}
+    """
+    def __init__(self, in_dim, hidden_dim, out_dim):
+        super().__init__()
+        # backbone
+        self.backbone = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU()
+        )
+        # regression head
+        self.reg_head = nn.Linear(hidden_dim, out_dim)
+        # ARC head
+        self.arc_head = nn.Linear(hidden_dim, 2)
 
-def rankup_regression(sup_df, inf_df, lr=1e-3, epochs=200, alpha=0.3):
+    def forward(self, x):
+        feat = self.backbone(x)
+        y_pred = self.reg_head(feat)
+        arc_logits = self.arc_head(feat)
+        return feat, y_pred, arc_logits
+
+
+def rankup_regression(
+    sup_df,
+    inf_df,
+    hidden_dim=256,
+    lr=1e-3,
+    epochs=200,
+    batch_size=64,
+    alpha_arc=1.0,
+    alpha_arc_ulb=1.0,
+    alpha_rda=0.1,
+    T=0.5,
+    tau=0.95,
+    ema_m=0.999,
+    device=None
+):
+    """
+    Faithful implementation of RankUp (Huang et al. 2024) with:
+      - ARC supervised + unsupervised FixMatch-style loss
+      - Regression Distribution Alignment (RDA) on unlabeled
+      - EMA teacher model for inference
+
+    Args:
+      sup_df: DataFrame with 'morph_coordinates', 'gene_coordinates'
+      inf_df: DataFrame with 'morph_coordinates', 'gene_coordinates'
+    Returns:
+      preds_unl (ndarray): predictions for inf_df
+      true_unl  (ndarray): ground-truth gene coords for inf_df
+    """
+    device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
+    # prepare tensors
     Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32)
-    ys = torch.tensor(np.vstack(sup_df['gene_coordinates']), dtype=torch.float32)
-    Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']), dtype=torch.float32)
+    ys = torch.tensor(np.vstack(sup_df['gene_coordinates']),    dtype=torch.float32)
+    Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']),   dtype=torch.float32)
     yu = np.vstack(inf_df['gene_coordinates'])
 
-    net = _simple_mlp(Xs.size(1), ys.size(1))
-    opt = torch.optim.Adam(net.parameters(), lr=lr)
-    for _ in range(epochs):
-        idx = torch.randperm(Xs.size(0))[:32]
-        xb, yb = Xs[idx], ys[idx]
-        pred_b = net(xb)
-        # basic MSE
-        loss = F.mse_loss(pred_b, yb)
-        # auxiliary ranking on the batch
-        rank_loss = torch.tensor(_pairwise_rank_loss(pred_b.detach().numpy(),
-                                                     yb.detach().numpy()),
-                                 dtype=torch.float32)
-        loss = loss + alpha*rank_loss
-        opt.zero_grad(); loss.backward(); opt.step()
+    in_dim  = Xs.size(1)
+    out_dim = ys.size(1)
 
+    # DataLoaders
+    sup_loader = DataLoader(TensorDataset(Xs, ys), batch_size=batch_size, shuffle=True, drop_last=True)
+    unl_loader = DataLoader(TensorDataset(Xu), batch_size=batch_size, shuffle=True, drop_last=True)
+
+    # model + EMA
+    model = RankUpNet(in_dim, hidden_dim, out_dim).to(device)
+    ema_model = RankUpNet(in_dim, hidden_dim, out_dim).to(device)
+    ema_model.load_state_dict(model.state_dict())
+    for p in ema_model.parameters(): p.requires_grad_(False)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    # training loop
+    for epoch in range(epochs):
+        sup_iter = iter(sup_loader)
+        unl_iter = iter(unl_loader)
+        for _ in range(min(len(sup_loader), len(unl_loader))):
+            xb, yb = next(sup_iter)
+            (xu_w,) = next(unl_iter)
+            # augment: weak (identity) and strong (gaussian noise)
+            xu_s = xu_w + torch.randn_like(xu_w) * 0.1
+
+            xb, yb, xu_w, xu_s = xb.to(device), yb.to(device), xu_w.to(device), xu_s.to(device)
+
+            # forward sup
+            feat_b, pred_b, logit_arc_b = model(xb)
+            # compute pairwise ARC targets: torch.sign(y_i - y_j)
+            with torch.no_grad():
+                y_diff = yb.unsqueeze(0) - yb.unsqueeze(1)
+                arc_targets_sup = ((y_diff > 0).long().view(-1)).to(device)
+
+            # sup losses
+            loss_reg = F.mse_loss(pred_b, yb)
+            # sup ARC logits matrix
+            logits_mat_b = (logit_arc_b.unsqueeze(0) - logit_arc_b.unsqueeze(1)).view(-1, 2)
+            loss_arc_sup = F.cross_entropy(logits_mat_b, arc_targets_sup)
+
+            # forward unlabeled weak
+            _, _, logit_arc_u_w = model(xu_w)
+            probs = F.softmax(logit_arc_u_w / T, dim=1)
+            maxp, pseudo = probs.max(dim=1)
+            mask = (maxp >= tau).float()
+
+            # forward unlabeled strong
+            _, _, logit_arc_u_s = model(xu_s)
+            loss_arc_unsup = (F.cross_entropy(logit_arc_u_s, pseudo, reduction='none') * mask).mean()
+
+            # RDA on regression outputs (mean & std alignment)
+            _, pred_u_w, _ = model(xu_w)
+            mu_sup = pred_b.detach().mean(0)
+            sigma_sup = pred_b.detach().std(0)
+            mu_unl = pred_u_w.mean(0)
+            sigma_unl = pred_u_w.std(0)
+            loss_rda = ((mu_unl - mu_sup)**2).sum() + ((sigma_unl - sigma_sup)**2).sum()
+
+            # total loss: Eq.6 of RankUp paper
+            loss = (loss_reg + alpha_arc * loss_arc_sup
+                    + alpha_arc_ulb * loss_arc_unsup
+                    + alpha_rda * loss_rda)
+
+            optimizer.zero_grad(); loss.backward(); optimizer.step()
+
+            # EMA update
+            with torch.no_grad():
+                for ema_p, p in zip(ema_model.parameters(), model.parameters()):
+                    ema_p.data.mul_(ema_m).add_(p.data, alpha=1-ema_m)
+
+    # inference with EMA model
+    ema_model.eval()
     with torch.no_grad():
-        preds = net(Xu).numpy()
-    return preds, yu
+        _, preds_unl, _ = ema_model(Xu.to(device))
+    return preds_unl.cpu().numpy(), yu
 
 
-##################################################
-# Model J: AGDN - one-hop GAT
-##################################################
+# def _simple_mlp(in_dim, out_dim):
+#     return nn.Sequential(nn.Linear(in_dim,256), nn.ReLU(),
+#                          nn.Linear(256,128), nn.ReLU(),
+#                          nn.Linear(128,out_dim))
 
-# agdn.py
+# def _pairwise_rank_loss(pred, y):
+#     # hinge on pairwise orderings
+#     dif_pred = pred[:,None]-pred[None,:]
+#     dif_true = y[:,None]-y[None,:]
+#     sign_true = np.sign(dif_true)
+#     margin = 0.1
+#     loss = np.maximum(0, margin - sign_true*dif_pred)
+#     return loss.mean()
 
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-# from torch_geometric.nn import MessagePassing
-# from torch_geometric.utils import softmax
 
-# class HopWiseAGDNConv(MessagePassing):
-#     """
-#     Single-layer multi-hop AGDN convolution with Hop-wise Attention (HA).
-#     Implements K-hop diffusion in one pass.
-#     """
-#     def __init__(self,
-#                  in_channels: int,
-#                  out_channels: int,
-#                  heads: int = 1,
-#                  K: int = 3,
-#                  negative_slope: float = 0.2,
-#                  dropout: float = 0.0,
-#                  residual: bool = True,
-#                  **kwargs):
-#         super().__init__(aggr='add', node_dim=0)
-#         self.in_channels = in_channels
-#         self.out_channels = out_channels
-#         self.heads = heads
-#         self.K = K
-#         self.negative_slope = negative_slope
-#         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
-#         self.residual = residual
+# def rankup_regression(sup_df, inf_df, lr=1e-3, epochs=200, alpha=0.3):
+#     Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32)
+#     ys = torch.tensor(np.vstack(sup_df['gene_coordinates']), dtype=torch.float32)
+#     Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']), dtype=torch.float32)
+#     yu = np.vstack(inf_df['gene_coordinates'])
 
-#         # 0-hop linear projection
-#         self.linear = nn.Linear(in_channels, heads * out_channels, bias=False)
-#         # hop-wise attention vector: [1, heads, 2*out_channels]
-#         self.hop_att = nn.Parameter(torch.Tensor(1, heads, 2 * out_channels))
+#     net = _simple_mlp(Xs.size(1), ys.size(1))
+#     opt = torch.optim.Adam(net.parameters(), lr=lr)
+#     for _ in range(epochs):
+#         idx = torch.randperm(Xs.size(0))[:32]
+#         xb, yb = Xs[idx], ys[idx]
+#         pred_b = net(xb)
+#         # basic MSE
+#         loss = F.mse_loss(pred_b, yb)
+#         # auxiliary ranking on the batch
+#         rank_loss = torch.tensor(_pairwise_rank_loss(pred_b.detach().numpy(),
+#                                                      yb.detach().numpy()),
+#                                  dtype=torch.float32)
+#         loss = loss + alpha*rank_loss
+#         opt.zero_grad(); loss.backward(); opt.step()
 
-#         # optional residual projection
-#         if residual and in_channels != heads * out_channels:
-#             self.res_fc = nn.Linear(in_channels, heads * out_channels, bias=False)
-#         else:
-#             self.res_fc = None
-
-#         # bias term
-#         self.bias = nn.Parameter(torch.Tensor(heads * out_channels))
-#         self.reset_parameters()
-
-#     def reset_parameters(self):
-#         nn.init.xavier_uniform_(self.linear.weight)
-#         nn.init.xavier_uniform_(self.hop_att)
-#         if self.res_fc is not None:
-#             nn.init.xavier_uniform_(self.res_fc.weight)
-#         nn.init.zeros_(self.bias)
-
-#     def forward(self, x: torch.Tensor, edge_index: torch.LongTensor) -> torch.Tensor:
-#         # x: [N, in_channels]
-#         N = x.size(0)
-#         # 1) compute 0-hop features
-#         h0 = self.linear(x).view(N, self.heads, self.out_channels)  # [N, heads, out_ch]
-
-#         # 2) recursively get hops 1..K
-#         h_list = [h0]
-#         for _ in range(self.K):
-#             h_prev = h_list[-1]
-#             h_k = self.propagate(edge_index, x=h_prev)  # [N, heads, out_ch]
-#             h_list.append(h_k)
-
-#         # 3) stack into [N, heads, K+1, out_ch]
-#         h_stack = torch.stack(h_list, dim=2)
-
-#         # 4) compute hop-wise attention
-#         h0_exp = h0.unsqueeze(2).expand(-1, -1, self.K+1, -1)
-#         cat = torch.cat([h0_exp, h_stack], dim=-1)            # [N, heads, K+1, 2*out_ch]
-#         scores = (cat * self.hop_att).sum(dim=-1)              # [N, heads, K+1]
-#         scores = F.leaky_relu(scores, self.negative_slope)
-#         attn = F.softmax(scores, dim=2)[..., None]            # [N, heads, K+1, 1]
-#         attn = self.dropout(attn)
-
-#         # 5) weighted sum over hops
-#         h_out = (h_stack * attn).sum(dim=2)                    # [N, heads, out_ch]
-
-#         # 6) flatten heads
-#         h_out = h_out.view(N, self.heads * self.out_channels)
-
-#         # 7) residual
-#         if self.residual:
-#             if self.res_fc is not None:
-#                 res = self.res_fc(x)
-#             else:
-#                 res = h0.view(N, self.heads * self.out_channels)
-#             h_out = h_out + res
-
-#         # 8) add bias
-#         return h_out + self.bias
-
-#     def message(self, x_j: torch.Tensor, index: torch.Tensor) -> torch.Tensor:
-#         # simple sum aggregation of neighbor embeddings
-#         return x_j
-
-#     def update(self, aggr_out: torch.Tensor) -> torch.Tensor:
-#         return aggr_out
-# class AGDN(nn.Module):
-#     """
-#     Stacks multiple HopWiseAGDNConv layers.
-#     """
-#     def __init__(self,
-#                  in_channels: int,
-#                  hidden_channels: int,
-#                  out_channels: int,
-#                  num_layers: int = 2,
-#                  heads: int = 1,
-#                  K: int = 3,
-#                  dropout: float = 0.0):
-#         super().__init__()
-#         self.convs = nn.ModuleList()
-
-#         # first layer
-#         self.convs.append(
-#             HopWiseAGDNConv(in_channels, hidden_channels,
-#                              heads=heads, K=K, dropout=dropout)
-#         )
-#         # middle layers
-#         for _ in range(num_layers - 2):
-#             self.convs.append(
-#                 HopWiseAGDNConv(hidden_channels * heads,
-#                                  hidden_channels,
-#                                  heads=heads, K=K, dropout=dropout)
-#             )
-#         # last layer (single head, optionally still with multi-hop)
-#         self.convs.append(
-#             HopWiseAGDNConv(hidden_channels * heads,
-#                              out_channels,
-#                              heads=1, K=K, dropout=dropout)
-#         )
-
-#         self.dropout = dropout
-
-#     def forward(self, x: torch.Tensor, edge_index: torch.LongTensor) -> torch.Tensor:
-#         for i, conv in enumerate(self.convs):
-#             x = conv(x, edge_index)
-#             if i < len(self.convs) - 1:
-#                 x = F.elu(x)
-#                 x = F.dropout(x, p=self.dropout, training=self.training)
-#         return x
-
-# def agdn_regression(supervised_df, inference_df, morph_col='morph_coordinates', gene_col='gene_coordinates',
-#                     hidden=64, num_layers=2, heads=1, dropout=0.1,
-#                     epochs=1000, lr=1e-3):
-#     """
-#     Train an AGDN to map morphological embeddings -> gene embeddings,
-#     using 'supervised_df' as labeled data, then predict gene embeddings
-#     for 'inference_df'. Return the per-sample Euclidean distance.
-    
-#     :param supervised_df: DataFrame with columns [morph_col, gene_col]
-#     :param inference_df:  DataFrame with columns [morph_col, gene_col]
-#     :param morph_col:     Name of the morphological embedding column in the DataFrame
-#     :param gene_col:      Name of the gene embedding column in the DataFrame
-#     :param hidden:        Hidden dimension
-#     :param num_layers:    Number of AGDN layers
-#     :param heads:         Number of heads
-#     :param dropout:       Dropout rate
-#     :param epochs:        Training epochs
-#     :param lr:            Learning rate
-#     :return: Numpy array of distances for each row in inference_df
-#     """
-
-#     # 1) Extract morphological & gene embeddings as arrays
-#     sup_morph = np.stack(supervised_df[morph_col].values, axis=0)
-#     sup_gene  = np.stack(supervised_df[gene_col].values, axis=0)
-#     inf_morph = np.stack(inference_df[morph_col].values, axis=0)
-#     inf_gene  = np.stack(inference_df[gene_col].values, axis=0)
-
-#     sup_morph_t = torch.FloatTensor(sup_morph)
-#     sup_gene_t  = torch.FloatTensor(sup_gene)
-#     inf_morph_t = torch.FloatTensor(inf_morph)
-#     inf_gene_t  = torch.FloatTensor(inf_gene)
-
-#     N_sup = sup_morph.shape[0]
-#     N_inf = inf_morph.shape[0]
-
-#     # 2) Build adjacency for supervised portion
-#     #    For demonstration, we do a full mesh among supervised nodes
-#     srcs, dsts = [], []
-#     for i in range(N_sup):
-#         for j in range(N_sup):
-#             if i != j:
-#                 srcs.append(i)
-#                 dsts.append(j)
-#     edge_index_sup = torch.tensor([srcs, dsts], dtype=torch.long)
-
-#     data_sup = Data(x=sup_morph_t, edge_index=edge_index_sup)
-
-#     # 3) Build the AGDN
-#     in_channels  = sup_morph.shape[1]
-#     out_channels = sup_gene.shape[1]
-#     model = AGDN(in_channels, hidden, out_channels, num_layers=num_layers, heads=heads, dropout=dropout)
-
-#     # 4) Loss & optimizer
-#     criterion = nn.MSELoss()
-#     optimizer = Adam(model.parameters(), lr=lr)
-
-#     # 5) Train on supervised
-#     model.train()
-#     for epoch in range(epochs):
-#         optimizer.zero_grad()
-#         out = model(data_sup.x, data_sup.edge_index)   # [N_sup, out_channels]
-#         loss = criterion(out, sup_gene_t)
-#         loss.backward()
-#         optimizer.step()
-
-#     # 6) Build a combined graph that includes inference nodes,
-#     #    so that we can propagate morphological info from sup->inf
-#     #    We'll label the new nodes from [N_sup..N_sup+N_inf-1]
-#     srcs_inf, dsts_inf = [], []
-#     for i in range(N_inf):
-#         inf_node_id = N_sup + i
-#         # Connect to all supervised nodes (bidirectional):
-#         for j in range(N_sup):
-#             srcs_inf.append(inf_node_id)
-#             dsts_inf.append(j)
-#             srcs_inf.append(j)
-#             dsts_inf.append(inf_node_id)
-#     edge_index_inf = torch.tensor([srcs_inf, dsts_inf], dtype=torch.long)
-
-#     big_x = torch.cat([sup_morph_t, inf_morph_t], dim=0)
-#     big_edge = torch.cat([edge_index_sup, edge_index_inf], dim=1)
-#     data_inf = Data(x=big_x, edge_index=big_edge)
-
-#     # 7) Infer for the last portion
-#     model.eval()
 #     with torch.no_grad():
-#         big_out = model(data_inf.x, data_inf.edge_index) # shape [N_sup+N_inf, out_channels]
-#     inf_pred = big_out[N_sup:, :]  # shape [N_inf, out_channels]
+#         preds = net(Xu).numpy()
+#     return preds, yu
 
-#     return inf_pred.numpy(), inf_gene_t.numpy()
 
-class AGDNConv(MessagePassing):
-    """
-    A simplified AGDN-like convolution layer, in PyTorch Geometric style.
-    """
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        heads=1,
-        negative_slope=0.2,
-        dropout=0.0,
-        residual=True,
-        **kwargs
-    ):
-        super().__init__(aggr='add', node_dim=0)  # Force node_dim=0
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.heads = heads
-        self.negative_slope = negative_slope
-        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
-        self.residual = residual
+##################################################
+# Model J: AGDN
+##################################################
 
-        # Linear transformation for inputs
-        self.linear = nn.Linear(in_channels, heads * out_channels, bias=False)
 
-        # Attention parameters
-        self.att_l = nn.Parameter(torch.Tensor(1, heads, out_channels))
-        self.att_r = nn.Parameter(torch.Tensor(1, heads, out_channels))
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric.nn import MessagePassing
+from torch_geometric.utils import add_self_loops, degree
 
-        # Residual connection
-        if residual and in_channels != heads * out_channels:
-            self.res_fc = nn.Linear(in_channels, heads * out_channels, bias=False)
-        else:
-            self.res_fc = None
-
-        # Bias
-        self.bias = nn.Parameter(torch.Tensor(heads * out_channels))
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        nn.init.xavier_uniform_(self.linear.weight, gain=1.0)
-        nn.init.xavier_uniform_(self.att_l, gain=1.0)
-        nn.init.xavier_uniform_(self.att_r, gain=1.0)
-        if self.res_fc is not None:
-            nn.init.xavier_uniform_(self.res_fc.weight, gain=1.0)
-        nn.init.zeros_(self.bias)
+class ADCConv(MessagePassing):
+    def __init__(self, in_channels, out_channels, K=5):
+        super().__init__(aggr='add')
+        self.K = K
+        self.log_t = nn.Parameter(torch.log(torch.tensor(1.0)))
+        self.lin = nn.Linear(in_channels, out_channels)
 
     def forward(self, x, edge_index):
-        """
-        x: [N, in_channels]
-        edge_index: [2, E]
-        """
-        # Transform input
-        x_lin = self.linear(x).view(-1, self.heads, self.out_channels)
+        edge_index, norm = self._normalize(edge_index, x.size(0))
+        h = x
+        t = torch.exp(self.log_t)
+        out = torch.exp(-t) * h
+        scale = torch.exp(-t)
+        for k in range(1, self.K + 1):
+            h = self.propagate(edge_index, x=h, norm=norm)
+            scale = scale * t / k
+            out = out + scale.view(-1, *([1] * (h.dim() - 1))) * h
+        return self.lin(out)
 
-        # Residual part (optional)
-        if self.res_fc is not None:
-            x_res = self.res_fc(x).view(-1, self.heads, self.out_channels)
-        else:
-            x_res = x_lin if self.residual else None
+    def message(self, x_j, norm):
+        return norm.view(-1, 1) * x_j
 
-        # Compute alpha_l and alpha_r per node
-        alpha_l = (x_lin * self.att_l).sum(dim=-1, keepdim=True)  # shape: [N, heads, 1]
-        alpha_r = (x_lin * self.att_r).sum(dim=-1, keepdim=True)  # shape: [N, heads, 1]
-
-        # Propagate messages; the target indices are passed as "index" to the message function.
-        out = self.propagate(edge_index, x=x_lin, alpha_l=alpha_l, alpha_r=alpha_r)
-
-        # Flatten heads
-        out = out.view(-1, self.heads * self.out_channels)
-
-        # Add residual if available
-        if self.residual and (x_res is not None):
-            out += x_res.view(-1, self.heads * self.out_channels)
-
-        # Add bias
-        out = out + self.bias
-        return out
-
-    def message(self, x_j, alpha_l_j, alpha_r_i, index):
-        """
-        x_j: Neighbor features [E, heads, out_channels]
-        alpha_l_j: Attention term from neighbor [E, heads, 1]
-        alpha_r_i: Attention term from center node [E, heads, 1]
-        index:   Target indices for each edge from propagate
-        """
-        alpha = alpha_l_j + alpha_r_i
-        alpha = F.leaky_relu(alpha, self.negative_slope)
-        # Use the provided "index" for softmax computation.
-        alpha = torch_geometric.utils.softmax(alpha, index, num_nodes=x_j.size(0))
-        alpha = self.dropout(alpha)
-        return x_j * alpha
-
-    def update(self, aggr_out):
-        return aggr_out
+    def _normalize(self, edge_index, num_nodes):
+        edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
+        row, col = edge_index
+        deg = degree(col, num_nodes=num_nodes)
+        deg_inv_sqrt = deg.pow(-0.5)
+        norm = deg_inv_sqrt[row] * deg_inv_sqrt[col]
+        return edge_index, norm
 
 class AGDN(nn.Module):
-    def __init__(
-        self,
-        in_channels,
-        hidden_channels,
-        out_channels,
-        num_layers=2,
-        heads=1,
-        dropout=0.0
-    ):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers=2, K=5, dropout=0.1):
         super().__init__()
-        self.num_layers = num_layers
-        self.heads = heads
-        self.dropout = dropout
-
         self.convs = nn.ModuleList()
-        # First layer
-        self.convs.append(
-            AGDNConv(in_channels, hidden_channels, heads=heads, dropout=dropout)
-        )
-        # Middle layers
+        self.last_flags = []
+        self.dropouts = []
+        self.convs.append(ADCConv(in_channels, hidden_channels, K)); self.last_flags.append(False); self.dropouts.append(dropout)
         for _ in range(num_layers - 2):
-            self.convs.append(
-                AGDNConv(hidden_channels * heads, hidden_channels, heads=heads, dropout=dropout)
-            )
-        # Last layer
-        self.convs.append(
-            AGDNConv(hidden_channels * heads, out_channels, heads=1, dropout=dropout)
-        )
+            self.convs.append(ADCConv(hidden_channels, hidden_channels, K)); self.last_flags.append(False); self.dropouts.append(dropout)
+        self.convs.append(ADCConv(hidden_channels, out_channels, K)); self.last_flags.append(True);  self.dropouts.append(0.0)
 
     def forward(self, x, edge_index):
-        for i, conv in enumerate(self.convs):
+        for conv, last, drop in zip(self.convs, self.last_flags, self.dropouts):
             x = conv(x, edge_index)
-            if i < len(self.convs) - 1:
+            if not last:
                 x = F.elu(x)
-                x = F.dropout(x, p=self.dropout, training=self.training)
+                x = F.dropout(x, p=drop, training=self.training)
         return x
 
-def agdn_regression(supervised_df, inference_df, morph_col='morph_coordinates', gene_col='gene_coordinates',
-                    hidden=64, num_layers=2, heads=1, dropout=0.1,
-                    epochs=500, lr=1e-3):
-    """
-    Train an AGDN to map morphological embeddings -> gene embeddings,
-    using 'supervised_df' as labeled data, then predict gene embeddings
-    for 'inference_df'. Return the per-sample Euclidean distance.
-    
-    :param supervised_df: DataFrame with columns [morph_col, gene_col]
-    :param inference_df:  DataFrame with columns [morph_col, gene_col]
-    :param morph_col:     Name of the morphological embedding column in the DataFrame
-    :param gene_col:      Name of the gene embedding column in the DataFrame
-    :param hidden:        Hidden dimension
-    :param num_layers:    Number of AGDN layers
-    :param heads:         Number of heads
-    :param dropout:       Dropout rate
-    :param epochs:        Training epochs
-    :param lr:            Learning rate
-    :return: Numpy array of distances for each row in inference_df
-    """
 
-    # 1) Extract morphological & gene embeddings as arrays
-    sup_morph = np.stack(supervised_df[morph_col].values, axis=0)
-    sup_gene  = np.stack(supervised_df[gene_col].values, axis=0)
-    inf_morph = np.stack(inference_df[morph_col].values, axis=0)
-    inf_gene  = np.stack(inference_df[gene_col].values, axis=0)
-
-    sup_morph_t = torch.FloatTensor(sup_morph)
-    sup_gene_t  = torch.FloatTensor(sup_gene)
-    inf_morph_t = torch.FloatTensor(inf_morph)
-    inf_gene_t  = torch.FloatTensor(inf_gene)
-
-    N_sup = sup_morph.shape[0]
-    N_inf = inf_morph.shape[0]
-
-    # 2) Build adjacency for supervised portion
-    #    For demonstration, we do a full mesh among supervised nodes
+def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, dropout=0.1, epochs=500, lr=1e-3, device=None):
+    device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
+    sup_m = np.stack(supervised_df['morph_coordinates'].values)
+    sup_g = np.stack(supervised_df['gene_coordinates'].values)
+    inf_m = np.stack(inference_df['morph_coordinates'].values)
+    inf_g = np.stack(inference_df['gene_coordinates'].values)
+    X = torch.tensor(np.vstack([sup_m, inf_m]), dtype=torch.float32, device=device)
+    Y_sup = torch.tensor(sup_g, dtype=torch.float32, device=device)
+    N_sup = sup_m.shape[0]
     srcs, dsts = [], []
     for i in range(N_sup):
         for j in range(N_sup):
             if i != j:
-                srcs.append(i)
-                dsts.append(j)
-    edge_index_sup = torch.tensor([srcs, dsts], dtype=torch.long)
-
-    data_sup = Data(x=sup_morph_t, edge_index=edge_index_sup)
-
-    # 3) Build the AGDN
-    in_channels  = sup_morph.shape[1]
-    out_channels = sup_gene.shape[1]
-    model = AGDN(in_channels, hidden, out_channels, num_layers=num_layers, heads=heads, dropout=dropout)
-
-    # 4) Loss & optimizer
-    criterion = nn.MSELoss()
-    optimizer = Adam(model.parameters(), lr=lr)
-
-    # 5) Train on supervised
+                srcs.append(i); dsts.append(j)
+    for i in range(inf_m.shape[0]):
+        u = N_sup + i
+        for j in range(N_sup):
+            srcs.extend([u, j]); dsts.extend([j, u])
+    edge_index = torch.tensor([srcs, dsts], dtype=torch.long, device=device)
+    model = AGDN(in_channels=sup_m.shape[1], hidden_channels=hidden, out_channels=sup_g.shape[1], num_layers=num_layers, K=K, dropout=dropout).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    loss_fn = nn.MSELoss()
     model.train()
-    for epoch in range(epochs):
+    for epoch in range(1, epochs + 1):
         optimizer.zero_grad()
-        out = model(data_sup.x, data_sup.edge_index)   # [N_sup, out_channels]
-        loss = criterion(out, sup_gene_t)
+        out = model(X, edge_index)
+        loss = loss_fn(out[:N_sup], Y_sup)
         loss.backward()
         optimizer.step()
-
-        if (epoch+1) % 10 == 0:
-            print(f"AGDN epoch={epoch+1}, MSE={loss.item():.4f}")
-
-    # 6) Build a combined graph that includes inference nodes,
-    #    so that we can propagate morphological info from sup->inf
-    #    We'll label the new nodes from [N_sup..N_sup+N_inf-1]
-    srcs_inf, dsts_inf = [], []
-    for i in range(N_inf):
-        inf_node_id = N_sup + i
-        # Connect to all supervised nodes (bidirectional):
-        for j in range(N_sup):
-            srcs_inf.append(inf_node_id)
-            dsts_inf.append(j)
-            srcs_inf.append(j)
-            dsts_inf.append(inf_node_id)
-    edge_index_inf = torch.tensor([srcs_inf, dsts_inf], dtype=torch.long)
-
-    big_x = torch.cat([sup_morph_t, inf_morph_t], dim=0)
-    big_edge = torch.cat([edge_index_sup, edge_index_inf], dim=1)
-    data_inf = Data(x=big_x, edge_index=big_edge)
-
-    # 7) Infer for the last portion
     model.eval()
     with torch.no_grad():
-        big_out = model(data_inf.x, data_inf.edge_index) # shape [N_sup+N_inf, out_channels]
-    inf_pred = big_out[N_sup:, :]  # shape [N_inf, out_channels]
-
-    return inf_pred.numpy(), inf_gene_t.numpy()
+        pred = model(X, edge_index)[N_sup:].cpu().numpy()
+    return pred, inf_g
 
 
 
@@ -1492,6 +1381,7 @@ def evaluate_loss(predictions, actuals):
 
     # Mean Absolute Error
     mae = np.mean(np.abs(predictions - actuals))
+    mae = mean_absolute_error(predictions, actuals)
     
     # R^2 Score
     r2 = r2_score(actuals, predictions)
@@ -1522,12 +1412,14 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
     inference_samples = encode_images_for_samples(inference_samples, images, image_model, image_transform)
     inference_samples = encode_genes_for_samples(inference_samples, barcode_tokenizer, barcode_model)
 
+    inference_plus_supervised = pd.concat([inference_samples, supervised_samples], axis=0)
+
     # Encode gene data
     gene_samples = encode_genes_for_samples(gene_samples, barcode_tokenizer, barcode_model)
 
     # Perform Bridged Clustering
     image_kmeans, gene_kmeans, _, gene_features, image_clusters, gene_clusters = perform_clustering(
-        inference_samples, gene_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, n_families
+        inference_plus_supervised, gene_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, n_families
     )
 
     # Build the decision matrix using supervised samples
@@ -1545,8 +1437,8 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
     bkm_predictions, bkm_actuals = bkm_regression(inference_samples_bc)
 
     ### Unlike BKM, we don't call a series of functions for the basline models, instead we put them in the helper "regression" functions
-    mt_predictions, mt_actuals = mean_teacher_regression(supervised_samples, inference_samples)
     knn_predictions, knn_actuals = knn_regression(supervised_samples, inference_samples, n_neighbors=max(1, int(n_samples * supervised)))
+    mt_predictions, mt_actuals = mean_teacher_regression(supervised_samples, inference_samples)
     xgb_preds, xgb_actuals = xgboost_regression(supervised_samples, inference_samples)
     lap_preds, lap_actuals = laprls_regression(supervised_samples, inference_samples)
     tsvr_preds, tsvr_actuals = tsvr_regression(supervised_samples, inference_samples)
@@ -1616,13 +1508,13 @@ if __name__ == '__main__':
     csv_path = '../bioscan5m/test_data.csv'
     image_folder = '../bioscan5m/test_images'
 
-    n_families_values = [3]
-    n_samples_values = [200]
-    supervised_values = [1, 2, 3]
+    n_families_values = [5]
+    n_samples_values = [50]
+    supervised_values = [1]
     models = ['BKM', 'KNN', 'Mean Teacher', 'XGBoost', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'RankUp', 'AGDN']
-    models = ['BKM', 'XGBoost', 'RankUp', 'AGDN']
+    # models = ['BKM', 'XGBoost', 'RankUp', 'AGDN']
 
-    n_trials = 10
+    n_trials = 3
     
 
     # Initialize a 5D matrix to store results for each experiment
@@ -1677,6 +1569,6 @@ if __name__ == '__main__':
                     f.write("\n")
 
     # Save the results matrix to a file
-    np.save('results/total_results_matrix_009.npy', results_matrix)
+    np.save('results/total_results_matrix_010.npy', results_matrix)
     np.save('results/rs_matrix_009.npy', rs_matrix)
     print("Experiment completed.")
