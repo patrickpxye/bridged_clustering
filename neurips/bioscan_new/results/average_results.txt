@@ -290,3 +290,51 @@ XGBoost: 0.3255
 RankUp: 0.2765
 AGDN: 0.3349
 
+Experiment Setting: n_families=3, n_samples=100, supervised=1
+BKM: 0.2857
+KNN: 0.3615
+Mean Teacher: 0.3026
+XGBoost: 0.3677
+Laplacian RLS: 0.3459
+TSVR: 0.3313
+TNNR: 0.3530
+UCVME: 0.2932
+RankUp: 0.2868
+AGDN: 0.3402
+
+Experiment Setting: n_families=3, n_samples=100, supervised=1
+BKM: 0.2563
+KNN: 0.3257
+Mean Teacher: 0.3345
+XGBoost: 0.3393
+Laplacian RLS: 0.3364
+TSVR: 0.3203
+TNNR: 0.3493
+UCVME: 0.2974
+RankUp: 0.3420
+AGDN: 0.3570
+
+Experiment Setting: n_families=3, n_samples=100, supervised=1
+BKM: 0.2623
+KNN: 0.3350
+Mean Teacher: 0.3189
+XGBoost: 0.3810
+Laplacian RLS: 0.3273
+TSVR: 0.3160
+TNNR: 0.3401
+UCVME: 0.2973
+RankUp: 0.3282
+AGDN: 0.3145
+
+Experiment Setting: n_families=5, n_samples=50, supervised=1
+BKM: 0.3147
+KNN: 0.3361
+Mean Teacher: 0.3087
+XGBoost: 0.3556
+Laplacian RLS: 0.2864
+TSVR: 0.2843
+TNNR: 0.3054
+UCVME: 0.2812
+RankUp: 0.3181
+AGDN: 0.2917
+
