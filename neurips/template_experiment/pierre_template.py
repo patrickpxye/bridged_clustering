@@ -50,7 +50,7 @@ ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
 N_CLUSTERS      = 3
-SUP_FRACS       = [0.0205]
+SUP_FRACS       = [0.0205, 0.05, 0.1]
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 3
 Y_DIM_REDUCED   = 128   # target dim for random projection
@@ -1234,8 +1234,6 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     # 9) AGDN
     agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
 
-    mt_mae               = mean_absolute_error(mt_actuals, mt_preds)
-
     # now compute MAE on each:
     results = {
       "BKM":       mean_absolute_error(Y_inf,    Yb_all[inf_mask]),
@@ -1314,6 +1312,91 @@ def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size):
 #############################
 # Main
 #############################
+def bubble_plot(df_results,
+                cluster_labels=[3,4,5],
+                sup_labels=["2.05%","5%","10%"],
+                model_order=None,
+                bubble_scale=2000,
+                offset_radius=0.15):
+    """
+    df_results: DataFrame with columns
+      ['n_clusters','sup_frac','model','MAE']
+    """
+    # convert sup_frac back to % strings for tick labels
+    xf = sorted(df_results['sup_frac'].unique())
+    yf = sorted(df_results['n_clusters'].unique())
+    if model_order is None:
+        model_order = df_results['model'].unique()
+
+    # prepare color map
+    colors = plt.cm.tab10(np.linspace(0,1,len(model_order)))
+
+    fig, ax = plt.subplots(figsize=(8,6))
+    # for each model, plot its bubbles
+    for mi, model_name in enumerate(model_order):
+        sub = df_results[df_results['model']==model_name]
+        xs, ys, ss = [], [], []
+        for _, row in sub.iterrows():
+            # base coords: index into lists
+            x0 = xf.index(row.sup_frac)
+            y0 = yf.index(row.n_clusters)
+            # small radial offset
+            angle = 2*np.pi * mi/len(model_order)
+            dx = offset_radius*np.cos(angle)
+            dy = offset_radius*np.sin(angle)
+            xs.append(x0 + dx)
+            ys.append(y0 + dy)
+            # scale MAE -> bubble area
+            ss.append(row.MAE * bubble_scale)
+        ax.scatter(xs, ys, s=ss, color=colors[mi],
+                   alpha=0.7, label=model_name, edgecolor='k', linewidth=0.5)
+
+    # axis ticks
+    ax.set_xticks(range(len(xf)))
+    ax.set_xticklabels([f"{int(f*100)}%" for f in xf])
+    ax.set_yticks(range(len(yf)))
+    ax.set_yticklabels([str(c) for c in yf])
+    ax.set_xlabel("Supervision fraction")
+    ax.set_ylabel("Number of clusters")
+    ax.set_title("MAE of models over clusters & supervision")
+    ax.legend(bbox_to_anchor=(1.05,1), loc="upper left")
+    plt.tight_layout()
+    plt.show()
+
+def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
+    all_rows = []
+    for n_clusters in [3,4,5]:
+        # override global for each run
+        global N_CLUSTERS
+        N_CLUSTERS = n_clusters
+        if n_clusters == 3:
+            df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen'})].reset_index(drop=True)
+        elif n_clusters == 4:
+            df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen', 'apple_pie'})].reset_index(drop=True)
+        else:
+            df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen', 'apple_pie', 'strawberry_shortcake'})].reset_index(drop=True)
+        summary = run_all_trials(df, model, tfm, recipes, ing2idx, D)
+        print(f"\n=== Summary for all proportions ({n_clusters} clusters) ===")
+        print(pd.DataFrame(summary).T)
+        # summary keys look like "sup=2.05%, out=55.00%"
+        for key, metrics in summary.items():
+            sup_frac = float(key.split(",")[0].split("=")[1].strip("%"))/100
+            for metric_name, mae in metrics.items():
+                all_rows.append({
+                    "n_clusters": n_clusters,
+                    "sup_frac":   sup_frac,
+                    "model":      metric_name.replace("_MAE",""),
+                    "MAE":        mae
+                })
+
+    df_results = pd.DataFrame(all_rows)
+    bubble_plot(df_results,
+                cluster_labels=[3,4,5],
+                sup_labels=["2.05%","5%","10%"],
+                model_order=["BKM","KNN","MeanTeacher","XGBoost","LapRLS","TSVR","TNNR","UCVME","RankUp","AGDN"])
+#############################
+# Main
+#############################
 if __name__ == '__main__':
     vocab, ing2idx = load_ingredients()
     recipes        = load_recipes()
@@ -1324,9 +1407,10 @@ if __name__ == '__main__':
     df['recipe_id']    = pd.read_csv(ALL_LABELS_FILE,header=None).iloc[:,0]
     df['ingredient_vec'] = df['recipe_id'].apply(lambda r: make_multihot(r, recipes, ing2idx, D))
     df['cuisine_type']  = df['img_path'].str.split('/').str[0]
-    df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen'})].reset_index(drop=True)
+    # df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen'})].reset_index(drop=True)
 
     model, tfm = get_image_encoder()
-    summary = run_all_trials(df, model, tfm, recipes, ing2idx, D)
-    print("\n=== Summary for all proportions ===")
-    print(pd.DataFrame(summary).T)
+    # summary = run_all_trials(df, model, tfm, recipes, ing2idx, D)
+    # print("\n=== Summary for all proportions ===")
+    # print(pd.DataFrame(summary).T)
+    run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
