@@ -49,7 +49,7 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = 3
+# N_CLUSTERS      = 3
 SUP_FRACS       = [0.0205, 0.05, 0.1]
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 3
@@ -113,7 +113,7 @@ def make_multihot(recipe_id, recipes, ing2idx, D):
 #############################
 # Splits: stratified supervised, output-only, inference
 #############################
-def stratified_split_masks(x_lab, sup_frac, out_frac):
+def stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters):
     """
     Create boolean masks for three disjoint subsets:
       - sup_mask:   stratified supervised samples (at least one per X-cluster)
@@ -133,11 +133,11 @@ def stratified_split_masks(x_lab, sup_frac, out_frac):
     N = len(x_lab)
 
     # 1) Determine total number of supervised samples, at least one per cluster
-    n_sup = max(N_CLUSTERS, int(sup_frac * N))
+    n_sup = max(n_clusters, int(sup_frac * N))
 
     # 2) Pick one supervised index from each cluster to ensure coverage
     sup_idx = []
-    for c in range(N_CLUSTERS):
+    for c in range(n_clusters):
         indices = np.where(x_lab == c)[0]
         if len(indices) > 0:
             sup_idx.append(int(np.random.choice(indices)))
@@ -1157,18 +1157,18 @@ def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, d
 #############################
 # Single‐trial Experiment
 #############################
-def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac):
+def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters):
     Y_true = np.vstack(df['ingredient_vec'].values)               # (N, D)
     rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
     Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
 
     # 1) stratify & split
-    x_lab  = cluster_features(X, N_CLUSTERS)
-    sup_mask, out_mask, inf_mask = stratified_split_masks(x_lab, sup_frac, out_frac)
+    x_lab  = cluster_features(X, n_clusters)
+    sup_mask, out_mask, inf_mask = stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters)
 
     # 2) cluster Y only on sup+out
     y_lab = np.empty(len(Y_proj), int)
-    y_lab[sup_mask | out_mask] = cluster_ingredients(Y_proj[sup_mask | out_mask], N_CLUSTERS)
+    y_lab[sup_mask | out_mask] = cluster_ingredients(Y_proj[sup_mask | out_mask], n_clusters)
 
     # 3) prepare supervised/inference sets for Mean Teacher
     X_sup = X[sup_mask];    Y_sup = Y_true[sup_mask]
@@ -1201,8 +1201,8 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 
     # 4) compute our three baselines
     # — BKM
-    mapping   = learn_bridge(x_lab, y_lab, sup_mask, N_CLUSTERS)
-    centroids = compute_centroids(Y_true, y_lab, N_CLUSTERS)
+    mapping   = learn_bridge(x_lab, y_lab, sup_mask, n_clusters)
+    centroids = compute_centroids(Y_true, y_lab, n_clusters)
     Yb_all    = predict_bridge(x_lab, mapping, centroids)
     # bkm_mae   = mean_absolute_error(Y_inf, Yb_all[inf_mask])
 
@@ -1255,7 +1255,7 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 #############################
 # Multi‐trial Evaluation
 #############################
-def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size):
+def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
     summary = {}
     X       = encode_images(df, IMAGE_FOLDER, model, tfm)
 
@@ -1282,7 +1282,7 @@ def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size):
                 # 3) run your experiment; assume it now returns (results_dict, sup_mask)
                 results, sup_mask = run_experiment(
                     df, model, tfm, recipes, ing2idx, vocab_size,
-                    X, sup_frac, OUT_FRAC
+                    X, sup_frac, OUT_FRAC, n_clusters
                 )
                 # results is a dict: {"BKM":0.01, "KNN":0.02, ...}
 
@@ -1332,6 +1332,9 @@ def bubble_plot(df_results,
     colors = plt.cm.tab10(np.linspace(0,1,len(model_order)))
 
     fig, ax = plt.subplots(figsize=(8,6))
+    max_mae  = df_results["MAE"].max()
+    desired_max_area = 2000    # or 3000, whatever fits your figure
+    bubble_scale = desired_max_area / max_mae
     # for each model, plot its bubbles
     for mi, model_name in enumerate(model_order):
         sub = df_results[df_results['model']==model_name]
@@ -1365,17 +1368,24 @@ def bubble_plot(df_results,
 
 def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
     all_rows = []
-    for n_clusters in [3,4,5]:
-        # override global for each run
-        global N_CLUSTERS
-        N_CLUSTERS = n_clusters
+    for n_clusters in [3, 4, 5]:
+        # select exactly the cuisines you want for this number of clusters
+        cuisines = []
         if n_clusters == 3:
-            df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen'})].reset_index(drop=True)
+            cuisines = ['beef_tacos', 'pizza', 'ramen']
         elif n_clusters == 4:
-            df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen', 'apple_pie'})].reset_index(drop=True)
-        else:
-            df = df[df['cuisine_type'].isin({'beef_tacos','pizza','ramen', 'apple_pie', 'strawberry_shortcake'})].reset_index(drop=True)
-        summary = run_all_trials(df, model, tfm, recipes, ing2idx, D)
+            cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie']
+        else:  # n_clusters == 5
+            cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie', 'strawberry_shortcake']
+
+
+        # create a fresh DataFrame for this run
+        df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+        
+        print(f"Running with {n_clusters} clusters on {len(df_run)} recipes")
+
+        summary = run_all_trials(df_run, model, tfm, recipes, ing2idx, D, n_clusters)
+        
         print(f"\n=== Summary for all proportions ({n_clusters} clusters) ===")
         print(pd.DataFrame(summary).T)
         # summary keys look like "sup=2.05%, out=55.00%"
