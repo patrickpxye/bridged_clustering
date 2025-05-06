@@ -49,8 +49,8 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-# N_CLUSTERS      = 3
-SUP_FRACS       = [0.0205, 0.05, 0.1]
+N_CLUSTERS      = [3, 4, 5] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+SUP_FRACS       = [0.0205, 0.05, 0.1] # supervised sample fractions (0.0205 = 1/49)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 3
 Y_DIM_REDUCED   = 128   # target dim for random projection
@@ -1256,6 +1256,8 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 # Multi‐trial Evaluation
 #############################
 def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
+    # summary of all the models for this cluster number
+    # 1) initialize an empty DataFrame
     summary = {}
     X       = encode_images(df, IMAGE_FOLDER, model, tfm)
 
@@ -1273,11 +1275,13 @@ def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
     ]
 
     for sup_frac in SUP_FRACS:
+            # summary keys look like "sup=2.05%, out=55.00%"
             key    = f"sup={sup_frac:.2%}, out={OUT_FRAC:.2%}"
             # 2) initialize an empty list for each model
             errors = { name: [] for name in model_names }
 
             print(f"\n=== Supervised {sup_frac:.2%} / Output-only {OUT_FRAC:.2%} ===")
+            # run N_TRIALS trials
             for t in range(N_TRIALS):
                 # 3) run your experiment; assume it now returns (results_dict, sup_mask)
                 results, sup_mask = run_experiment(
@@ -1310,11 +1314,9 @@ def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
     return summary
 
 #############################
-# Main
+# Plot
 #############################
 def bubble_plot(df_results,
-                cluster_labels=[3,4,5],
-                sup_labels=["2.05%","5%","10%"],
                 model_order=None,
                 bubble_scale=2000,
                 offset_radius=0.15):
@@ -1356,7 +1358,7 @@ def bubble_plot(df_results,
 
     # axis ticks
     ax.set_xticks(range(len(xf)))
-    ax.set_xticklabels([f"{int(f*100)}%" for f in xf])
+    ax.set_xticklabels([f"{f*100:.2f}%" for f in xf])
     ax.set_yticks(range(len(yf)))
     ax.set_yticklabels([str(c) for c in yf])
     ax.set_xlabel("Supervision fraction")
@@ -1368,8 +1370,11 @@ def bubble_plot(df_results,
 
 def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
     all_rows = []
-    for n_clusters in [3, 4, 5]:
+    # if want to do randomization:
+    # all_cuisines = df['cuisine_type'].unique()
+    for n_clusters in N_CLUSTERS:
         # select exactly the cuisines you want for this number of clusters
+        # determinstic
         cuisines = []
         if n_clusters == 3:
             cuisines = ['beef_tacos', 'pizza', 'ramen']
@@ -1377,7 +1382,9 @@ def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
             cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie']
         else:  # n_clusters == 5
             cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie', 'strawberry_shortcake']
-
+        # or randomize
+        # cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
+        print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
 
         # create a fresh DataFrame for this run
         df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
@@ -1401,8 +1408,6 @@ def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
 
     df_results = pd.DataFrame(all_rows)
     bubble_plot(df_results,
-                cluster_labels=[3,4,5],
-                sup_labels=["2.05%","5%","10%"],
                 model_order=["BKM","KNN","MeanTeacher","XGBoost","LapRLS","TSVR","TNNR","UCVME","RankUp","AGDN"])
 #############################
 # Main
