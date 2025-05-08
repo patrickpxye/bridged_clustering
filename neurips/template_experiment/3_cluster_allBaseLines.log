@@ -1,0 +1,6 @@
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Traceback (most recent call last):
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 330, in <module>
+    from xgboost import XGBRegressor
+ModuleNotFoundError: No module named 'xgboost'

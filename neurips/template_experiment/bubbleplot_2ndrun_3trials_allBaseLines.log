@@ -1,0 +1,546 @@
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 147/147 [00:13<00:00, 11.26it/s]
+
+=== Supervised 2.05% / Output-only 55.00% ===
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.880,  NMI: 0.673
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0104
+KNN          MAE = 0.0130
+MeanTeacher  MAE = 0.0309
+XGBoost      MAE = 0.0127
+LapRLS       MAE = 0.0116
+TSVR         MAE = 0.0130
+TNNR         MAE = 0.0767
+UCVME        MAE = 0.0259
+RankUp       MAE = 0.0715
+AGDN         MAE = 0.0557
+
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.627,  NMI: 0.439
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0121
+KNN          MAE = 0.0136
+MeanTeacher  MAE = 0.0324
+XGBoost      MAE = 0.0156
+LapRLS       MAE = 0.0132
+TSVR         MAE = 0.0145
+TNNR         MAE = 0.0812
+UCVME        MAE = 0.0299
+RankUp       MAE = 0.0768
+AGDN         MAE = 0.0527
+
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.843,  NMI: 0.638
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0105
+KNN          MAE = 0.0117
+MeanTeacher  MAE = 0.0211
+XGBoost      MAE = 0.0116
+LapRLS       MAE = 0.0114
+TSVR         MAE = 0.0116
+TNNR         MAE = 0.0758
+UCVME        MAE = 0.0323
+RankUp       MAE = 0.0651
+AGDN         MAE = 0.0523
+
+=== Averages ===
+BKM          avg MAE = 0.0110
+KNN          avg MAE = 0.0128
+MeanTeacher  avg MAE = 0.0281
+XGBoost      avg MAE = 0.0133
+LapRLS       avg MAE = 0.0121
+TSVR         avg MAE = 0.0131
+TNNR         avg MAE = 0.0779
+UCVME        avg MAE = 0.0294
+RankUp       avg MAE = 0.0711
+AGDN         avg MAE = 0.0536
+
+=== Supervised 5.00% / Output-only 55.00% ===
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.908,  NMI: 0.699
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0114
+KNN          MAE = 0.0104
+MeanTeacher  MAE = 0.0196
+XGBoost      MAE = 0.0124
+LapRLS       MAE = 0.0114
+TSVR         MAE = 0.0122
+TNNR         MAE = 0.0755
+UCVME        MAE = 0.0232
+RankUp       MAE = 0.0644
+AGDN         MAE = 0.0433
+
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.632,  NMI: 0.405
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0109
+KNN          MAE = 0.0136
+MeanTeacher  MAE = 0.0216
+XGBoost      MAE = 0.0131
+LapRLS       MAE = 0.0125
+TSVR         MAE = 0.0137
+TNNR         MAE = 0.0753
+UCVME        MAE = 0.0261
+RankUp       MAE = 0.0646
+AGDN         MAE = 0.0461
+
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.885,  NMI: 0.634
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0099
+KNN          MAE = 0.0126
+MeanTeacher  MAE = 0.0203
+XGBoost      MAE = 0.0148
+LapRLS       MAE = 0.0126
+TSVR         MAE = 0.0142
+TNNR         MAE = 0.0780
+UCVME        MAE = 0.0258
+RankUp       MAE = 0.0726
+AGDN         MAE = 0.0455
+
+=== Averages ===
+BKM          avg MAE = 0.0107
+KNN          avg MAE = 0.0122
+MeanTeacher  avg MAE = 0.0205
+XGBoost      avg MAE = 0.0134
+LapRLS       avg MAE = 0.0121
+TSVR         avg MAE = 0.0134
+TNNR         avg MAE = 0.0763
+UCVME        avg MAE = 0.0251
+RankUp       avg MAE = 0.0672
+AGDN         avg MAE = 0.0450
+
+=== Supervised 10.00% / Output-only 55.00% ===
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.926,  NMI: 0.764
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0102
+KNN          MAE = 0.0117
+MeanTeacher  MAE = 0.0237
+XGBoost      MAE = 0.0131
+LapRLS       MAE = 0.0123
+TSVR         MAE = 0.0137
+TNNR         MAE = 0.0750
+UCVME        MAE = 0.0236
+RankUp       MAE = 0.0651
+AGDN         MAE = 0.0387
+
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.809,  NMI: 0.593
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0105
+KNN          MAE = 0.0110
+MeanTeacher  MAE = 0.0207
+XGBoost      MAE = 0.0117
+LapRLS       MAE = 0.0114
+TSVR         MAE = 0.0130
+TNNR         MAE = 0.0743
+UCVME        MAE = 0.0221
+RankUp       MAE = 0.0657
+AGDN         MAE = 0.0371
+
+  → X-cluster purity: 0.912,  NMI: 0.696
+  → Y-cluster purity: 0.926,  NMI: 0.759
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0107
+KNN          MAE = 0.0120
+MeanTeacher  MAE = 0.0215
+XGBoost      MAE = 0.0137
+LapRLS       MAE = 0.0126
+TSVR         MAE = 0.0154
+TNNR         MAE = 0.0733
+UCVME        MAE = 0.0225
+RankUp       MAE = 0.0750
+AGDN         MAE = 0.0399
+
+=== Averages ===
+BKM          avg MAE = 0.0105
+KNN          avg MAE = 0.0116
+MeanTeacher  avg MAE = 0.0220
+XGBoost      avg MAE = 0.0128
+LapRLS       avg MAE = 0.0121
+TSVR         avg MAE = 0.0140
+TNNR         avg MAE = 0.0742
+UCVME        avg MAE = 0.0227
+RankUp       avg MAE = 0.0686
+AGDN         avg MAE = 0.0386
+
+=== Summary for all proportions (3 clusters) ===
+                         BKM_MAE   KNN_MAE  MeanTeacher_MAE  XGBoost_MAE  LapRLS_MAE  TSVR_MAE  TNNR_MAE  UCVME_MAE  RankUp_MAE  AGDN_MAE
+sup=2.05%, out=55.00%   0.010997  0.012751         0.028134     0.013313    0.012078  0.013057  0.077902   0.029378    0.071124  0.053570
+sup=5.00%, out=55.00%   0.010708  0.012205         0.020496     0.013412    0.012147  0.013359  0.076253   0.025053    0.067197  0.044999
+sup=10.00%, out=55.00%  0.010478  0.011552         0.021957     0.012814    0.012092  0.014024  0.074227   0.022715    0.068570  0.038553
+Running with 4 clusters on 196 recipes
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 196/196 [00:20<00:00,  9.74it/s]
+
+=== Supervised 2.05% / Output-only 55.00% ===
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.847,  NMI: 0.787
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0102
+KNN          MAE = 0.0144
+MeanTeacher  MAE = 0.0331
+XGBoost      MAE = 0.0173
+LapRLS       MAE = 0.0154
+TSVR         MAE = 0.0150
+TNNR         MAE = 0.0766
+UCVME        MAE = 0.0272
+RankUp       MAE = 0.0744
+AGDN         MAE = 0.0515
+
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.937,  NMI: 0.845
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0099
+KNN          MAE = 0.0128
+MeanTeacher  MAE = 0.0279
+XGBoost      MAE = 0.0151
+LapRLS       MAE = 0.0145
+TSVR         MAE = 0.0137
+TNNR         MAE = 0.0770
+UCVME        MAE = 0.0259
+RankUp       MAE = 0.0688
+AGDN         MAE = 0.0504
+
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.919,  NMI: 0.818
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0117
+KNN          MAE = 0.0119
+MeanTeacher  MAE = 0.0281
+XGBoost      MAE = 0.0108
+LapRLS       MAE = 0.0118
+TSVR         MAE = 0.0122
+TNNR         MAE = 0.0762
+UCVME        MAE = 0.0256
+RankUp       MAE = 0.0662
+AGDN         MAE = 0.0485
+
+=== Averages ===
+BKM          avg MAE = 0.0106
+KNN          avg MAE = 0.0130
+MeanTeacher  avg MAE = 0.0297
+XGBoost      avg MAE = 0.0144
+LapRLS       avg MAE = 0.0139
+TSVR         avg MAE = 0.0136
+TNNR         avg MAE = 0.0766
+UCVME        avg MAE = 0.0262
+RankUp       avg MAE = 0.0698
+AGDN         avg MAE = 0.0501
+
+=== Supervised 5.00% / Output-only 55.00% ===
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.707,  NMI: 0.556
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0106
+KNN          MAE = 0.0110
+MeanTeacher  MAE = 0.0228
+XGBoost      MAE = 0.0138
+LapRLS       MAE = 0.0119
+TSVR         MAE = 0.0132
+TNNR         MAE = 0.0760
+UCVME        MAE = 0.0228
+RankUp       MAE = 0.0675
+AGDN         MAE = 0.0443
+
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.922,  NMI: 0.815
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0102
+KNN          MAE = 0.0112
+MeanTeacher  MAE = 0.0242
+XGBoost      MAE = 0.0128
+LapRLS       MAE = 0.0124
+TSVR         MAE = 0.0143
+TNNR         MAE = 0.0778
+UCVME        MAE = 0.0235
+RankUp       MAE = 0.0623
+AGDN         MAE = 0.0453
+
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.750,  NMI: 0.630
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0118
+KNN          MAE = 0.0092
+MeanTeacher  MAE = 0.0197
+XGBoost      MAE = 0.0103
+LapRLS       MAE = 0.0105
+TSVR         MAE = 0.0112
+TNNR         MAE = 0.0750
+UCVME        MAE = 0.0244
+RankUp       MAE = 0.0595
+AGDN         MAE = 0.0440
+
+=== Averages ===
+BKM          avg MAE = 0.0109
+KNN          avg MAE = 0.0105
+MeanTeacher  avg MAE = 0.0222
+XGBoost      avg MAE = 0.0123
+LapRLS       avg MAE = 0.0116
+TSVR         avg MAE = 0.0129
+TNNR         avg MAE = 0.0762
+UCVME        avg MAE = 0.0236
+RankUp       avg MAE = 0.0631
+AGDN         avg MAE = 0.0445
+
+=== Supervised 10.00% / Output-only 55.00% ===
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.929,  NMI: 0.824
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0104
+KNN          MAE = 0.0096
+MeanTeacher  MAE = 0.0224
+XGBoost      MAE = 0.0121
+LapRLS       MAE = 0.0110
+TSVR         MAE = 0.0134
+TNNR         MAE = 0.0757
+UCVME        MAE = 0.0198
+RankUp       MAE = 0.0669
+AGDN         MAE = 0.0372
+
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.905,  NMI: 0.785
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0110
+KNN          MAE = 0.0100
+MeanTeacher  MAE = 0.0205
+XGBoost      MAE = 0.0116
+LapRLS       MAE = 0.0104
+TSVR         MAE = 0.0125
+TNNR         MAE = 0.0756
+UCVME        MAE = 0.0221
+RankUp       MAE = 0.0646
+AGDN         MAE = 0.0382
+
+  → X-cluster purity: 0.668,  NMI: 0.469
+  → Y-cluster purity: 0.722,  NMI: 0.696
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0096
+KNN          MAE = 0.0102
+MeanTeacher  MAE = 0.0208
+XGBoost      MAE = 0.0117
+LapRLS       MAE = 0.0110
+TSVR         MAE = 0.0135
+TNNR         MAE = 0.0741
+UCVME        MAE = 0.0206
+RankUp       MAE = 0.0597
+AGDN         MAE = 0.0382
+
+=== Averages ===
+BKM          avg MAE = 0.0103
+KNN          avg MAE = 0.0099
+MeanTeacher  avg MAE = 0.0212
+XGBoost      avg MAE = 0.0118
+LapRLS       avg MAE = 0.0108
+TSVR         avg MAE = 0.0131
+TNNR         avg MAE = 0.0751
+UCVME        avg MAE = 0.0209
+RankUp       avg MAE = 0.0638
+AGDN         avg MAE = 0.0379
+
+=== Summary for all proportions (4 clusters) ===
+                         BKM_MAE   KNN_MAE  MeanTeacher_MAE  XGBoost_MAE  LapRLS_MAE  TSVR_MAE  TNNR_MAE  UCVME_MAE  RankUp_MAE  AGDN_MAE
+sup=2.05%, out=55.00%   0.010596  0.013000         0.029729     0.014396    0.013907  0.013613  0.076576   0.026214    0.069781  0.050146
+sup=5.00%, out=55.00%   0.010887  0.010468         0.022236     0.012292    0.011614  0.012923  0.076232   0.023556    0.063072  0.044521
+sup=10.00%, out=55.00%  0.010349  0.009950         0.021198     0.011789    0.010815  0.013115  0.075143   0.020851    0.063756  0.037887
+Running with 5 clusters on 246 recipes
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 246/246 [00:22<00:00, 11.17it/s]
+
+=== Supervised 2.05% / Output-only 55.00% ===
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.879,  NMI: 0.766
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0083
+KNN          MAE = 0.0111
+MeanTeacher  MAE = 0.0295
+XGBoost      MAE = 0.0137
+LapRLS       MAE = 0.0105
+TSVR         MAE = 0.0118
+TNNR         MAE = 0.0755
+UCVME        MAE = 0.0224
+RankUp       MAE = 0.0657
+AGDN         MAE = 0.0483
+
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.729,  NMI: 0.676
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0094
+KNN          MAE = 0.0116
+MeanTeacher  MAE = 0.0230
+XGBoost      MAE = 0.0147
+LapRLS       MAE = 0.0108
+TSVR         MAE = 0.0121
+TNNR         MAE = 0.0789
+UCVME        MAE = 0.0226
+RankUp       MAE = 0.0589
+AGDN         MAE = 0.0526
+
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.643,  NMI: 0.531
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0104
+KNN          MAE = 0.0120
+MeanTeacher  MAE = 0.0244
+XGBoost      MAE = 0.0128
+LapRLS       MAE = 0.0114
+TSVR         MAE = 0.0130
+TNNR         MAE = 0.0753
+UCVME        MAE = 0.0233
+RankUp       MAE = 0.0636
+AGDN         MAE = 0.0513
+
+=== Averages ===
+BKM          avg MAE = 0.0094
+KNN          avg MAE = 0.0116
+MeanTeacher  avg MAE = 0.0256
+XGBoost      avg MAE = 0.0137
+LapRLS       avg MAE = 0.0109
+TSVR         avg MAE = 0.0123
+TNNR         avg MAE = 0.0765
+UCVME        avg MAE = 0.0227
+RankUp       avg MAE = 0.0627
+AGDN         avg MAE = 0.0508
+
+=== Supervised 5.00% / Output-only 55.00% ===
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.912,  NMI: 0.815
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0094
+KNN          MAE = 0.0105
+MeanTeacher  MAE = 0.0207
+XGBoost      MAE = 0.0127
+LapRLS       MAE = 0.0126
+TSVR         MAE = 0.0143
+TNNR         MAE = 0.0764
+UCVME        MAE = 0.0204
+RankUp       MAE = 0.0662
+AGDN         MAE = 0.0430
+
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.714,  NMI: 0.623
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0095
+KNN          MAE = 0.0107
+MeanTeacher  MAE = 0.0212
+XGBoost      MAE = 0.0104
+LapRLS       MAE = 0.0108
+TSVR         MAE = 0.0120
+TNNR         MAE = 0.0753
+UCVME        MAE = 0.0233
+RankUp       MAE = 0.0626
+AGDN         MAE = 0.0403
+
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.565,  NMI: 0.537
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0099
+KNN          MAE = 0.0096
+MeanTeacher  MAE = 0.0204
+XGBoost      MAE = 0.0105
+LapRLS       MAE = 0.0100
+TSVR         MAE = 0.0114
+TNNR         MAE = 0.0746
+UCVME        MAE = 0.0222
+RankUp       MAE = 0.0624
+AGDN         MAE = 0.0433
+
+=== Averages ===
+BKM          avg MAE = 0.0096
+KNN          avg MAE = 0.0103
+MeanTeacher  avg MAE = 0.0208
+XGBoost      avg MAE = 0.0112
+LapRLS       avg MAE = 0.0111
+TSVR         avg MAE = 0.0125
+TNNR         avg MAE = 0.0754
+UCVME        avg MAE = 0.0220
+RankUp       avg MAE = 0.0637
+AGDN         avg MAE = 0.0422
+
+=== Supervised 10.00% / Output-only 55.00% ===
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.862,  NMI: 0.742
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 1 ---
+BKM          MAE = 0.0088
+KNN          MAE = 0.0091
+MeanTeacher  MAE = 0.0194
+XGBoost      MAE = 0.0109
+LapRLS       MAE = 0.0108
+TSVR         MAE = 0.0130
+TNNR         MAE = 0.0752
+UCVME        MAE = 0.0201
+RankUp       MAE = 0.0685
+AGDN         MAE = 0.0369
+
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.836,  NMI: 0.701
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 2 ---
+BKM          MAE = 0.0086
+KNN          MAE = 0.0097
+MeanTeacher  MAE = 0.0189
+XGBoost      MAE = 0.0108
+LapRLS       MAE = 0.0103
+TSVR         MAE = 0.0130
+TNNR         MAE = 0.0736
+UCVME        MAE = 0.0181
+RankUp       MAE = 0.0654
+AGDN         MAE = 0.0357
+
+  → X-cluster purity: 0.841,  NMI: 0.651
+  → Y-cluster purity: 0.887,  NMI: 0.787
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+--- Trial 3 ---
+BKM          MAE = 0.0084
+KNN          MAE = 0.0094
+MeanTeacher  MAE = 0.0207
+XGBoost      MAE = 0.0111
+LapRLS       MAE = 0.0105
+TSVR         MAE = 0.0130
+TNNR         MAE = 0.0761
+UCVME        MAE = 0.0211
+RankUp       MAE = 0.0682
+AGDN         MAE = 0.0353
+
+=== Averages ===
+BKM          avg MAE = 0.0086
+KNN          avg MAE = 0.0094
+MeanTeacher  avg MAE = 0.0196
+XGBoost      avg MAE = 0.0109
+LapRLS       avg MAE = 0.0106
+TSVR         avg MAE = 0.0130
+TNNR         avg MAE = 0.0750
+UCVME        avg MAE = 0.0198
+RankUp       avg MAE = 0.0674
+AGDN         avg MAE = 0.0360
+
+=== Summary for all proportions (5 clusters) ===
+                         BKM_MAE   KNN_MAE  MeanTeacher_MAE  XGBoost_MAE  LapRLS_MAE  TSVR_MAE  TNNR_MAE  UCVME_MAE  RankUp_MAE  AGDN_MAE
+sup=2.05%, out=55.00%   0.009389  0.011555         0.025612     0.013716    0.010896  0.012297  0.076543   0.022747    0.062740  0.050752
+sup=5.00%, out=55.00%   0.009615  0.010281         0.020771     0.011176    0.011112  0.012548  0.075423   0.021971    0.063744  0.042204
+sup=10.00%, out=55.00%  0.008626  0.009401         0.019641     0.010923    0.010575  0.012985  0.074953   0.019766    0.067388  0.035965
+2025-05-04 20:54:37.693 python[95710:3119530] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
