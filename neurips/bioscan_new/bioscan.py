@@ -12,7 +12,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from torchvision.models.resnet import ResNet50_Weights
-from sklearn.metrics import normalized_mutual_info_score, mean_squared_error, mean_absolute_error
+from sklearn.metrics import normalized_mutual_info_score, mean_squared_error, mean_absolute_error, adjusted_mutual_info_score
 from scipy.stats import gaussian_kde
 from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
@@ -25,6 +25,9 @@ from torch.optim import Adam
 import torch_geometric
 import torch_geometric.utils
 from sklearn.metrics import r2_score
+from k_means_constrained import KMeansConstrained
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 #########################################
 # Data Loading and Splitting Functions  #
@@ -54,6 +57,8 @@ def load_dataset(csv_path, image_folder, n_families=5, n_samples=50):
       ValueError: If fewer than n_families with a valid homogeneous group can be found.
     """
     df = pd.read_csv(csv_path)
+
+    df = df[df['class'] == 'Insecta']
     
     # Filter families that have at least n_samples overall.
     family_counts = df['family'].value_counts()
@@ -118,7 +123,7 @@ def load_dataset(csv_path, image_folder, n_families=5, n_samples=50):
                 group_found = True
                 break
         if group_found:
-            sample = chosen_group.sample(n=n_samples, random_state=42)
+            sample = chosen_group.sample(n=n_samples)
             valid_family_samples.append(sample)
         else:
             print(f"Family {family} does not have a homogeneous group with at least {n_samples} samples. Skipping.")
@@ -142,7 +147,7 @@ def load_dataset(csv_path, image_folder, n_families=5, n_samples=50):
                     group_found = True
                     break
             if group_found:
-                sample = chosen_group.sample(n=n_samples, random_state=42)
+                sample = chosen_group.sample(n=n_samples)
                 valid_family_samples.append(sample)
             if len(valid_family_samples) == n_families:
                 break
@@ -162,7 +167,7 @@ def load_dataset(csv_path, image_folder, n_families=5, n_samples=50):
     
     return final_df, images
 
-def split_family_samples(family_data, supervised=0.05, random_state=42):
+def split_family_samples(family_data, supervised=0.05, out_only=0.5):
     """
     Randomly permute and split a family's data into four non-overlapping sets based on given proportions.
     
@@ -177,7 +182,7 @@ def split_family_samples(family_data, supervised=0.05, random_state=42):
       tuple: Four DataFrames corresponding to image_samples, gene_samples, supervised_samples, inference_samples.
     """
     # Set default proportions if none provided
-    proportions = {'gene': 0.5, 'supervised': supervised, 'inference': 1.0 - 0.5 - supervised}
+    proportions = {'gene': out_only, 'supervised': supervised, 'inference': 1.0 - out_only - supervised}
     
     # Verify the proportions sum to 1
     total = sum(proportions.values())
@@ -185,7 +190,7 @@ def split_family_samples(family_data, supervised=0.05, random_state=42):
         raise ValueError(f"Proportions must sum to 1. Provided sum: {total}")
     
     # Shuffle the data
-    family_data = family_data.sample(frac=1, random_state=random_state)
+    family_data = family_data.sample(frac=1)
     n = len(family_data)
     
     # Calculate the number of samples per split
@@ -202,7 +207,7 @@ def split_family_samples(family_data, supervised=0.05, random_state=42):
     
     return gene_samples, supervised_samples, inference_samples
 
-def get_data_splits(df, supervised):
+def get_data_splits(df, supervised, out_only):
     """
     Loop over families in the DataFrame and concatenate splits from each family.
     Returns four DataFrames: image_samples, gene_samples, supervised_samples, inference_samples.
@@ -210,7 +215,7 @@ def get_data_splits(df, supervised):
     image_list, gene_list, sup_list, inf_list = [], [], [], []
     for family in df['family'].unique():
         family_data = df[df['family'] == family]
-        gene, sup, inf = split_family_samples(family_data, supervised=supervised)
+        gene, sup, inf = split_family_samples(family_data, supervised=supervised, out_only=out_only)
         gene_list.append(gene)
         sup_list.append(sup)
         inf_list.append(inf)
@@ -227,10 +232,10 @@ def load_pretrained_models():
     # Load BarcodeBERT for genetic barcode encoding
     barcode_model_name = "bioscan-ml/BarcodeBERT"
     barcode_tokenizer = AutoTokenizer.from_pretrained(barcode_model_name, trust_remote_code=True)
-    barcode_model = AutoModel.from_pretrained(barcode_model_name, trust_remote_code=True)
+    barcode_model = AutoModel.from_pretrained(barcode_model_name, trust_remote_code=True).to(device)
 
     # Load ResNet50 model for image encoding
-    image_model = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
+    image_model = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT).to(device)
     image_model.eval()
 
     # Define image preprocessing (resizing, cropping, normalization for ResNet50)
@@ -256,10 +261,10 @@ def encode_images(image_ids, image_folder, model, transform):
         image_path = image_folder.get(processid, None)
         if image_path and os.path.exists(image_path):
             image = Image.open(image_path).convert('RGB')
-            image = transform(image).unsqueeze(0)  # Add batch dimension
+            image = transform(image).unsqueeze(0).to(device)  # Add batch dimension
             with torch.no_grad():
                 output = model(image)
-            features.append(output.squeeze().numpy())
+            features.append(output.squeeze().cpu().numpy())
         else:
             print(f"Warning: Image {processid} not found or invalid!")
             features.append(np.zeros(model.fc.in_features))  # Placeholder if image missing
@@ -277,9 +282,9 @@ def encode_genes(dna_barcodes, tokenizer, model):
     for barcode in dna_barcodes:
         encodings = tokenizer(barcode, return_tensors="pt", padding=True, truncation=True)
         # Add batch dimension
-        encodings = {key: value.unsqueeze(0) for key, value in encodings.items()}
+        encodings = {key: value.unsqueeze(0).to(device) for key, value in encodings.items()}
         with torch.no_grad():
-            embedding = model(**encodings).last_hidden_state.mean(dim=1).numpy()
+            embedding = model(**encodings).last_hidden_state.mean(dim=1).cpu().numpy()
         embeddings.append(embedding)
     
     embeddings = np.array(embeddings)
@@ -300,20 +305,34 @@ def encode_genes_for_samples(df, barcode_tokenizer, barcode_model):
 ##################################
 # Bridged Clustering Functions #
 ##################################
+
 def perform_clustering(image_samples, gene_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, n_families):
     """
     Perform KMeans clustering on image and gene samples.
     Returns the trained KMeans objects and raw features.
     """
+
+    N = len(image_samples)
+    base_size = N // n_families
+    size_min = base_size
+    size_max = base_size + (1 if N % n_families else 0)
+
+    M = len(gene_samples)
+    base_size_g = M // n_families
+    size_min_g = base_size_g
+    size_max_g = base_size_g + (1 if M % n_families else 0)
+
     image_features = encode_images(image_samples['processid'].values, images, image_model, image_transform)
-    image_kmeans = KMeans(n_clusters=n_families, random_state=42).fit(image_features)
+    image_kmeans = KMeansConstrained(n_clusters=n_families, size_min=size_min, size_max=size_max, random_state=42).fit(image_features)
     image_clusters = image_kmeans.predict(image_features)
+
     
     gene_features = encode_genes(gene_samples['dna_barcode'].values, barcode_tokenizer, barcode_model)
-    gene_kmeans = KMeans(n_clusters=n_families, random_state=42).fit(gene_features)
+    gene_kmeans = KMeansConstrained(n_clusters=n_families, size_min=size_min_g, size_max=size_max_g, random_state=42).fit(gene_features)
     gene_clusters = gene_kmeans.predict(gene_features)
     
     return image_kmeans, gene_kmeans, image_features, gene_features, image_clusters, gene_clusters
+
 
 def decisionVector(sample, morph_column='morph_cluster', gene_column='gene_cluster', dim=5):
 
@@ -339,26 +358,77 @@ def decisionVector(sample, morph_column='morph_cluster', gene_column='gene_clust
 
     return decision
 
-def build_decision_matrix(supervised_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, image_kmeans, gene_kmeans, n_families):
+
+def build_true_decision_vector(img_df: pd.DataFrame,
+                               gene_df: pd.DataFrame,
+                               dim: int):
+    """
+    img_df : DataFrame with columns ['image_cluster','family']
+    gene_df: DataFrame with columns ['gene_cluster','family']
+    dim    : number of clusters (n_families)
+
+    Returns:
+      decision: np.array of length dim, where
+                decision[i] = gene_cluster whose majority-family
+                               matches image_cluster i’s majority-family
+                (or -1 if no match)
+      image_to_family: dict {image_cluster -> majority family}
+      gene_to_family:  dict {gene_cluster  -> majority family}
+    """
+    # 1) majority-family for each image-cluster
+    image_to_family = (
+        img_df
+        .groupby('image_cluster')['family']
+        .agg(lambda x: x.value_counts().idxmax())
+        .to_dict()
+    )
+
+    print(f"Image to family mapping: {image_to_family}")
+
+    # 2) majority-family for each gene-cluster
+    gene_to_family = (
+        gene_df
+        .groupby('gene_cluster')['family']
+        .agg(lambda x: x.value_counts().idxmax())
+        .to_dict()
+    )
+
+    print(f"Gene to family mapping: {gene_to_family}")
+
+    # 3) invert 1–1 mapping directly
+    family_to_gene = {fam: gc for gc, fam in gene_to_family.items()}
+
+    # 4) build decision vector with default -1
+    decision = np.full(dim, -1, dtype=int)
+    for i in range(dim):
+        fam = image_to_family.get(i)           # might be None if i missing
+        decision[i] = family_to_gene.get(fam, -1)
+
+    return decision
+
+
+def build_decision_matrix(supervised_samples, image_clusters, gene_clusters, n_families):
     """
     Build the decision matrix (association vector) using the supervised samples.
     """
+    N_sup = len(supervised_samples)
     supervised_samples = supervised_samples.copy()
-    sup_image_features = encode_images(supervised_samples['processid'].values, images, image_model, image_transform)
-    supervised_samples['image_cluster'] = image_kmeans.predict(sup_image_features)
-    
-    sup_gene_features = encode_genes(supervised_samples['dna_barcode'].values, barcode_tokenizer, barcode_model)
-    supervised_samples['gene_cluster'] = gene_kmeans.predict(sup_gene_features)
+    supervised_samples['image_cluster'] = image_clusters[-N_sup:]
+    supervised_samples['gene_cluster'] = gene_clusters[-N_sup:]
     
     decision_matrix = decisionVector(supervised_samples, morph_column='image_cluster', gene_column='gene_cluster', dim=n_families)
+
     return decision_matrix
 
-def compute_gene_centroids(gene_samples, gene_features, gene_kmeans, n_families):
+
+
+def compute_gene_centroids(gene_samples, gene_features, gene_clusters, n_families):
     """
     Compute centroids for gene clusters based on gene_samples.
     """
     gene_samples = gene_samples.copy()
-    gene_samples['gene_cluster'] = gene_kmeans.labels_
+    N_gene = len(gene_samples)
+    gene_samples['gene_cluster'] = gene_clusters[:N_gene]
     gene_samples['gene_coordinates'] = gene_features.tolist()
     
     centroids = []
@@ -371,13 +441,13 @@ def compute_gene_centroids(gene_samples, gene_features, gene_kmeans, n_families)
         centroids.append(centroid)
     return np.array(centroids)
 
-def perform_inference(inference_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, image_kmeans, decision_matrix, centroids):
+def perform_inference(inference_samples, image_clusters, barcode_tokenizer, barcode_model, image_kmeans, decision_matrix, centroids):
     """
     Assign clusters to inference samples and predict gene coordinates.
     """
+    N_inf = len(inference_samples)
     inference_samples = inference_samples.copy()
-    inf_image_features = encode_images(inference_samples['processid'].values, images, image_model, image_transform)
-    inference_samples['image_cluster'] = image_kmeans.predict(inf_image_features)
+    inference_samples['image_cluster'] = image_clusters[:N_inf]
     
     inference_samples['predicted_gene_cluster'] = inference_samples['image_cluster'].apply(lambda x: decision_matrix[x])
     inference_samples['predicted_gene_coordinates'] = inference_samples['predicted_gene_cluster'].apply(lambda x: centroids[x])
@@ -394,7 +464,6 @@ def bkm_regression(df):
     actual_gene_coords = np.array(df['gene_coordinates'].tolist())
 
     return predicted_gene_coords, actual_gene_coords
-
 
 
 ###################################
@@ -464,7 +533,7 @@ def mean_teacher_loss(student_preds, teacher_preds, labels, consistency_weight=0
 
 # --- Mean Teacher (Tarvainen & Valpola 2017) ---------------------------  # 
 def train_mean_teacher(model, sup_loader, unlab_loader, optim, device,
-                       alpha=0.99, w_max=30., ramp_len=80):
+                       alpha=0.99, w_max=0.1, ramp_len=1):
     model.train()
     step = 0
     for (x_l,y_l),(x_u,_) in zip(sup_loader, unlab_loader):
@@ -555,7 +624,7 @@ import numpy as np
 def xgboost_regression(sup_df, inf_df,
                        **xgb_params):               # e.g. n_estimators=200, max_depth=6
     if not xgb_params:                              # sensible defaults
-        xgb_params = dict(n_estimators=300,
+        xgb_params = dict(n_estimators=200,
                           learning_rate=0.05,
                           max_depth=6,
                           subsample=0.8,
@@ -803,93 +872,6 @@ def tnnr_regression(
     return np.vstack(preds), y_inf
 
 
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-# from torch.utils.data import Dataset, DataLoader
-# import numpy as np
-# import itertools
-
-# class TwinDataset(Dataset):
-#     """Dataset of all (i,j) pairs from X, y -> targets y_i - y_j."""
-#     def __init__(self, X, y):
-#         self.X = torch.tensor(X, dtype=torch.float32)
-#         self.y = torch.tensor(y, dtype=torch.float32)
-#         self.pairs = list(itertools.combinations(range(len(X)), 2))
-    
-#     def __len__(self):
-#         return len(self.pairs)
-    
-#     def __getitem__(self, idx):
-#         i, j = self.pairs[idx]
-#         xi, xj = self.X[i], self.X[j]
-#         dy = self.y[i] - self.y[j]
-#         return xi, xj, dy
-
-
-# class TwinRegressor(nn.Module):
-#     def __init__(self, in_dim, rep_dim=64, out_dim=1):
-#         super().__init__()
-#         # shared representation
-#         self.h = nn.Sequential(
-#             nn.Linear(in_dim, 128), nn.ReLU(),
-#             nn.Linear(128, rep_dim), nn.ReLU()
-#         )
-#         # difference head
-#         self.g = nn.Linear(rep_dim, out_dim)
-    
-#     def forward(self, x1, x2):
-#         h1, h2 = self.h(x1), self.h(x2)
-#         return self.g(h1 - h2)  # predict y1 - y2
-
-# def tnnr_regression(supervised_df, inference_df,
-#                     rep_dim=64, lr=1e-3, epochs=200, batch_size=256,
-#                     device=None):
-#     # 1) Prepare data
-#     Xs = np.vstack(supervised_df['morph_coordinates'])
-#     ys = np.vstack(supervised_df['gene_coordinates'])
-#     Xte = np.vstack(inference_df['morph_coordinates'])
-#     yte = np.vstack(inference_df['gene_coordinates'])
-    
-#     device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-#     ds = TwinDataset(Xs, ys)
-#     loader = DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=True)
-    
-#     # 2) Build model
-#     in_dim = Xs.shape[1]
-#     out_dim = ys.shape[1]
-#     model = TwinRegressor(in_dim, rep_dim, out_dim).to(device)
-#     opt = torch.optim.Adam(model.parameters(), lr=lr)
-    
-#     # 3) Train on pairwise differences
-#     for epoch in range(epochs):
-#         total_loss = 0.0
-#         for x1, x2, dy in loader:
-#             x1, x2, dy = x1.to(device), x2.to(device), dy.to(device)
-#             pred = model(x1, x2)
-#             loss = F.mse_loss(pred, dy)
-#             opt.zero_grad(); loss.backward(); opt.step()
-#             total_loss += loss.item() * x1.size(0)
-#         # print(f"Epoch {epoch+1}/{epochs}, loss={total_loss/len(ds):.4f}")
-    
-#     # 4) Inference by ensembling differences to all anchors
-#     model.eval()
-#     Xs_t = torch.tensor(Xs, dtype=torch.float32, device=device)
-#     ys_t = torch.tensor(ys, dtype=torch.float32, device=device)
-#     Xq_t = torch.tensor(Xte, dtype=torch.float32, device=device)
-#     preds = []
-#     with torch.no_grad():
-#         for xq in Xq_t:
-#             # shape: (m, out_dim)
-#             diffs = model(xq.unsqueeze(0).repeat(len(Xs_t),1), Xs_t)
-#             estimates = ys_t + diffs
-#             mean_est = estimates.mean(dim=0)
-#             preds.append(mean_est.cpu().numpy())
-#     preds = np.vstack(preds)
-#     return preds, yte
-
-
-
 ##############################################
 #  Model G: Transductive SVM‑Regression (TSVR)
 ##############################################
@@ -1116,7 +1098,6 @@ class RankUpNet(nn.Module):
         arc_logits = self.arc_head(feat)
         return feat, y_pred, arc_logits
 
-
 def rankup_regression(
     sup_df,
     inf_df,
@@ -1229,47 +1210,6 @@ def rankup_regression(
     return preds_unl.cpu().numpy(), yu
 
 
-# def _simple_mlp(in_dim, out_dim):
-#     return nn.Sequential(nn.Linear(in_dim,256), nn.ReLU(),
-#                          nn.Linear(256,128), nn.ReLU(),
-#                          nn.Linear(128,out_dim))
-
-# def _pairwise_rank_loss(pred, y):
-#     # hinge on pairwise orderings
-#     dif_pred = pred[:,None]-pred[None,:]
-#     dif_true = y[:,None]-y[None,:]
-#     sign_true = np.sign(dif_true)
-#     margin = 0.1
-#     loss = np.maximum(0, margin - sign_true*dif_pred)
-#     return loss.mean()
-
-
-# def rankup_regression(sup_df, inf_df, lr=1e-3, epochs=200, alpha=0.3):
-#     Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32)
-#     ys = torch.tensor(np.vstack(sup_df['gene_coordinates']), dtype=torch.float32)
-#     Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']), dtype=torch.float32)
-#     yu = np.vstack(inf_df['gene_coordinates'])
-
-#     net = _simple_mlp(Xs.size(1), ys.size(1))
-#     opt = torch.optim.Adam(net.parameters(), lr=lr)
-#     for _ in range(epochs):
-#         idx = torch.randperm(Xs.size(0))[:32]
-#         xb, yb = Xs[idx], ys[idx]
-#         pred_b = net(xb)
-#         # basic MSE
-#         loss = F.mse_loss(pred_b, yb)
-#         # auxiliary ranking on the batch
-#         rank_loss = torch.tensor(_pairwise_rank_loss(pred_b.detach().numpy(),
-#                                                      yb.detach().numpy()),
-#                                  dtype=torch.float32)
-#         loss = loss + alpha*rank_loss
-#         opt.zero_grad(); loss.backward(); opt.step()
-
-#     with torch.no_grad():
-#         preds = net(Xu).numpy()
-#     return preds, yu
-
-
 ##################################################
 # Model J: AGDN
 ##################################################
@@ -1332,7 +1272,7 @@ class AGDN(nn.Module):
         return x
 
 
-def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, dropout=0.1, epochs=500, lr=1e-3, device=None):
+def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, dropout=0.1, epochs=200, lr=1e-3, device=None):
     device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
     sup_m = np.stack(supervised_df['morph_coordinates'].values)
     sup_g = np.stack(supervised_df['gene_coordinates'].values)
@@ -1380,95 +1320,110 @@ def evaluate_loss(predictions, actuals):
     # return np.mean(np.abs(predictions - actuals))
 
     # Mean Absolute Error
-    mae = np.mean(np.abs(predictions - actuals))
+    
     mae = mean_absolute_error(predictions, actuals)
     
-    # R^2 Score
-    r2 = r2_score(actuals, predictions)
+    # Mean Squared Error
+    mse = mean_squared_error(predictions, actuals)
     
-    return mae, r2
+    return mae, mse
 
     # Another Option: Calculate Euclidean distance for each sample (row-wise distance)
-    distances = np.linalg.norm(predictions - actuals, axis=1)  # Euclidean distance for each sample
+    # distances = np.linalg.norm(predictions - actuals, axis=1)  # Euclidean distance for each sample
+    # mae = np.mean(np.abs(predictions - actuals))
 
 
 ###########################
 # Main Experiment Routine #
 ###########################
-def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=0.05):
+def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=0.05, out_only=0.5):
 
     # Load dataset and images
     df, images = load_dataset(csv_path, image_folder, n_families, n_samples)
-    gene_samples, supervised_samples, inference_samples = get_data_splits(df, supervised=supervised)
+    gene_samples, supervised_samples, inference_samples = get_data_splits(df, supervised=supervised, out_only=out_only)
 
     # Load pre-trained models
     barcode_tokenizer, barcode_model, image_model, image_transform = load_pretrained_models()
 
-    # Encode supervised data
-    supervised_samples = encode_images_for_samples(supervised_samples, images, image_model, image_transform)
     supervised_samples = encode_genes_for_samples(supervised_samples, barcode_tokenizer, barcode_model)
-
-    # Encode inference data
-    inference_samples = encode_images_for_samples(inference_samples, images, image_model, image_transform)
-    inference_samples = encode_genes_for_samples(inference_samples, barcode_tokenizer, barcode_model)
-
-    inference_plus_supervised = pd.concat([inference_samples, supervised_samples], axis=0)
-
-    # Encode gene data
     gene_samples = encode_genes_for_samples(gene_samples, barcode_tokenizer, barcode_model)
+    gene_plus_supervised = pd.concat([gene_samples, supervised_samples], axis=0)
+
+    supervised_samples = encode_images_for_samples(supervised_samples, images, image_model, image_transform)
+    inference_samples = encode_genes_for_samples(inference_samples, barcode_tokenizer, barcode_model)
+    inference_samples = encode_images_for_samples(inference_samples, images, image_model, image_transform)
+    inference_plus_supervised = pd.concat([inference_samples, supervised_samples], axis=0)
 
     # Perform Bridged Clustering
     image_kmeans, gene_kmeans, _, gene_features, image_clusters, gene_clusters = perform_clustering(
-        inference_plus_supervised, gene_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, n_families
+        inference_plus_supervised, gene_plus_supervised, images, image_model, image_transform, barcode_tokenizer, barcode_model, n_families
     )
 
-    # Build the decision matrix using supervised samples
-    decision_matrix = build_decision_matrix(supervised_samples, images, image_model, image_transform,
-                                            barcode_tokenizer, barcode_model, image_kmeans, gene_kmeans, n_families)
+    ami_image = adjusted_mutual_info_score(image_clusters, inference_plus_supervised['family'].values)
+    ami_gene = adjusted_mutual_info_score(gene_clusters, gene_plus_supervised['family'].values)
+    print(f"Adjusted Mutual Information (Image): {ami_image}")
+    print(f"Adjusted Mutual Information (Gene): {ami_gene}")
+    inference_plus_supervised['image_cluster'] = image_clusters
+    gene_plus_supervised['gene_cluster'] = gene_clusters
+
+    true_decision_vector = build_true_decision_vector(inference_plus_supervised, gene_plus_supervised, n_families)
+    decision_matrix = build_decision_matrix(supervised_samples, image_clusters, gene_clusters, n_families)
+    decision_accuracy = np.mean(true_decision_vector == decision_matrix)
+    print(f"Decision: {decision_matrix}")
+    print(f"Oracle Decision: {true_decision_vector}")
+    print(f"Decision Accuracy: {decision_accuracy}")
+
 
     # Compute centroids for gene clusters using the gene samples
-    centroids = compute_gene_centroids(gene_samples, gene_features, gene_kmeans, n_families)
+    centroids = compute_gene_centroids(gene_plus_supervised, gene_features, gene_clusters, n_families)
 
     # Perform inference using Bridged Clustering
-    inference_samples_bc = perform_inference(inference_samples, images, image_model, image_transform,
-                                             barcode_tokenizer, barcode_model, image_kmeans, decision_matrix, centroids)
+    inference_samples_bc = perform_inference(inference_samples, image_clusters, barcode_tokenizer, barcode_model, image_kmeans, decision_matrix, centroids)
 
 
     bkm_predictions, bkm_actuals = bkm_regression(inference_samples_bc)
 
     ### Unlike BKM, we don't call a series of functions for the basline models, instead we put them in the helper "regression" functions
     knn_predictions, knn_actuals = knn_regression(supervised_samples, inference_samples, n_neighbors=max(1, int(n_samples * supervised)))
+    print("starting mean teacher")
     mt_predictions, mt_actuals = mean_teacher_regression(supervised_samples, inference_samples)
-    xgb_preds, xgb_actuals = xgboost_regression(supervised_samples, inference_samples)
+    # print("starting xgboost")
+    # xgb_preds, xgb_actuals = xgboost_regression(supervised_samples, inference_samples)
+    print("starting laprls")
     lap_preds, lap_actuals = laprls_regression(supervised_samples, inference_samples)
+    print("starting tsvr")
     tsvr_preds, tsvr_actuals = tsvr_regression(supervised_samples, inference_samples)
+    print("starting tnnr")
     tnnr_preds, tnnr_actuals = tnnr_regression(supervised_samples, inference_samples)
+    print("starting ucvme")
     ucv_preds, ucv_actuals = ucvme_regression(supervised_samples, inference_samples)
-    rank_preds, rank_actuals = rankup_regression(supervised_samples, inference_samples)
+    # print("starting rankup")
+    # rank_preds, rank_actuals = rankup_regression(supervised_samples, inference_samples)
+    print("starting agdn")
     agdn_preds, agdn_actuals = agdn_regression(supervised_samples, inference_samples)
 
     # Compute errors
     bkm_error, bkm_r2 = evaluate_loss(bkm_predictions, bkm_actuals)
     knn_error, knn_r2 = evaluate_loss(knn_predictions, knn_actuals)
     mean_teacher_error, mean_teacher_r2 = evaluate_loss(mt_predictions, mt_actuals)
-    xgb_error, xgb_r2 = evaluate_loss(xgb_preds, xgb_actuals)
+    # xgb_error, xgb_r2 = evaluate_loss(xgb_preds, xgb_actuals)
     lap_error, lap_r2 = evaluate_loss(lap_preds, lap_actuals)
     tsvr_error, tsvr_r2 = evaluate_loss(tsvr_preds, tsvr_actuals)
     tnnr_error, tnnr_r2 = evaluate_loss(tnnr_preds, tnnr_actuals)
     ucv_error, ucv_r2 = evaluate_loss(ucv_preds, ucv_actuals)
-    rank_error, rank_r2 = evaluate_loss(rank_preds, rank_actuals)
+    # rank_error, rank_r2 = evaluate_loss(rank_preds, rank_actuals)
     agdn_error, agdn_r2 = evaluate_loss(agdn_preds, agdn_actuals)
 
     # Print results
     print(f"Bridged Clustering Error: {bkm_error}")
     print(f"KNN Error: {knn_error}")
     print(f"Mean Teacher Error: {mean_teacher_error}")
-    print(f"XGBoost Error: {xgb_error}")
+    # print(f"XGBoost Error: {xgb_error}")
     print(f"Laplacian RLS Error: {lap_error}")
     print(f"TSVR Error: {tsvr_error}")
     print(f"TNNR Error: {tnnr_error}")
     print(f"UCVME Error: {ucv_error}")
-    print(f"RankUp Error: {rank_error}")
+    # print(f"RankUp Error: {rank_error}")
     print(f"AGDN Error: {agdn_error}")
     # Store results in a dictionary
 
@@ -1476,12 +1431,12 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
         'BKM': bkm_error,
         'KNN': knn_error,
         'Mean Teacher': mean_teacher_error,
-        'XGBoost': xgb_error,
+        # 'XGBoost': xgb_error,
         'Laplacian RLS': lap_error,
         'TSVR': tsvr_error,
         'TNNR': tnnr_error,
         'UCVME': ucv_error,
-        'RankUp': rank_error,
+        # 'RankUp': rank_error,
         'AGDN': agdn_error
     }
 
@@ -1489,38 +1444,42 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
         'BKM': bkm_r2,
         'KNN': knn_r2,
         'Mean Teacher': mean_teacher_r2,
-        'XGBoost': xgb_r2,
+        # 'XGBoost': xgb_r2,
         'Laplacian RLS': lap_r2,
         'TSVR': tsvr_r2,
         'TNNR': tnnr_r2,
         'UCVME': ucv_r2,
-        'RankUp': rank_r2,
+        # 'RankUp': rank_r2,
         'AGDN': agdn_r2
     }
     
 
-    return errors, rs
-
+    return errors, rs, ami_image, ami_gene, decision_accuracy
 
 
 
 if __name__ == '__main__':
-    csv_path = '../bioscan5m/test_data.csv'
-    image_folder = '../bioscan5m/test_images'
+    csv_path = 'test_data.csv'
+    image_folder = 'test_images'
 
-    n_families_values = [5]
-    n_samples_values = [50]
-    supervised_values = [1]
-    models = ['BKM', 'KNN', 'Mean Teacher', 'XGBoost', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'RankUp', 'AGDN']
-    # models = ['BKM', 'XGBoost', 'RankUp', 'AGDN']
+    experiment_key = "038"
 
-    n_trials = 3
+    n_families_values = [3]
+    n_samples_values = [100]
+    supervised_values = [0.04]
+    out_only_values = [0.2]
+    models = ['BKM', 'KNN', 'Mean Teacher', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'AGDN']
+
+    n_trials = 20
     
 
     # Initialize a 5D matrix to store results for each experiment
     # Dimensions: [n_families, n_samples, supervised, models, trials]
-    results_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(models), n_trials))
-    rs_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(models), n_trials))
+    results_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(out_only_values), len(models), n_trials))
+    rs_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(out_only_values), len(models), n_trials))
+    ami_image_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(out_only_values), n_trials))
+    ami_gene_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(out_only_values), n_trials))
+    decesion_matrix = np.empty((len(n_families_values), len(n_samples_values), len(supervised_values), len(out_only_values), n_trials))
 
     # Initialize a dictionary to store average results for each experiment setting
     average_results = {}
@@ -1530,45 +1489,42 @@ if __name__ == '__main__':
     for n_families_idx, n_families in enumerate(n_families_values):
         for n_samples_idx, n_samples in enumerate(n_samples_values):
             for supervised_idx, supervised in enumerate(supervised_values):
-                # Initialize a dictionary to store cumulative errors for each model
-                cumulative_errors = {model: 0 for model in models}
-                cumulative_rs = {model: 0 for model in models}
-                
-                for trial in range(n_trials):
-                    print(f"Running trial {trial + 1} for n_families={n_families}, n_samples={n_samples}, supervised={supervised/n_samples}")
-                    errors,rs = run_experiment(csv_path, image_folder, n_families=n_families, n_samples=n_samples, supervised=supervised/n_samples)
+                for out_only_idx, out_only in enumerate(out_only_values):
+                    # Initialize a dictionary to store cumulative errors for each model
+                    cumulative_errors = {model: 0 for model in models}
+                    cumulative_rs = {model: 0 for model in models}
                     
-                    # Accumulate errors for each model
-                    for model_name in models:
-                        cumulative_errors[model_name] += errors[model_name]
-                        cumulative_rs[model_name] += rs[model_name]
+                    for trial in range(n_trials):
+                        print(f"Running trial {trial + 1} for n_families={n_families}, n_samples={n_samples}, supervised={supervised}, out_only={out_only}")
+                        errors,rs,ami_image,ami_gene,decision_accuracy = \
+                            run_experiment(csv_path, image_folder, n_families=n_families, n_samples=n_samples, supervised=supervised, out_only=out_only)
+
+                        ami_image_matrix[n_families_idx, n_samples_idx, supervised_idx, out_only_idx, trial] = ami_image
+                        ami_gene_matrix[n_families_idx, n_samples_idx, supervised_idx, out_only_idx, trial] = ami_gene
+                        decesion_matrix[n_families_idx, n_samples_idx, supervised_idx, out_only_idx, trial] = decision_accuracy
                         
-                    # Store results in the matrix
-                    for model_idx, model_name in enumerate(models):
-                        results_matrix[n_families_idx, n_samples_idx, supervised_idx, model_idx, trial] = errors[model_name]
-                        rs_matrix[n_families_idx, n_samples_idx, supervised_idx, model_idx, trial] = rs[model_name]
+                        # Accumulate errors for each model
+                        for model_name in models:
+                            cumulative_errors[model_name] += errors[model_name]
+                            cumulative_rs[model_name] += rs[model_name]
+                            
+                        # Store results in the matrix
+                        for model_idx, model_name in enumerate(models):
+                            results_matrix[n_families_idx, n_samples_idx, supervised_idx, out_only_idx, model_idx, trial] = errors[model_name]
+                            rs_matrix[n_families_idx, n_samples_idx, supervised_idx, out_only_idx, model_idx, trial] = rs[model_name]
 
-                    # Save the results matrix to a file
-                    np.save('results/total_results_matrix.npy', results_matrix)
-                    np.save('results/rs_matrix.npy', rs_matrix)
-                
-                # Compute average errors for each model
-                average_errors = {model: cumulative_errors[model] / n_trials for model in models}
-                average_rs = {model: cumulative_rs[model] / n_trials for model in models}
-                
-                # Store average results for this experiment setting
-                experiment_key = (n_families, n_samples, supervised)
-                average_results[experiment_key] = average_errors
-                average_rs_results[experiment_key] = average_rs
-
-                # Write the average results to a file
-                with open('results/average_results.txt', 'a') as f:
-                    f.write(f"Experiment Setting: n_families={n_families}, n_samples={n_samples}, supervised={supervised}\n")
-                    for model_name, avg_error in average_errors.items():
-                        f.write(f"{model_name}: {avg_error:.4f}\n")
-                    f.write("\n")
+                        # Save the results matrix to a file
+                        np.save(f"results/mae_matrix_{experiment_key}.npy", results_matrix)
+                        np.save(f"results/mse_matrix_{experiment_key}.npy", rs_matrix)
+                        np.save(f"results/ami_image_matrix_{experiment_key}.npy", ami_image_matrix)
+                        np.save(f"results/ami_gene_matrix_{experiment_key}.npy", ami_gene_matrix)
+                        np.save(f"results/decision_matrix_{experiment_key}.npy", decesion_matrix)
+                    
 
     # Save the results matrix to a file
-    np.save('results/total_results_matrix_010.npy', results_matrix)
-    np.save('results/rs_matrix_009.npy', rs_matrix)
+    np.save(f"results/mae_matrix_{experiment_key}.npy", results_matrix)
+    np.save(f"results/mse_matrix_{experiment_key}.npy", rs_matrix)
+    np.save(f"results/ami_image_matrix_{experiment_key}.npy", ami_image_matrix)
+    np.save(f"results/ami_gene_matrix_{experiment_key}.npy", ami_gene_matrix)
+    np.save(f"results/decision_matrix_{experiment_key}.npy", decesion_matrix)
     print("Experiment completed.")
