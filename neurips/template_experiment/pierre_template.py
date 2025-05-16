@@ -11,6 +11,7 @@ from sklearn.metrics import r2_score
 from scipy.stats import gaussian_kde
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.random_projection import GaussianRandomProjection
+from sklearn.metrics import pairwise_distances
 import torch
 import torchvision
 from torchvision import models, transforms
@@ -27,11 +28,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric
 from torch_geometric.nn import MessagePassing
-from torch_geometric.data import Data
+
 from torch.optim import Adam
 import torch_geometric.utils
 from tqdm import tqdm
 from collections import Counter
+
+
+
+
+from sklearn.neighbors import NearestNeighbors
 
 warnings.filterwarnings("ignore")
 torch.manual_seed(42)
@@ -49,8 +55,8 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = [3, 4, 5] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.05, 0.1] # supervised sample fractions (0.0205 = 1/49)
+N_CLUSTERS      = [6, 8, 10] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+SUP_FRACS       = [0.02051] # supervised sample fractions (0.0205 = 1/49)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 3
 Y_DIM_REDUCED   = 128   # target dim for random projection
@@ -206,6 +212,14 @@ def compute_centroids(Y, y_lab, n_clusters):
 def predict_bridge(x_lab, mapping, centroids):
     return centroids[mapping[x_lab]]
 
+def responsibilities(y, centroids, tau):
+    # y:   (D,)   one sample’s bridged‐continuous prediction
+    # centroids: (K, D)
+    dists  = np.linalg.norm(centroids - y[None], axis=1)      # (K,)
+    logits = - dists / tau
+    exp    = np.exp(logits - logits.max())
+    return exp / exp.sum()       
+
 #############################
 # Baseline: KNN
 #############################
@@ -213,6 +227,85 @@ def knn_baseline(X_train, Y_train, X_test, k=3):
     knn = KNeighborsRegressor(n_neighbors=k)
     knn.fit(X_train, Y_train)
     return knn.predict(X_test)
+
+#############################
+# Baseline: GNN
+#############################
+
+class GNNClusterBridge(nn.Module):
+    def __init__(self, in_dim, hidden_dim, n_clusters, tau=1.0):
+        super().__init__()
+        self.conv1 = GCNConv(in_dim, hidden_dim)
+        self.conv2 = GCNConv(hidden_dim, hidden_dim)
+        self.classifier = nn.Linear(hidden_dim, n_clusters)
+        self.tau = tau
+
+    def forward(self, x, edge_index):
+        h = F.relu(self.conv1(x, edge_index))
+        h = F.relu(self.conv2(h, edge_index))
+        logits = self.classifier(h)             # [N, K]
+        return F.softmax(logits / self.tau, dim=-1)  # soft assignments p
+
+def run_gnn_bridged(X, Y_true, sup_mask, n_clusters, edge_index, tau=1.0):
+    """
+    X: np.ndarray [N×D_x]
+    Y_true: np.ndarray [N×D_y]
+    sup_mask: boolean mask [N]
+    edge_index: LongTensor [2×E] for PyG
+    returns Y_pred: np.ndarray [N×D_y]
+    """
+    # 1) Y‐clustering on sup only (hard) to get centroids
+    from sklearn.cluster import KMeans
+    rp = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+    Yp = rp.fit_transform(Y_true)
+    y_lab = np.empty(len(Yp), int)
+    y_lab[sup_mask] = KMeans(n_clusters, random_state=42).fit_predict(Yp[sup_mask])
+    centroids = np.vstack([
+        Y_true[sup_mask][y_lab[sup_mask] == c].mean(0)
+        for c in range(n_clusters)
+    ])  # [K×D_y]
+
+    # 2) Build PyG Data and train GNN
+    data = Data(
+        x=torch.from_numpy(X).float(),
+        edge_index=edge_index
+    )
+    model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=128, n_clusters=n_clusters, tau=tau)
+    opt = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+    for epoch in range(50):
+        model.train()
+        p = model(data.x, data.edge_index)        # [N,K]
+        loss = F.cross_entropy(
+            torch.log(p[sup_mask]), 
+            torch.from_numpy(y_lab[sup_mask]).long()
+        )
+        opt.zero_grad(); loss.backward(); opt.step()
+
+    # 3) Inference
+    model.eval()
+    with torch.no_grad():
+        p = model(data.x, data.edge_index)       # [N,K]
+    # 4) Bridge: weighted sum of centroids
+    Y_pred = p @ torch.from_numpy(centroids).float()  # [N, D_y]
+    return Y_pred.cpu().numpy()
+
+import skfuzzy as fuzz
+def fuzzy_cluster(X, n_clusters, m=2.0, error=1e-5, maxiter=1000):
+    """
+    Run fuzzy c‑means on X (N×D) and return:
+      - centers: (n_clusters×D)
+      - u: membership matrix (n_clusters×N)
+      - hard_labels: argmax over u (N,)
+    """
+    # skfuzzy wants features×samples
+    X_T = X.T
+    centers, u, _, _, _, _, _ = fuzz.cluster.cmeans(
+        X_T, c=n_clusters, m=m,
+        error=error, maxiter=maxiter
+    )
+    hard = np.argmax(u, axis=0)
+    return centers, u, hard
 
 # Model C: Mean Teacher Model
 ##################################
@@ -1157,7 +1250,7 @@ def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, d
 #############################
 # Single‐trial Experiment
 #############################
-def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters):
+def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters, edge_index):
     Y_true = np.vstack(df['ingredient_vec'].values)               # (N, D)
     rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
     Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
@@ -1206,6 +1299,25 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     Yb_all    = predict_bridge(x_lab, mapping, centroids)
     # bkm_mae   = mean_absolute_error(Y_inf, Yb_all[inf_mask])
 
+    Y_hard_inf = Yb_all[inf_mask]
+    Y_true_inf = Y_true[inf_mask]
+
+    # choose tau heuristically
+    # from sklearn.metrics import pairwise_distances
+    cd   = pairwise_distances(centroids)
+    tau  = np.median(cd[cd>0])
+
+    # compute Y_soft for the inference set
+    Y_soft_inf = []
+    for yc in Yb_all[inf_mask]:
+        r = responsibilities(yc, centroids, tau)
+        Y_soft_inf.append(r.dot(centroids))
+    Y_soft_inf = np.vstack(Y_soft_inf)
+
+    # # evaluate both
+    # mae_hard = mean_absolute_error(Y_true_inf, Y_hard_inf)
+    # mae_soft = mean_absolute_error(Y_true_inf, Y_soft_inf)
+
     # — KNN
     Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf)
     # knn_mae   = mean_absolute_error(Y_inf, Yk_inf)
@@ -1236,7 +1348,8 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 
     # now compute MAE on each:
     results = {
-      "BKM":       mean_absolute_error(Y_inf,    Yb_all[inf_mask]),
+      "BKM":       mean_absolute_error(Y_true[inf_mask], Y_hard_inf),
+      "BKM_soft":  mean_absolute_error(Y_true[inf_mask], Y_soft_inf),
       "KNN":       mean_absolute_error(Y_true[inf_mask],    Yk_inf),
       "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
       "XGBoost":   mean_absolute_error(xgb_y,   xgb_preds),
@@ -1248,21 +1361,36 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
       "AGDN":      mean_absolute_error(agdn_y,agdn_preds),
     }
 
+    # GNN‐bridge
+    Y_gnn = run_gnn_bridged(
+        X, Y_true, sup_mask, n_clusters, edge_index, tau=0.5
+    )
+    results["GNNBridge"] = mean_absolute_error(Y_true[inf_mask], Y_gnn[inf_mask])
 
+    # 5) Fuzzy‐bridge (soft)
+    centers_x, u_x, hard_x = fuzzy_cluster(X, n_clusters, m=2.0)
+    # re‑use the SAME Y‑centroids above; membership u_x tells us soft weights
+    # for each sample i, cluster c: u_x[c,i]
+    # so the soft prediction is ∑₍c₌0→K₋₁₎ u_x[c,i] * centroids[c]
+    Y_soft = u_x.T.dot(centroids)
+
+    results["FuzzyBridge"] = mean_absolute_error(Y_true[inf_mask], Y_soft[inf_mask])
 
     return results, sup_mask
 
 #############################
 # Multi‐trial Evaluation
 #############################
-def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
+def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters, edge_index, X_all):
     # summary of all the models for this cluster number
     # 1) initialize an empty DataFrame
     summary = {}
-    X       = encode_images(df, IMAGE_FOLDER, model, tfm)
+    # X       = encode_images(df, IMAGE_FOLDER, model, tfm)
+    X     = X_all
 
     model_names = [
       "BKM",
+      "BKM_soft",
       "KNN",
       "MeanTeacher",
       "XGBoost",
@@ -1272,6 +1400,8 @@ def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
       "UCVME",
       "RankUp",
       "AGDN",
+      "GNNBridge",
+        "FuzzyBridge",
     ]
 
     for sup_frac in SUP_FRACS:
@@ -1286,7 +1416,7 @@ def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
                 # 3) run your experiment; assume it now returns (results_dict, sup_mask)
                 results, sup_mask = run_experiment(
                     df, model, tfm, recipes, ing2idx, vocab_size,
-                    X, sup_frac, OUT_FRAC, n_clusters
+                    X, sup_frac, OUT_FRAC, n_clusters, edge_index
                 )
                 # results is a dict: {"BKM":0.01, "KNN":0.02, ...}
 
@@ -1371,27 +1501,32 @@ def bubble_plot(df_results,
 def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
     all_rows = []
     # if want to do randomization:
-    # all_cuisines = df['cuisine_type'].unique()
+    all_cuisines = df['cuisine_type'].unique()
     for n_clusters in N_CLUSTERS:
         # select exactly the cuisines you want for this number of clusters
         # determinstic
         cuisines = []
-        if n_clusters == 3:
-            cuisines = ['beef_tacos', 'pizza', 'ramen']
-        elif n_clusters == 4:
-            cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie']
-        else:  # n_clusters == 5
-            cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie', 'strawberry_shortcake']
+        # if n_clusters == 3:
+        #     cuisines = ['beef_tacos', 'pizza', 'ramen']
+        # elif n_clusters == 4:
+        #     cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie']
+        # else:  # n_clusters == 5
+        #     cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie', 'strawberry_shortcake']
         # or randomize
-        # cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
+        cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
         print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
 
         # create a fresh DataFrame for this run
         df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+
+        X_all = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+        knn = NearestNeighbors(n_neighbors=10, algorithm="auto").fit(X_all)
+        adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
+        edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
         
         print(f"Running with {n_clusters} clusters on {len(df_run)} recipes")
 
-        summary = run_all_trials(df_run, model, tfm, recipes, ing2idx, D, n_clusters)
+        summary = run_all_trials(df_run, model, tfm, recipes, ing2idx, D, n_clusters, edge_index, X_all)
         
         print(f"\n=== Summary for all proportions ({n_clusters} clusters) ===")
         print(pd.DataFrame(summary).T)
@@ -1408,7 +1543,7 @@ def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
 
     df_results = pd.DataFrame(all_rows)
     bubble_plot(df_results,
-                model_order=["BKM","KNN","MeanTeacher","XGBoost","LapRLS","TSVR","TNNR","UCVME","RankUp","AGDN"])
+                model_order=["BKM","BKM_soft","GNNBridge","FuzzyBridge", "KNN","MeanTeacher","XGBoost","LapRLS","TSVR","TNNR","UCVME","RankUp","AGDN"])
 #############################
 # Main
 #############################
