@@ -56,7 +56,7 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = [3, 4, 5] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+N_CLUSTERS      = [2, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
 SUP_FRACS       = [0.0205, 0.05, 0.1] # supervised sample fractions (0.0205 = 1/49)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 3
@@ -224,7 +224,8 @@ def responsibilities(y, centroids, tau):
 #############################
 # Baseline: KNN
 #############################
-def knn_baseline(X_train, Y_train, X_test, k=3):
+def knn_baseline(X_train, Y_train, X_test, k=1):
+    k = max(k, len(X_train))
     knn = KNeighborsRegressor(n_neighbors=k)
     knn.fit(X_train, Y_train)
     return knn.predict(X_test)
@@ -275,7 +276,7 @@ def run_gnn_bridged(X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, t
     model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=128, n_clusters=n_clusters, tau=tau)
     opt = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-    for epoch in range(50):
+    for epoch in range(200):
         model.train()
         p = model(data.x, data.edge_index)        # [N,K]
         loss = F.cross_entropy(
