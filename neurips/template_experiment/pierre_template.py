@@ -3,6 +3,7 @@ import random
 import warnings
 
 import numpy as np
+import itertools
 import pandas as pd
 from PIL import Image
 from sklearn.cluster import KMeans
@@ -56,10 +57,10 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = [2, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.05, 0.1] # supervised sample fractions (0.0205 = 1/49)
+N_CLUSTERS      = [3] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+SUP_FRACS       = [0.0205] # supervised sample fractions (0.0205 = 1/49)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
-N_TRIALS        = 3
+N_TRIALS        = 10
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
 #############################
@@ -225,7 +226,6 @@ def responsibilities(y, centroids, tau):
 # Baseline: KNN
 #############################
 def knn_baseline(X_train, Y_train, X_test, k=1):
-    k = max(k, len(X_train))
     knn = KNeighborsRegressor(n_neighbors=k)
     knn.fit(X_train, Y_train)
     return knn.predict(X_test)
@@ -239,16 +239,25 @@ class GNNClusterBridge(nn.Module):
         super().__init__()
         self.conv1 = GCNConv(in_dim, hidden_dim)
         self.conv2 = GCNConv(hidden_dim, hidden_dim)
+        self.conv3 = GCNConv(hidden_dim, hidden_dim)
         self.classifier = nn.Linear(hidden_dim, n_clusters)
         self.tau = tau
 
     def forward(self, x, edge_index):
         h = F.relu(self.conv1(x, edge_index))
         h = F.relu(self.conv2(h, edge_index))
+        h = F.relu(self.conv3(h, edge_index))
         logits = self.classifier(h)             # [N, K]
         return F.softmax(logits / self.tau, dim=-1)  # soft assignments p
 
-def run_gnn_bridged(X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, tau=1.0):
+def run_gnn_bridged( X, y_lab, sup_mask,
+    n_clusters,
+    edge_index,
+    centroids,
+    tau,
+    hidden_dim,
+    lr,
+    epochs):
     """
     X: np.ndarray [N×D_x]
     Y_true: np.ndarray [N×D_y]
@@ -257,31 +266,21 @@ def run_gnn_bridged(X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, t
     edge_index: LongTensor [2×E] for PyG
     returns Y_pred: np.ndarray [N×D_y]
     """
-    # 1) Y‐clustering on sup only (hard) to get centroids
-    from sklearn.cluster import KMeans
-    # rp = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
-    # Yp = rp.fit_transform(Y_true)
-    # y_lab = np.empty(len(Yp), int)
-    # y_lab[sup_mask] = KMeans(n_clusters, random_state=42).fit_predict(Yp[sup_mask])
-    # centroids = np.vstack([
-    #     Y_true[sup_mask][y_lab[sup_mask] == c].mean(0)
-    #     for c in range(n_clusters)
-    # ])  # [K×D_y]
 
     # 2) Build PyG Data and train GNN
     data = Data(
         x=torch.from_numpy(X).float(),
         edge_index=edge_index
     )
-    model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=128, n_clusters=n_clusters, tau=tau)
-    opt = torch.optim.Adam(model.parameters(), lr=1e-4)
+    model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=hidden_dim, n_clusters=n_clusters, tau=tau)
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-5)
 
-    for epoch in range(200):
+    for epoch in range(epochs):
         model.train()
         p = model(data.x, data.edge_index)        # [N,K]
         loss = F.cross_entropy(
-            torch.log(p[mask]), 
-            torch.from_numpy(y_lab[mask]).long()
+            torch.log(p.clamp(min=1e-10)[sup_mask]), 
+            torch.from_numpy(y_lab[sup_mask]).long()
         )
         opt.zero_grad(); loss.backward(); opt.step()
 
@@ -1286,14 +1285,14 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     print(f"  → Y-cluster purity: {y_p:.3f},  NMI: {nmi_y:.3f}")
 
     # wrap into the small DataFrames MT expects
-    df_sup = pd.DataFrame({
-        'image_coordinates': list(X_sup),
-        'ingredient_coordinates' : list(Y_sup)
-    })
-    df_inf = pd.DataFrame({
-        'image_coordinates': list(X_inf),
-        'ingredient_coordinates' : list(Y_inf)
-    })
+    # df_sup = pd.DataFrame({
+    #     'image_coordinates': list(X_sup),
+    #     'ingredient_coordinates' : list(Y_sup)
+    # })
+    # df_inf = pd.DataFrame({
+    #     'image_coordinates': list(X_inf),
+    #     'ingredient_coordinates' : list(Y_inf)
+    # })
 
     # 4) compute our three baselines
     # — BKM
@@ -1307,15 +1306,15 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 
     # choose tau heuristically
     # from sklearn.metrics import pairwise_distances
-    cd   = pairwise_distances(centroids)
-    tau  = np.median(cd[cd>0])
+    # cd   = pairwise_distances(centroids)
+    # tau  = np.median(cd[cd>0])
 
     # compute Y_soft for the inference set
-    Y_soft_inf = []
-    for yc in Yb_all[inf_mask]:
-        r = responsibilities(yc, centroids, tau)
-        Y_soft_inf.append(r.dot(centroids))
-    Y_soft_inf = np.vstack(Y_soft_inf)
+    # Y_soft_inf = []
+    # for yc in Yb_all[inf_mask]:
+    #     r = responsibilities(yc, centroids, tau)
+    #     Y_soft_inf.append(r.dot(centroids))
+    # Y_soft_inf = np.vstack(Y_soft_inf)
 
     # # evaluate both
     # mae_hard = mean_absolute_error(Y_true_inf, Y_hard_inf)
@@ -1323,51 +1322,51 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 
     # - GNN-bridge
     Y_gnn = run_gnn_bridged(
-        X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, tau=0.5
+        X, y_lab, sup_mask, n_clusters, edge_index, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=2000
     )
 
     # — KNN
-    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf)
+    # Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
     # knn_mae   = mean_absolute_error(Y_inf, Yk_inf)
 
-    # — Mean Teacher
-    mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
+    # # — Mean Teacher
+    # mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
 
-    # 3) XGBoost
-    xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
+    # # 3) XGBoost
+    # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
 
-    # 4) LapRLS
-    lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+    # # 4) LapRLS
+    # lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
 
-    # 5) Twin-NN regressor
-    tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
+    # # 5) Twin-NN regressor
+    # tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
 
-    # 6) Transductive SVR
-    tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
+    # # 6) Transductive SVR
+    # tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
 
-    # 7) UCVME
-    ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
+    # # 7) UCVME
+    # ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
 
-    # 8) RankUp
-    rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
+    # # 8) RankUp
+    # rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
 
-    # 9) AGDN
-    agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
+    # # 9) AGDN
+    # agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
 
     # now compute MAE on each:
     results = {
-      "BKM":       mean_absolute_error(Y_true[inf_mask], Y_hard_inf),
-      "BKM_soft":  mean_absolute_error(Y_true[inf_mask], Y_soft_inf),
-      "GNNBridge": mean_absolute_error(Y_true[inf_mask], Y_gnn[inf_mask]),
-      "KNN":       mean_absolute_error(Y_true[inf_mask],    Yk_inf),
-      "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
-      "XGBoost":   mean_absolute_error(xgb_y,   xgb_preds),
-      "LapRLS":    mean_absolute_error(lap_y,   lap_preds),
-      "TNNR":      mean_absolute_error(tnnr_y, tnnr_preds),
-      "TSVR":      mean_absolute_error(tsvr_y, tsvr_preds),
-      "UCVME":     mean_absolute_error(ucv_y,  ucv_preds),
-      "RankUp":    mean_absolute_error(rank_y, rank_preds),
-      "AGDN":      mean_absolute_error(agdn_y,agdn_preds),
+      "BKM":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
+    #   "BKM_soft":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
+      "GNNBridge":   mean_absolute_error(Y_true_inf,    Y_gnn[inf_mask]),
+    #   "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
+    #   "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
+    #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
+    #   "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
+    #   "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
+    #   "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
+    #   "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
+    #   "RankUp":      mean_absolute_error(rank_y,        rank_preds),
+    #   "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
     }
 
     # # GNN‐bridge
@@ -1461,8 +1460,18 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
       - model_names: the list of model keys, in the order used in loss_data
     """
     model_names = [
-      "BKM","BKM_soft","KNN","MeanTeacher","XGBoost","LapRLS",
-      "TSVR","TNNR","UCVME","RankUp","AGDN","GNNBridge"
+      "BKM",
+    #   "BKM_soft",
+      "GNNBridge",
+    #   "KNN",
+    #   "MeanTeacher",
+    #   "XGBoost",
+    #   "LapRLS",
+    #   "TSVR",
+    #   "TNNR",
+    #   "UCVME",
+    #   "RankUp",
+    #   "AGDN",
     ]
     num_h1 = len(cluster_vals)
     num_h2 = len(sup_fracs)
@@ -1475,12 +1484,12 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         all_cuisines = df['cuisine_type'].unique()
         cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
         df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
-
+        print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
         # pre‐encode once per df_run
         X_all = encode_images(df_run, IMAGE_FOLDER, model, tfm)
         # build your GNN graph once
         from sklearn.neighbors import NearestNeighbors
-        knn = NearestNeighbors(n_neighbors=10, algorithm="auto").fit(X_all)
+        knn = NearestNeighbors(n_neighbors=22, algorithm="auto").fit(X_all)
         adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
         edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
 
@@ -1723,9 +1732,9 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
       - model_labels: List of labels for models (default: "Model 1", "Model 2", ...).
       - log_scale: Boolean, if True the y-axis will be set to a logarithmic scale.
     """
-    # Remove the wrapper dimension, if present.
-    if loss_data.shape[0] == 1:
-        loss_data = loss_data[0]  # Now shape should be (5, 4, 5, 20)
+    # # Remove the wrapper dimension, if present.
+    # if loss_data.shape[0] == 1:
+    #     loss_data = loss_data[0]  # Now shape should be (5, 4, 5, 20)
         
     # Unpack shape
     num_h1, num_h2, num_models, num_trials = loss_data.shape  # 5,4,5,20
@@ -1739,7 +1748,24 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
         model_labels = [f'Model {i+1}' for i in range(num_models)]
     
     # Define a color for each model (consistent across all subplots)
-    colors = ['lightblue', 'lightgreen', 'salmon', 'violet', 'wheat', 'lightgrey', 'lightpink', 'lightyellow', 'lightcyan', 'lightcoral', 'lightsteelblue', 'lightgoldenrodyellow', 'lightseagreen', 'lightsalmon', 'lightblue', 'lightgreen']
+    colors = [
+        'lightblue', 
+        'lightgreen', 
+        'salmon', 
+        'violet', 
+        'wheat', 
+        'lightgrey', 
+        'lightpink', 
+        'lightyellow', 
+        'lightcyan', 
+        'lightcoral', 
+        'lightsteelblue', 
+        'lightgoldenrodyellow', 
+        'lightseagreen', 
+        'lightsalmon', 
+        'lightblue', 
+        'lightgreen'
+    ]
 
     # Create the figure with one subplot per hyperparameter 1 value.
     fig, axes = plt.subplots(nrows=num_h1, ncols=1, figsize=(12, 4 * num_h1), sharex=False)
@@ -1796,6 +1822,128 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
     plt.show()
 
 
+#############################
+# Fine-Tuning
+#############################
+def train_and_eval_gnn(
+    X, y_lab, sup_mask,
+    edge_index,
+    centroids,
+    n_clusters=5,
+    tau=0.5,
+    hidden_dim=64,
+    lr=0.01,
+    epochs=1000
+):
+    # 1) train the GNN
+    Y_gnn = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters,
+        edge_index, centroids,
+        tau=tau,
+        hidden_dim=hidden_dim,
+        lr=lr,
+        epochs=epochs
+    )
+
+    return Y_gnn
+
+def eval_one_config(
+    X, Y_true, Y_proj, x_lab, y_lab,
+    n_clusters, sup_frac, out_frac,
+    edge_index, tau,
+    hidden_dim, lr, epochs
+):
+    # replicate exactly your stratified / clustering / centroids logic
+    sup_mask, out_mask, inf_mask = stratified_split_masks(
+        x_lab, sup_frac, out_frac, n_clusters
+    )
+    # cluster Y on sup+out
+    y_lab[sup_mask|out_mask] = cluster_ingredients(
+        Y_proj[sup_mask|out_mask], n_clusters
+    )
+    centroids = compute_centroids(Y_true, y_lab, n_clusters)
+
+    # train & eval the GNN for this config
+    Y_pred = train_and_eval_gnn(
+        X, y_lab, sup_mask,
+        edge_index,
+        centroids,
+        n_clusters=n_clusters,
+        tau=tau,
+        hidden_dim=hidden_dim,
+        lr=lr,
+        epochs=epochs
+    )
+    return mean_absolute_error(Y_true[inf_mask], Y_pred[inf_mask])
+
+def find_general_gnn_hyperparams(
+    df,                    # your DataFrame for one dataset
+    param_grid,                # dict of lists for tau, hidden_dim, lr, epochs
+    model, tfm, recipes, ing2idx, D,
+        cluster_vals, sup_fracs, out_frac, n_trials
+):
+
+    best = None
+    for tau, hidden_dim, lr, n_neighbors, epochs in itertools.product(
+        param_grid['tau'],
+        param_grid['hidden_dim'],
+        param_grid['lr'],
+        param_grid['n_neighbors'],
+        param_grid['epochs']
+    ):
+        maes = []
+        print(f"\n=== RUNNING for tau={tau}, hidden_dim={hidden_dim}, lr={lr}, n_neighbors={n_neighbors}, epochs={epochs} ===")
+        # pick cuisines at random (or deterministic if you prefer)
+        for i, n_clusters in enumerate(cluster_vals):
+            print(f"\n=== RUNNING for {n_clusters} clusters ===")
+            # pick cuisines at random (or deterministic if you prefer)
+            all_cuisines = df['cuisine_type'].unique()
+            cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
+            df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+            print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+
+            # pre‐encode once per df_run
+            X_all = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+            # build your GNN graph once
+            from sklearn.neighbors import NearestNeighbors
+            knn = NearestNeighbors(n_neighbors=n_neighbors, algorithm="auto").fit(X_all)
+            adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
+            edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
+
+            Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+            rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+            Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
+            y_lab  = np.empty(len(Y_proj), int)
+            # 1) stratify & split
+            x_lab  = cluster_features(X_all, n_clusters)
+
+            for j, sup_frac in enumerate(sup_fracs):
+                print(f"\n-- Supervision = {sup_frac:.2%} --")
+                mae = eval_one_config(
+                    X_all, Y_true,
+                    Y_proj, x_lab, y_lab,
+                    n_clusters=n_clusters,
+                    sup_frac=sup_frac,
+                    out_frac=OUT_FRAC,
+                    edge_index=edge_index,
+                    tau=tau,
+                    hidden_dim=hidden_dim,
+                    lr=lr,
+                    epochs=epochs
+                )
+                maes.append(mae)
+                print(f"    MAE = {mae:.4f}")
+        avg_mae = np.mean(maes)
+        print(f"→ AVERAGE MAE = {avg_mae:.4f}")
+        if best is None or avg_mae < best[0]:
+            best = (avg_mae, dict(
+                tau=tau, hidden_dim=hidden_dim,
+                lr=lr, n_neighbors=n_neighbors, epochs=epochs
+            ))
+
+    return best  # (best_avg_mae, best_config)
+    
+
 
 #############################
 # Main
@@ -1843,3 +1991,13 @@ if __name__ == '__main__':
         log_scale=False
     )
     # run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
+    # param_grid = {
+    # 'tau':        [0.4, 0.5, 0.75],
+    # 'hidden_dim': [64, 128, 256],
+    # 'lr':         [1e-4, 5e-4, 1e-5],
+    # 'n_neighbors': [5, 10, 20],
+    # 'epochs':     [100]
+    # }
+    # best_mae, best_cfg = find_general_gnn_hyperparams(df, param_grid, model, tfm, recipes, ing2idx, D,
+    #     cluster_vals, sup_fracs, out_frac, n_trials)
+    # print("GENERAL GNN hyperparams →", best_cfg, "avg MAE =", best_mae)
