@@ -1,0 +1,54 @@
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+
+=== RUNNING for 3 clusters ===
+Encoding images:   0%|          | 0/146 [00:00<?, ?it/s]Encoding images:   1%|          | 1/146 [00:00<00:28,  5.01it/s]Encoding images:   2%|▏         | 3/146 [00:00<00:16,  8.60it/s]Encoding images:   3%|▎         | 5/146 [00:00<00:14, 10.05it/s]Encoding images:   5%|▍         | 7/146 [00:00<00:13, 10.69it/s]Encoding images:   6%|▌         | 9/146 [00:00<00:12, 11.08it/s]Encoding images:   8%|▊         | 11/146 [00:01<00:12, 10.78it/s]Encoding images:   9%|▉         | 13/146 [00:01<00:12, 10.93it/s]Encoding images:  10%|█         | 15/146 [00:01<00:11, 11.13it/s]Encoding images:  12%|█▏        | 17/146 [00:01<00:11, 11.41it/s]Encoding images:  13%|█▎        | 19/146 [00:01<00:10, 11.62it/s]Encoding images:  14%|█▍        | 21/146 [00:01<00:10, 11.66it/s]Encoding images:  16%|█▌        | 23/146 [00:02<00:10, 11.72it/s]Encoding images:  17%|█▋        | 25/146 [00:02<00:10, 11.78it/s]Encoding images:  18%|█▊        | 27/146 [00:02<00:10, 11.80it/s]Encoding images:  20%|█▉        | 29/146 [00:02<00:09, 11.92it/s]Encoding images:  21%|██        | 31/146 [00:02<00:09, 11.96it/s]Encoding images:  23%|██▎       | 33/146 [00:02<00:09, 12.01it/s]Encoding images:  24%|██▍       | 35/146 [00:03<00:09, 11.97it/s]Encoding images:  25%|██▌       | 37/146 [00:03<00:09, 11.88it/s]Encoding images:  27%|██▋       | 39/146 [00:03<00:09, 11.89it/s]Encoding images:  28%|██▊       | 41/146 [00:03<00:08, 11.86it/s]Encoding images:  29%|██▉       | 43/146 [00:03<00:08, 11.82it/s]Encoding images:  31%|███       | 45/146 [00:03<00:08, 11.73it/s]Encoding images:  32%|███▏      | 47/146 [00:04<00:08, 11.65it/s]Encoding images:  34%|███▎      | 49/146 [00:04<00:09, 10.40it/s]Encoding images:  35%|███▍      | 51/146 [00:04<00:13,  7.19it/s]Encoding images:  36%|███▌      | 52/146 [00:05<00:13,  6.76it/s]Encoding images:  36%|███▋      | 53/146 [00:05<00:12,  7.20it/s]Encoding images:  37%|███▋      | 54/146 [00:05<00:12,  7.62it/s]Encoding images:  38%|███▊      | 56/146 [00:05<00:10,  8.24it/s]Encoding images:  39%|███▉      | 57/146 [00:05<00:11,  8.07it/s]Encoding images:  40%|████      | 59/146 [00:05<00:09,  9.00it/s]Encoding images:  42%|████▏     | 61/146 [00:05<00:08,  9.70it/s]Encoding images:  43%|████▎     | 63/146 [00:06<00:08,  9.72it/s]Encoding images:  45%|████▍     | 65/146 [00:06<00:07, 10.30it/s]Encoding images:  46%|████▌     | 67/146 [00:06<00:07, 10.39it/s]Encoding images:  47%|████▋     | 69/146 [00:06<00:07, 10.67it/s]Encoding images:  49%|████▊     | 71/146 [00:06<00:06, 10.95it/s]Encoding images:  50%|█████     | 73/146 [00:07<00:06, 11.21it/s]Encoding images:  51%|█████▏    | 75/146 [00:07<00:06, 11.28it/s]Encoding images:  53%|█████▎    | 77/146 [00:07<00:06, 11.30it/s]Encoding images:  54%|█████▍    | 79/146 [00:07<00:05, 11.44it/s]Encoding images:  55%|█████▌    | 81/146 [00:07<00:05, 11.63it/s]Encoding images:  57%|█████▋    | 83/146 [00:07<00:05, 11.54it/s]Encoding images:  58%|█████▊    | 85/146 [00:08<00:05, 11.62it/s]Encoding images:  60%|█████▉    | 87/146 [00:08<00:05, 11.77it/s]Encoding images:  61%|██████    | 89/146 [00:08<00:04, 11.76it/s]Encoding images:  62%|██████▏   | 91/146 [00:08<00:04, 11.51it/s]Encoding images:  64%|██████▎   | 93/146 [00:08<00:04, 11.36it/s]Encoding images:  65%|██████▌   | 95/146 [00:08<00:04, 11.55it/s]Encoding images:  66%|██████▋   | 97/146 [00:09<00:04, 10.97it/s]Encoding images:  68%|██████▊   | 99/146 [00:09<00:04, 11.22it/s]Encoding images:  69%|██████▉   | 101/146 [00:09<00:03, 11.35it/s]Encoding images:  71%|███████   | 103/146 [00:09<00:03, 11.48it/s]Encoding images:  72%|███████▏  | 105/146 [00:09<00:03, 11.41it/s]Encoding images:  73%|███████▎  | 107/146 [00:09<00:03, 11.47it/s]Encoding images:  75%|███████▍  | 109/146 [00:10<00:03, 11.59it/s]Encoding images:  76%|███████▌  | 111/146 [00:10<00:02, 11.72it/s]Encoding images:  77%|███████▋  | 113/146 [00:10<00:02, 11.74it/s]Encoding images:  79%|███████▉  | 115/146 [00:10<00:02, 11.62it/s]Encoding images:  80%|████████  | 117/146 [00:10<00:02, 11.68it/s]Encoding images:  82%|████████▏ | 119/146 [00:11<00:02, 11.71it/s]Encoding images:  83%|████████▎ | 121/146 [00:11<00:02, 11.24it/s]Encoding images:  84%|████████▍ | 123/146 [00:11<00:02, 11.42it/s]Encoding images:  86%|████████▌ | 125/146 [00:11<00:01, 11.53it/s]Encoding images:  87%|████████▋ | 127/146 [00:11<00:01, 11.67it/s]Encoding images:  88%|████████▊ | 129/146 [00:11<00:01, 11.53it/s]Encoding images:  90%|████████▉ | 131/146 [00:12<00:01, 11.70it/s]Encoding images:  91%|█████████ | 133/146 [00:12<00:01, 11.82it/s]Encoding images:  92%|█████████▏| 135/146 [00:12<00:00, 11.74it/s]Encoding images:  94%|█████████▍| 137/146 [00:12<00:00, 11.73it/s]Encoding images:  95%|█████████▌| 139/146 [00:12<00:00, 11.54it/s]Encoding images:  97%|█████████▋| 141/146 [00:12<00:00, 11.67it/s]Encoding images:  98%|█████████▊| 143/146 [00:13<00:00, 11.65it/s]Encoding images:  99%|█████████▉| 145/146 [00:13<00:00, 11.74it/s]Encoding images: 100%|██████████| 146/146 [00:13<00:00, 10.95it/s]
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+2025-05-23 23:33:37.225 python[17037:24405613] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+
+-- Supervision = 2.05% --
+ Trial 1/5:
+  → X-cluster purity: 0.829,  NMI: 0.532
+  → Y-cluster purity: 0.867,  NMI: 0.622
+    BKM          MAE = 0.0114
+    GNNBridge    MAE = 0.0118
+    KNN          MAE = 0.0149
+ Trial 2/5:
+  → X-cluster purity: 0.829,  NMI: 0.532
+  → Y-cluster purity: 0.614,  NMI: 0.379
+    BKM          MAE = 0.0104
+    GNNBridge    MAE = 0.0112
+    KNN          MAE = 0.0123
+ Trial 3/5:
+  → X-cluster purity: 0.829,  NMI: 0.532
+  → Y-cluster purity: 0.542,  NMI: 0.285
+    BKM          MAE = 0.0116
+    GNNBridge    MAE = 0.0120
+    KNN          MAE = 0.0106
+ Trial 4/5:
+  → X-cluster purity: 0.829,  NMI: 0.532
+  → Y-cluster purity: 0.904,  NMI: 0.745
+    BKM          MAE = 0.0096
+    GNNBridge    MAE = 0.0104
+    KNN          MAE = 0.0088
+ Trial 5/5:
+  → X-cluster purity: 0.829,  NMI: 0.532
+  → Y-cluster purity: 0.614,  NMI: 0.464
+    BKM          MAE = 0.0106
+    GNNBridge    MAE = 0.0116
+    KNN          MAE = 0.0118
+ → AVERAGES for 2.05%:
+    BKM          avg MAE = 0.0107
+    GNNBridge    avg MAE = 0.0114
+    KNN          avg MAE = 0.0117
+
+=== SUMMARY TABLE for 3 clusters ===
+               BKM  GNNBridge       KNN
+sup_frac                               
+2.05%     0.010721     0.0114  0.011681
+['3 clusters']
+['2% sup']
