@@ -1346,7 +1346,7 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 
     # - GNN-bridge
     Y_gnn = run_gnn_bridged(
-        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=45
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
     )
     Y_gnn_inf = Y_gnn[inf_mask]
     # — KNN
