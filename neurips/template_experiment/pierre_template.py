@@ -40,6 +40,7 @@ from collections import Counter
 
 
 from sklearn.neighbors import NearestNeighbors
+from k_means_constrained import KMeansConstrained
 
 warnings.filterwarnings("ignore")
 torch.manual_seed(42)
@@ -60,7 +61,7 @@ IMAGE_SIZE      = 224
 N_CLUSTERS      = [3] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
 SUP_FRACS       = [0.0205] # supervised sample fractions (0.0205 = 1/49)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
-N_TRIALS        = 10
+N_TRIALS        = 20
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
 #############################
@@ -192,10 +193,20 @@ def purity_score(true_labels, cluster_labels):
     return score / total
 
 def cluster_features(X, n_clusters):
-    return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(X)
+    N = X.shape[0]
+    base_size = N // n_clusters
+    size_min = base_size
+    size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(X)
+    # return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(X)
 
 def cluster_ingredients(Y_proj, n_clusters):
-    return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(Y_proj)
+    N = Y_proj.shape[0]
+    base_size = N // n_clusters
+    size_min = base_size
+    size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(Y_proj)
+    # return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(Y_proj)
 
 def learn_bridge(x_lab, y_lab, sup_mask, n_clusters):
     mapping = np.zeros(n_clusters, int)
@@ -243,16 +254,17 @@ class GNNClusterBridge(nn.Module):
         self.classifier = nn.Linear(hidden_dim, n_clusters)
         self.tau = tau
 
-    def forward(self, x, edge_index):
-        h = F.relu(self.conv1(x, edge_index))
-        h = F.relu(self.conv2(h, edge_index))
-        h = F.relu(self.conv3(h, edge_index))
+    def forward(self, x, edge_index, edge_weight=None):
+        h = F.relu(self.conv1(x, edge_index, edge_weight=edge_weight))
+        h = F.relu(self.conv2(h, edge_index, edge_weight=edge_weight))
+        h = F.relu(self.conv3(h, edge_index, edge_weight=edge_weight))
         logits = self.classifier(h)             # [N, K]
         return F.softmax(logits / self.tau, dim=-1)  # soft assignments p
 
 def run_gnn_bridged( X, y_lab, sup_mask,
     n_clusters,
     edge_index,
+    edge_weights,
     centroids,
     tau,
     hidden_dim,
@@ -260,21 +272,27 @@ def run_gnn_bridged( X, y_lab, sup_mask,
     epochs):
     """
     X: np.ndarray [N×D_x]
-    Y_true: np.ndarray [N×D_y]
     y_lab: array-like [N]
-    mask: boolean mask [N]
+    sup_mask: boolean mask [N]
+    n_clusters: int, number of clusters in X
     edge_index: LongTensor [2×E] for PyG
+    centroids: np.ndarray [K×D_y], where K is the number of clusters in Y
+    tau: float, temperature for softmax
+    hidden_dim: int, hidden dimension for GNN
+    lr: float, learning rate for optimizer
+    epochs: int, number of training epochs
     returns Y_pred: np.ndarray [N×D_y]
     """
 
     # 2) Build PyG Data and train GNN
     data = Data(
         x=torch.from_numpy(X).float(),
-        edge_index=edge_index
+        edge_index=edge_index,
+        edge_attr=edge_weights if edge_weights is not None else None
     )
     model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=hidden_dim, n_clusters=n_clusters, tau=tau)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-5)
-
+    # loss_history = []
     for epoch in range(epochs):
         model.train()
         p = model(data.x, data.edge_index)        # [N,K]
@@ -282,7 +300,18 @@ def run_gnn_bridged( X, y_lab, sup_mask,
             torch.log(p.clamp(min=1e-10)[sup_mask]), 
             torch.from_numpy(y_lab[sup_mask]).long()
         )
+        # loss_history.append(loss.item())
         opt.zero_grad(); loss.backward(); opt.step()
+    
+    # # after training:
+    # plt.figure(figsize=(6,4))
+    # plt.plot(range(1, epochs+1), loss_history, marker='o', linestyle='-')
+    # plt.xlabel("Epoch",  fontsize=12)
+    # plt.ylabel("Training Loss", fontsize=12)
+    # plt.title("Training Loss vs. Epoch", fontsize=14)
+    # plt.grid(True)
+    # plt.tight_layout()
+    # plt.show()
 
     # 3) Inference
     model.eval()
@@ -292,22 +321,22 @@ def run_gnn_bridged( X, y_lab, sup_mask,
     Y_pred = p @ torch.from_numpy(centroids).float()  # [N, D_y]
     return Y_pred.cpu().numpy()
 
-import skfuzzy as fuzz
-def fuzzy_cluster(X, n_clusters, m=2.0, error=1e-5, maxiter=1000):
-    """
-    Run fuzzy c‑means on X (N×D) and return:
-      - centers: (n_clusters×D)
-      - u: membership matrix (n_clusters×N)
-      - hard_labels: argmax over u (N,)
-    """
-    # skfuzzy wants features×samples
-    X_T = X.T
-    centers, u, _, _, _, _, _ = fuzz.cluster.cmeans(
-        X_T, c=n_clusters, m=m,
-        error=error, maxiter=maxiter
-    )
-    hard = np.argmax(u, axis=0)
-    return centers, u, hard
+# import skfuzzy as fuzz
+# def fuzzy_cluster(X, n_clusters, m=2.0, error=1e-5, maxiter=1000):
+#     """
+#     Run fuzzy c‑means on X (N×D) and return:
+#       - centers: (n_clusters×D)
+#       - u: membership matrix (n_clusters×N)
+#       - hard_labels: argmax over u (N,)
+#     """
+#     # skfuzzy wants features×samples
+#     X_T = X.T
+#     centers, u, _, _, _, _, _ = fuzz.cluster.cmeans(
+#         X_T, c=n_clusters, m=m,
+#         error=error, maxiter=maxiter
+#     )
+#     hard = np.argmax(u, axis=0)
+#     return centers, u, hard
 
 # Model C: Mean Teacher Model
 ##################################
@@ -1252,7 +1281,7 @@ def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, d
 #############################
 # Single‐trial Experiment
 #############################
-def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters, edge_index):
+def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters, edge_index, edge_weights):
     Y_true = np.vstack(df['ingredient_vec'].values)               # (N, D)
     rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
     Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
@@ -1299,35 +1328,29 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     mapping   = learn_bridge(x_lab, y_lab, sup_mask, n_clusters)
     centroids = compute_centroids(Y_true, y_lab, n_clusters)
     Yb_all    = predict_bridge(x_lab, mapping, centroids)
-    # bkm_mae   = mean_absolute_error(Y_inf, Yb_all[inf_mask])
 
     Y_hard_inf = Yb_all[inf_mask]
     Y_true_inf = Y_true[inf_mask]
 
     # choose tau heuristically
-    # from sklearn.metrics import pairwise_distances
-    # cd   = pairwise_distances(centroids)
-    # tau  = np.median(cd[cd>0])
+    from sklearn.metrics import pairwise_distances
+    cd   = pairwise_distances(centroids)
+    tau  = np.median(cd[cd>0])
 
     # compute Y_soft for the inference set
-    # Y_soft_inf = []
-    # for yc in Yb_all[inf_mask]:
-    #     r = responsibilities(yc, centroids, tau)
-    #     Y_soft_inf.append(r.dot(centroids))
-    # Y_soft_inf = np.vstack(Y_soft_inf)
-
-    # # evaluate both
-    # mae_hard = mean_absolute_error(Y_true_inf, Y_hard_inf)
-    # mae_soft = mean_absolute_error(Y_true_inf, Y_soft_inf)
+    Y_soft_inf = []
+    for yc in Yb_all[inf_mask]:
+        r = responsibilities(yc, centroids, tau)
+        Y_soft_inf.append(r.dot(centroids))
+    Y_soft_inf = np.vstack(Y_soft_inf)
 
     # - GNN-bridge
     Y_gnn = run_gnn_bridged(
-        X, y_lab, sup_mask, n_clusters, edge_index, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=2000
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=45
     )
-
+    Y_gnn_inf = Y_gnn[inf_mask]
     # — KNN
-    # Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
-    # knn_mae   = mean_absolute_error(Y_inf, Yk_inf)
+    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
 
     # # — Mean Teacher
     # mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
@@ -1356,9 +1379,9 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     # now compute MAE on each:
     results = {
       "BKM":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
-    #   "BKM_soft":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
-      "GNNBridge":   mean_absolute_error(Y_true_inf,    Y_gnn[inf_mask]),
-    #   "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
+      "BKM_soft":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
+      "GNNBridge":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+      "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
     #   "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
     #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
     #   "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
@@ -1461,9 +1484,9 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
     """
     model_names = [
       "BKM",
-    #   "BKM_soft",
+      "BKM_soft",
       "GNNBridge",
-    #   "KNN",
+      "KNN",
     #   "MeanTeacher",
     #   "XGBoost",
     #   "LapRLS",
@@ -1490,8 +1513,9 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         # build your GNN graph once
         from sklearn.neighbors import NearestNeighbors
         knn = NearestNeighbors(n_neighbors=22, algorithm="auto").fit(X_all)
-        adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
+        adj = knn.kneighbors_graph(X_all, mode="distance").tocoo()
         edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
+        edge_weights = torch.tensor(adj.data,  dtype=torch.float)
 
         for j, sup_frac in enumerate(sup_fracs):
             print(f"\n-- Supervision = {sup_frac:.2%} --")
@@ -1499,7 +1523,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
                 print(f" Trial {t+1}/{n_trials}:")
                 results, _ = run_experiment(
                     df_run, model, tfm, recipes, ing2idx, D,
-                    X_all, sup_frac, out_frac, n_clusters, edge_index
+                    X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
                 )
                 for m, name in enumerate(model_names):
                     mae = results[name]
