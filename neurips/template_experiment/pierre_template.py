@@ -24,6 +24,7 @@ from matplotlib.patches import Patch
 from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GATConv
 from torch_geometric.data import Data
 from sklearn.metrics.pairwise import cosine_similarity
 import torch.nn as nn
@@ -58,10 +59,10 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = [3] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205] # supervised sample fractions (0.0205 = 1/49)
+N_CLUSTERS      = [2, 3, 4, 5, 6, 10] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+SUP_FRACS       = [0.0205, 0.07, 0.15, 0.3] # supervised sample fractions (0.0205 = 1/49)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
-N_TRIALS        = 20
+N_TRIALS        = 10
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
 #############################
@@ -193,20 +194,35 @@ def purity_score(true_labels, cluster_labels):
     return score / total
 
 def cluster_features(X, n_clusters):
-    N = X.shape[0]
+    # N = X.shape[0]
+    # base_size = N // n_clusters
+    # size_min = base_size
+    # size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    # return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(X)
+    return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(X)
+
+def cluster_ingredients(Y_proj, n_clusters):
+    # N = Y_proj.shape[0]
+    # base_size = N // n_clusters
+    # size_min = base_size
+    # size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    # return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(Y_proj)
+    return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(Y_proj)
+def cluster_features_constrained(X, n_clusters):
+    N = len(X)
     base_size = N // n_clusters
     size_min = base_size
     size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
     return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(X)
-    # return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(X)
 
-def cluster_ingredients(Y_proj, n_clusters):
-    N = Y_proj.shape[0]
+
+def cluster_ingredients_constrained(Y_proj, n_clusters):
+    N = len(Y_proj)
     base_size = N // n_clusters
     size_min = base_size
     size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
     return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(Y_proj)
-    # return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(Y_proj)
+
 
 def learn_bridge(x_lab, y_lab, sup_mask, n_clusters):
     mapping = np.zeros(n_clusters, int)
@@ -1314,14 +1330,14 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     print(f"  → Y-cluster purity: {y_p:.3f},  NMI: {nmi_y:.3f}")
 
     # wrap into the small DataFrames MT expects
-    # df_sup = pd.DataFrame({
-    #     'image_coordinates': list(X_sup),
-    #     'ingredient_coordinates' : list(Y_sup)
-    # })
-    # df_inf = pd.DataFrame({
-    #     'image_coordinates': list(X_inf),
-    #     'ingredient_coordinates' : list(Y_inf)
-    # })
+    df_sup = pd.DataFrame({
+        'image_coordinates': list(X_sup),
+        'ingredient_coordinates' : list(Y_sup)
+    })
+    df_inf = pd.DataFrame({
+        'image_coordinates': list(X_inf),
+        'ingredient_coordinates' : list(Y_inf)
+    })
 
     # 4) compute our three baselines
     # — BKM
@@ -1332,10 +1348,10 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     Y_hard_inf = Yb_all[inf_mask]
     Y_true_inf = Y_true[inf_mask]
 
-    # choose tau heuristically
-    from sklearn.metrics import pairwise_distances
-    cd   = pairwise_distances(centroids)
-    tau  = np.median(cd[cd>0])
+    # # choose tau heuristically
+    # from sklearn.metrics import pairwise_distances
+    # cd   = pairwise_distances(centroids)
+    tau  = 0.2
 
     # compute Y_soft for the inference set
     Y_soft_inf = []
@@ -1352,29 +1368,29 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     # — KNN
     Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
 
-    # # — Mean Teacher
-    # mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
+    # — Mean Teacher
+    mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
 
     # # 3) XGBoost
     # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
 
-    # # 4) LapRLS
-    # lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+    # 4) LapRLS
+    lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
 
-    # # 5) Twin-NN regressor
-    # tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
+    # 5) Twin-NN regressor
+    tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
 
-    # # 6) Transductive SVR
-    # tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
+    # 6) Transductive SVR
+    tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
 
-    # # 7) UCVME
-    # ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
+    # 7) UCVME
+    ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
 
-    # # 8) RankUp
-    # rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
+    # 8) RankUp
+    rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
 
-    # # 9) AGDN
-    # agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
+    # 9) AGDN
+    agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
 
     # now compute MAE on each:
     results = {
@@ -1382,14 +1398,145 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
       "BKM_soft":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
       "GNNBridge":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
       "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
-    #   "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
+      "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
     #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
-    #   "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
-    #   "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
-    #   "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
-    #   "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
-    #   "RankUp":      mean_absolute_error(rank_y,        rank_preds),
-    #   "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
+      "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
+      "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
+      "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
+      "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
+      "RankUp":      mean_absolute_error(rank_y,        rank_preds),
+      "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
+    }
+
+    # # GNN‐bridge
+    # Y_gnn = run_gnn_bridged(
+    #     X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, tau=0.5
+    # )
+    # results["GNNBridge"] = mean_absolute_error(Y_true[inf_mask], Y_gnn[inf_mask])
+
+    # # 5) Fuzzy‐bridge (soft)
+    # centers_x, u_x, hard_x = fuzzy_cluster(X, n_clusters, m=2.0)
+    # # re‑use the SAME Y‑centroids above; membership u_x tells us soft weights
+    # # for each sample i, cluster c: u_x[c,i]
+    # # so the soft prediction is ∑₍c₌0→K₋₁₎ u_x[c,i] * centroids[c]
+    # Y_soft = u_x.T.dot(centroids)
+
+    # results["FuzzyBridge"] = mean_absolute_error(Y_true[inf_mask], Y_soft[inf_mask])
+
+    return results, sup_mask
+
+#############################
+# Single‐trial Experiment
+#############################
+def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters, edge_index, edge_weights):
+    Y_true = np.vstack(df['ingredient_vec'].values)               # (N, D)
+    rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+    Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
+
+    # 1) stratify & split
+    x_lab  = cluster_features_constrained(X, n_clusters)
+    sup_mask, out_mask, inf_mask = stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters)
+
+    # 2) cluster Y only on sup+out
+    y_lab = np.empty(len(Y_proj), int)
+    y_lab[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+
+    # 3) prepare supervised/inference sets for Mean Teacher
+    X_sup = X[sup_mask];    Y_sup = Y_true[sup_mask]
+    X_inf = X[inf_mask];    Y_inf = Y_true[inf_mask]
+
+    true = df['cuisine_type'].values
+
+    # 1) Purity of X-clusters (on *all* samples)
+    x_p = purity_score(true, x_lab)
+    nmi_x = normalized_mutual_info_score(true, x_lab)
+
+    # 2) Purity of Y-clusters (only on sup+out)
+    mask = sup_mask | out_mask
+    true_y = true[mask]
+    y_p   = purity_score(true_y, y_lab[mask])
+    nmi_y = normalized_mutual_info_score(true_y, y_lab[mask])
+
+    print(f"  → X-cluster purity (constrained): {x_p:.3f},  NMI: {nmi_x:.3f}")
+    print(f"  → Y-cluster purity (constrained): {y_p:.3f},  NMI: {nmi_y:.3f}")
+
+    # wrap into the small DataFrames MT expects
+    df_sup = pd.DataFrame({
+        'image_coordinates': list(X_sup),
+        'ingredient_coordinates' : list(Y_sup)
+    })
+    df_inf = pd.DataFrame({
+        'image_coordinates': list(X_inf),
+        'ingredient_coordinates' : list(Y_inf)
+    })
+
+    # 4) compute our three baselines
+    # — BKM
+    mapping   = learn_bridge(x_lab, y_lab, sup_mask, n_clusters)
+    centroids = compute_centroids(Y_true, y_lab, n_clusters)
+    Yb_all    = predict_bridge(x_lab, mapping, centroids)
+
+    Y_hard_inf = Yb_all[inf_mask]
+    Y_true_inf = Y_true[inf_mask]
+
+    # # choose tau heuristically
+    # from sklearn.metrics import pairwise_distances
+    # cd   = pairwise_distances(centroids)
+    tau  = 0.2
+
+    # compute Y_soft for the inference set
+    Y_soft_inf = []
+    for yc in Yb_all[inf_mask]:
+        r = responsibilities(yc, centroids, tau)
+        Y_soft_inf.append(r.dot(centroids))
+    Y_soft_inf = np.vstack(Y_soft_inf)
+
+    # - GNN-bridge
+    Y_gnn = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    )
+    Y_gnn_inf = Y_gnn[inf_mask]
+    # — KNN
+    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
+
+    # — Mean Teacher
+    mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
+
+    # # 3) XGBoost
+    # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
+
+    # 4) LapRLS
+    lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+
+    # 5) Twin-NN regressor
+    tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
+
+    # 6) Transductive SVR
+    tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
+
+    # 7) UCVME
+    ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
+
+    # 8) RankUp
+    rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
+
+    # 9) AGDN
+    agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
+
+    # now compute MAE on each:
+    results = {
+      "BC":          mean_absolute_error(Y_true_inf,    Y_hard_inf),
+      "Softmax-BC":  mean_absolute_error(Y_true_inf,    Y_soft_inf),
+      "GNN-BC":      mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+      "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
+      "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
+    #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
+      "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
+      "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
+      "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
+      "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
+      "RankUp":      mean_absolute_error(rank_y,        rank_preds),
+      "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
     }
 
     # # GNN‐bridge
@@ -1483,23 +1630,24 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
       - model_names: the list of model keys, in the order used in loss_data
     """
     model_names = [
-      "BKM",
-      "BKM_soft",
-      "GNNBridge",
+      "BC",
+      "Softmax-BC",
+      "GNN-BC",
       "KNN",
-    #   "MeanTeacher",
+      "MeanTeacher",
     #   "XGBoost",
-    #   "LapRLS",
-    #   "TSVR",
-    #   "TNNR",
-    #   "UCVME",
-    #   "RankUp",
-    #   "AGDN",
+      "LapRLS",
+      "TSVR",
+      "TNNR",
+      "UCVME",
+      "RankUp",
+      "AGDN",
     ]
     num_h1 = len(cluster_vals)
     num_h2 = len(sup_fracs)
     num_m  = len(model_names)
-    loss_data = np.zeros((num_h1, num_h2, num_m, n_trials), float)
+    # loss_data = np.zeros((num_h1, num_h2, num_m, n_trials), float)
+    loss_data_constrained = np.zeros((num_h1, num_h2, num_m, n_trials), float)
 
     for i, n_clusters in enumerate(cluster_vals):
         print(f"\n=== RUNNING for {n_clusters} clusters ===")
@@ -1513,40 +1661,101 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         # build your GNN graph once
         from sklearn.neighbors import NearestNeighbors
         knn = NearestNeighbors(n_neighbors=22, algorithm="auto").fit(X_all)
-        adj = knn.kneighbors_graph(X_all, mode="distance").tocoo()
+        adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
         edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
-        edge_weights = torch.tensor(adj.data,  dtype=torch.float)
+        edge_weights = None
+        # edge_weights = None  # not used in this experiment
+        # sigma = adj.data.mean()
+        # sim   = np.exp(- (adj.data**2) / (2 * sigma**2))
+        # edge_weights = torch.tensor(sim, dtype=torch.float)
+        # print(f"→ Edge index shape: {edge_index.shape}, weights: {edge_weights is not None}")
 
         for j, sup_frac in enumerate(sup_fracs):
             print(f"\n-- Supervision = {sup_frac:.2%} --")
             for t in range(n_trials):
                 print(f" Trial {t+1}/{n_trials}:")
-                results, _ = run_experiment(
+                # results, _ = run_experiment(
+                #     df_run, model, tfm, recipes, ing2idx, D,
+                #     X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
+                # )
+                # constrained version
+                results_constrained, _ = run_experiment_constrained(
                     df_run, model, tfm, recipes, ing2idx, D,
                     X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
                 )
+
                 for m, name in enumerate(model_names):
-                    mae = results[name]
-                    loss_data[i, j, m, t] = mae
-                    print(f"    {name:12s} MAE = {mae:.4f}")
+                    # mae = results[name]
+                    mae_constrained = results_constrained[name]
+                    # loss_data[i, j, m, t] = mae
+                    loss_data_constrained[i, j, m, t] = mae_constrained
+                    # print(f"    {name:12s} MAE = {mae:.4f} (constrained: {mae_constrained:.4f})")
+                    print(f"    {name:12s} MAE (constrained) = {mae_constrained:.4f}")
+                    
             # after all trials for this sup_frac, print the averages
             print(f" → AVERAGES for {sup_frac:.2%}:")
             for m, name in enumerate(model_names):
-                avg = loss_data[i,j,m,:].mean()
-                print(f"    {name:12s} avg MAE = {avg:.4f}")
+                # avg = loss_data[i,j,m,:].mean()
+                avg_constrained = loss_data_constrained[i,j,m,:].mean()
+                # print(f"    {name:12s} avg MAE = {avg:.4f} (constrained: {avg_constrained:.4f})")
+                print(f"    {name:12s} avg MAE (constrained) = {avg_constrained:.4f}")
 
         print(f"\n=== SUMMARY TABLE for {n_clusters} clusters ===")
         # shape (sup_fracs × models)
-        rows = []
+        # rows = []
+        rows_constrained = []
         for j, sup_frac in enumerate(sup_fracs):
-            row = {'sup_frac': f"{sup_frac:.2%}"}
+            # row = {'sup_frac': f"{sup_frac:.2%}"}
+            row_constrained = {'sup_frac': f"{sup_frac:.2%} (constrained)"}
             for m, name in enumerate(model_names):
-                row[name] = loss_data[i,j,m,:].mean()
-            rows.append(row)
-        summary_df = pd.DataFrame(rows).set_index('sup_frac')
-        print(summary_df)
+                # row[name] = loss_data[i,j,m,:].mean()
+                row_constrained[name] = loss_data_constrained[i,j,m,:].mean()
+            # rows.append(row)
+            rows_constrained.append(row_constrained)
+        # summary_df = pd.DataFrame(rows).set_index('sup_frac')
+        summary_df_constrained = pd.DataFrame(rows_constrained).set_index('sup_frac')
+        # print(summary_df)
+        print(summary_df_constrained)
+        output_dir = "results"
+    os.makedirs(output_dir, exist_ok=True)
 
-    return loss_data, model_names
+    for j, sup_frac in enumerate(sup_fracs):
+        # build a dict of “cluster size → average MAE per method”
+        table_data = {
+            str(c): loss_data_constrained[i, j].mean(axis=1)
+            for i, c in enumerate(cluster_vals)
+        }
+        df = pd.DataFrame(table_data, index=model_names)
+        df.insert(0, "Method", df.index)  # add the “Method” column
+        for col in df.columns.drop("Method"):
+            df[col] = df[col].map(lambda x: f"{x:.6f}")
+        # render with matplotlib
+        fig, ax = plt.subplots(
+            figsize=(len(cluster_vals)*1.2 + 2, len(model_names)*0.4 + 1)
+        )
+        ax.axis("off")
+        tbl = ax.table(
+            cellText=df.values,
+            colLabels=df.columns,
+            cellLoc="center",
+            loc="center"
+        )
+        tbl.auto_set_font_size(False)
+        tbl.set_fontsize(10)
+        tbl.scale(1, 1.5)
+        fig.tight_layout()
+        
+        # save it
+        pct = int(sup_frac * 100)
+        fname = os.path.join(output_dir, f"10trials_summary_supervised_{pct}pct.png")
+        fig.savefig(fname, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        
+        # also print it out here in the notebook
+        print(f"\nSupervision = {pct}%")
+        print(df)
+
+    return loss_data_constrained, model_names
 
 #############################
 # Plot
@@ -2007,13 +2216,13 @@ if __name__ == '__main__':
     print(hyperparam2_labels)
 
     # finally, plot
-    plot_boxplots_by_hyper1(
-        loss_data,
-        hyperparam1_labels=hyperparam1_labels,
-        hyperparam2_labels=hyperparam2_labels,
-        model_labels=model_labels,
-        log_scale=False
-    )
+    # plot_boxplots_by_hyper1(
+    #     loss_data,
+    #     hyperparam1_labels=hyperparam1_labels,
+    #     hyperparam2_labels=hyperparam2_labels,
+    #     model_labels=model_labels,
+    #     log_scale=False
+    # )
     # run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
     # param_grid = {
     # 'tau':        [0.4, 0.5, 0.75],
