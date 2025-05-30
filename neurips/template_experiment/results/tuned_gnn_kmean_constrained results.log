@@ -1,0 +1,333 @@
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:12<00:00,  7.66it/s]
+→ Edge index shape: torch.Size([2, 2156]), weights: True
+
+-- Supervision = 2.05% --
+ Trial 1/3:
+  → X-cluster purity: 0.888,  NMI: 0.494
+  → Y-cluster purity: 0.927,  NMI: 0.690
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+    BKM          MAE = 0.0083
+    BKM_soft     MAE = 0.0083
+    GNNBridge    MAE = 0.0083
+    KNN          MAE = 0.0115
+    MeanTeacher  MAE = 0.0280
+    LapRLS       MAE = 0.0112
+    TSVR         MAE = 0.0113
+    TNNR         MAE = 0.0786
+    UCVME        MAE = 0.0259
+    RankUp       MAE = 0.0621
+    AGDN         MAE = 0.0522
+ Trial 2/3:
+  → X-cluster purity: 0.888,  NMI: 0.494
+  → Y-cluster purity: 0.945,  NMI: 0.746
+    BKM          MAE = 0.0090
+    BKM_soft     MAE = 0.0090
+    GNNBridge    MAE = 0.0095
+    KNN          MAE = 0.0093
+    MeanTeacher  MAE = 0.0309
+    LapRLS       MAE = 0.0087
+    TSVR         MAE = 0.0092
+    TNNR         MAE = 0.0755
+    UCVME        MAE = 0.0278
+    RankUp       MAE = 0.0659
+    AGDN         MAE = 0.0552
+ Trial 3/3:
+  → X-cluster purity: 0.888,  NMI: 0.494
+  → Y-cluster purity: 0.964,  NMI: 0.810
+    BKM          MAE = 0.0090
+    BKM_soft     MAE = 0.0090
+    GNNBridge    MAE = 0.0102
+    KNN          MAE = 0.0089
+    MeanTeacher  MAE = 0.0226
+    LapRLS       MAE = 0.0087
+    TSVR         MAE = 0.0088
+    TNNR         MAE = 0.0744
+    UCVME        MAE = 0.0299
+    RankUp       MAE = 0.0665
+    AGDN         MAE = 0.0512
+ → AVERAGES for 2.05%:
+    BKM          avg MAE = 0.0087
+    BKM_soft     avg MAE = 0.0087
+    GNNBridge    avg MAE = 0.0093
+    KNN          avg MAE = 0.0099
+    MeanTeacher  avg MAE = 0.0272
+    LapRLS       avg MAE = 0.0095
+    TSVR         avg MAE = 0.0098
+    TNNR         avg MAE = 0.0762
+    UCVME        avg MAE = 0.0279
+    RankUp       avg MAE = 0.0649
+    AGDN         avg MAE = 0.0529
+
+=== SUMMARY TABLE for 2 clusters ===
+               BKM  BKM_soft  GNNBridge       KNN  MeanTeacher   LapRLS      TSVR      TNNR     UCVME    RankUp      AGDN
+sup_frac                                                                                                                 
+2.05%     0.008748  0.008749   0.009339  0.009897     0.027154  0.00952  0.009768  0.076152  0.027874  0.064868  0.052869
+
+=== RUNNING for 3 clusters ===
+→ Using cuisines for 3 clusters: ['scallops', 'crab_cakes', 'bruschetta']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 150/150 [00:12<00:00, 11.61it/s]
+→ Edge index shape: torch.Size([2, 3300]), weights: True
+
+-- Supervision = 2.05% --
+ Trial 1/3:
+  → X-cluster purity: 0.760,  NMI: 0.398
+  → Y-cluster purity: 0.976,  NMI: 0.922
+    BKM          MAE = 0.0093
+    BKM_soft     MAE = 0.0093
+    GNNBridge    MAE = 0.0094
+    KNN          MAE = 0.0103
+    MeanTeacher  MAE = 0.0214
+    LapRLS       MAE = 0.0107
+    TSVR         MAE = 0.0102
+    TNNR         MAE = 0.0762
+    UCVME        MAE = 0.0251
+    RankUp       MAE = 0.0622
+    AGDN         MAE = 0.0513
+ Trial 2/3:
+  → X-cluster purity: 0.760,  NMI: 0.398
+  → Y-cluster purity: 0.988,  NMI: 0.953
+    BKM          MAE = 0.0085
+    BKM_soft     MAE = 0.0085
+    GNNBridge    MAE = 0.0099
+    KNN          MAE = 0.0090
+    MeanTeacher  MAE = 0.0259
+    LapRLS       MAE = 0.0103
+    TSVR         MAE = 0.0105
+    TNNR         MAE = 0.0749
+    UCVME        MAE = 0.0246
+    RankUp       MAE = 0.0663
+    AGDN         MAE = 0.0512
+ Trial 3/3:
+  → X-cluster purity: 0.760,  NMI: 0.398
+  → Y-cluster purity: 0.941,  NMI: 0.818
+    BKM          MAE = 0.0117
+    BKM_soft     MAE = 0.0117
+    GNNBridge    MAE = 0.0117
+    KNN          MAE = 0.0137
+    MeanTeacher  MAE = 0.0290
+    LapRLS       MAE = 0.0135
+    TSVR         MAE = 0.0132
+    TNNR         MAE = 0.0788
+    UCVME        MAE = 0.0250
+    RankUp       MAE = 0.0621
+    AGDN         MAE = 0.0542
+ → AVERAGES for 2.05%:
+    BKM          avg MAE = 0.0098
+    BKM_soft     avg MAE = 0.0098
+    GNNBridge    avg MAE = 0.0103
+    KNN          avg MAE = 0.0110
+    MeanTeacher  avg MAE = 0.0254
+    LapRLS       avg MAE = 0.0115
+    TSVR         avg MAE = 0.0113
+    TNNR         avg MAE = 0.0766
+    UCVME        avg MAE = 0.0249
+    RankUp       avg MAE = 0.0635
+    AGDN         avg MAE = 0.0523
+
+=== SUMMARY TABLE for 3 clusters ===
+               BKM  BKM_soft  GNNBridge       KNN  MeanTeacher    LapRLS     TSVR      TNNR     UCVME    RankUp      AGDN
+sup_frac                                                                                                                 
+2.05%     0.009818  0.009818   0.010312  0.011006     0.025441  0.011501  0.01131  0.076628  0.024898  0.063526  0.052253
+
+=== RUNNING for 4 clusters ===
+→ Using cuisines for 4 clusters: ['beignets', 'pizza', 'lobster_bisque', 'chicken_quesadilla']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 196/196 [00:18<00:00, 10.88it/s]
+→ Edge index shape: torch.Size([2, 4312]), weights: True
+
+-- Supervision = 2.05% --
+ Trial 1/3:
+  → X-cluster purity: 0.898,  NMI: 0.752
+  → Y-cluster purity: 0.892,  NMI: 0.771
+    BKM          MAE = 0.0078
+    BKM_soft     MAE = 0.0078
+    GNNBridge    MAE = 0.0091
+    KNN          MAE = 0.0101
+    MeanTeacher  MAE = 0.0305
+    LapRLS       MAE = 0.0111
+    TSVR         MAE = 0.0117
+    TNNR         MAE = 0.0770
+    UCVME        MAE = 0.0269
+    RankUp       MAE = 0.0647
+    AGDN         MAE = 0.0501
+ Trial 2/3:
+  → X-cluster purity: 0.898,  NMI: 0.752
+  → Y-cluster purity: 0.946,  NMI: 0.868
+    BKM          MAE = 0.0082
+    BKM_soft     MAE = 0.0082
+    GNNBridge    MAE = 0.0087
+    KNN          MAE = 0.0077
+    MeanTeacher  MAE = 0.0219
+    LapRLS       MAE = 0.0096
+    TSVR         MAE = 0.0101
+    TNNR         MAE = 0.0739
+    UCVME        MAE = 0.0238
+    RankUp       MAE = 0.0671
+    AGDN         MAE = 0.0472
+ Trial 3/3:
+  → X-cluster purity: 0.898,  NMI: 0.752
+  → Y-cluster purity: 0.973,  NMI: 0.916
+    BKM          MAE = 0.0079
+    BKM_soft     MAE = 0.0079
+    GNNBridge    MAE = 0.0082
+    KNN          MAE = 0.0096
+    MeanTeacher  MAE = 0.0294
+    LapRLS       MAE = 0.0118
+    TSVR         MAE = 0.0133
+    TNNR         MAE = 0.0785
+    UCVME        MAE = 0.0260
+    RankUp       MAE = 0.0675
+    AGDN         MAE = 0.0508
+ → AVERAGES for 2.05%:
+    BKM          avg MAE = 0.0080
+    BKM_soft     avg MAE = 0.0080
+    GNNBridge    avg MAE = 0.0087
+    KNN          avg MAE = 0.0091
+    MeanTeacher  avg MAE = 0.0273
+    LapRLS       avg MAE = 0.0108
+    TSVR         avg MAE = 0.0117
+    TNNR         avg MAE = 0.0765
+    UCVME        avg MAE = 0.0256
+    RankUp       avg MAE = 0.0664
+    AGDN         avg MAE = 0.0494
+
+=== SUMMARY TABLE for 4 clusters ===
+              BKM  BKM_soft  GNNBridge       KNN  MeanTeacher    LapRLS      TSVR     TNNR     UCVME    RankUp      AGDN
+sup_frac                                                                                                                
+2.05%     0.00797   0.00797    0.00866  0.009132     0.027265  0.010833  0.011677  0.07648  0.025561  0.066419  0.049376
+
+=== RUNNING for 5 clusters ===
+→ Using cuisines for 5 clusters: ['hamburger', 'croque_madame', 'grilled_salmon', 'apple_pie', 'oysters']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 244/244 [00:35<00:00,  6.93it/s]
+→ Edge index shape: torch.Size([2, 5368]), weights: True
+
+-- Supervision = 2.05% --
+ Trial 1/3:
+  → X-cluster purity: 0.467,  NMI: 0.224
+  → Y-cluster purity: 0.885,  NMI: 0.761
+    BKM          MAE = 0.0103
+    BKM_soft     MAE = 0.0103
+    GNNBridge    MAE = 0.0103
+    KNN          MAE = 0.0098
+    MeanTeacher  MAE = 0.0231
+    LapRLS       MAE = 0.0100
+    TSVR         MAE = 0.0110
+    TNNR         MAE = 0.0761
+    UCVME        MAE = 0.0222
+    RankUp       MAE = 0.0664
+    AGDN         MAE = 0.0502
+ Trial 2/3:
+  → X-cluster purity: 0.467,  NMI: 0.224
+  → Y-cluster purity: 0.914,  NMI: 0.824
+    BKM          MAE = 0.0096
+    BKM_soft     MAE = 0.0096
+    GNNBridge    MAE = 0.0105
+    KNN          MAE = 0.0106
+    MeanTeacher  MAE = 0.0289
+    LapRLS       MAE = 0.0122
+    TSVR         MAE = 0.0124
+    TNNR         MAE = 0.0760
+    UCVME        MAE = 0.0253
+    RankUp       MAE = 0.0611
+    AGDN         MAE = 0.0468
+ Trial 3/3:
+  → X-cluster purity: 0.467,  NMI: 0.224
+  → Y-cluster purity: 0.942,  NMI: 0.878
+    BKM          MAE = 0.0105
+    BKM_soft     MAE = 0.0105
+    GNNBridge    MAE = 0.0108
+    KNN          MAE = 0.0107
+    MeanTeacher  MAE = 0.0212
+    LapRLS       MAE = 0.0110
+    TSVR         MAE = 0.0112
+    TNNR         MAE = 0.0754
+    UCVME        MAE = 0.0216
+    RankUp       MAE = 0.0653
+    AGDN         MAE = 0.0469
+ → AVERAGES for 2.05%:
+    BKM          avg MAE = 0.0101
+    BKM_soft     avg MAE = 0.0101
+    GNNBridge    avg MAE = 0.0105
+    KNN          avg MAE = 0.0104
+    MeanTeacher  avg MAE = 0.0244
+    LapRLS       avg MAE = 0.0111
+    TSVR         avg MAE = 0.0115
+    TNNR         avg MAE = 0.0758
+    UCVME        avg MAE = 0.0230
+    RankUp       avg MAE = 0.0643
+    AGDN         avg MAE = 0.0479
+
+=== SUMMARY TABLE for 5 clusters ===
+               BKM  BKM_soft  GNNBridge       KNN  MeanTeacher    LapRLS     TSVR      TNNR     UCVME    RankUp      AGDN
+sup_frac                                                                                                                 
+2.05%     0.010131  0.010132     0.0105  0.010353     0.024411  0.011073  0.01151  0.075842  0.023039  0.064288  0.047935
+
+=== RUNNING for 6 clusters ===
+→ Using cuisines for 6 clusters: ['foie_gras', 'bread_pudding', 'omelette', 'paella', 'tuna_tartare', 'fried_rice']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 282/282 [00:25<00:00, 11.09it/s]
+→ Edge index shape: torch.Size([2, 6204]), weights: True
+
+-- Supervision = 2.05% --
+ Trial 1/3:
+  → X-cluster purity: 0.571,  NMI: 0.405
+  → Y-cluster purity: 0.882,  NMI: 0.789
+    BKM          MAE = 0.0119
+    BKM_soft     MAE = 0.0119
+    GNNBridge    MAE = 0.0116
+    KNN          MAE = 0.0099
+    MeanTeacher  MAE = 0.0220
+    LapRLS       MAE = 0.0120
+    TSVR         MAE = 0.0135
+    TNNR         MAE = 0.0764
+    UCVME        MAE = 0.0231
+    RankUp       MAE = 0.0612
+    AGDN         MAE = 0.0497
+ Trial 2/3:
+  → X-cluster purity: 0.571,  NMI: 0.405
+  → Y-cluster purity: 0.826,  NMI: 0.686
+    BKM          MAE = 0.0121
+    BKM_soft     MAE = 0.0121
+    GNNBridge    MAE = 0.0115
+    KNN          MAE = 0.0099
+    MeanTeacher  MAE = 0.0246
+    LapRLS       MAE = 0.0121
+    TSVR         MAE = 0.0128
+    TNNR         MAE = 0.0753
+    UCVME        MAE = 0.0265
+    RankUp       MAE = 0.0692
+    AGDN         MAE = 0.0492
+ Trial 3/3:
+  → X-cluster purity: 0.571,  NMI: 0.405
+  → Y-cluster purity: 0.857,  NMI: 0.716
+    BKM          MAE = 0.0116
+    BKM_soft     MAE = 0.0116
+    GNNBridge    MAE = 0.0118
+    KNN          MAE = 0.0122
+    MeanTeacher  MAE = 0.0292
+    LapRLS       MAE = 0.0125
+    TSVR         MAE = 0.0137
+    TNNR         MAE = 0.0767
+    UCVME        MAE = 0.0232
+    RankUp       MAE = 0.0716
+    AGDN         MAE = 0.0492
+ → AVERAGES for 2.05%:
+    BKM          avg MAE = 0.0119
+    BKM_soft     avg MAE = 0.0119
+    GNNBridge    avg MAE = 0.0117
+    KNN          avg MAE = 0.0107
+    MeanTeacher  avg MAE = 0.0253
+    LapRLS       avg MAE = 0.0122
+    TSVR         avg MAE = 0.0133
+    TNNR         avg MAE = 0.0761
+    UCVME        avg MAE = 0.0243
+    RankUp       avg MAE = 0.0673
+    AGDN         avg MAE = 0.0494
+
+=== SUMMARY TABLE for 6 clusters ===
+              BKM  BKM_soft  GNNBridge       KNN  MeanTeacher    LapRLS      TSVR      TNNR     UCVME    RankUp      AGDN
+sup_frac                                                                                                                 
+2.05%     0.01186  0.011861   0.011652  0.010662     0.025264  0.012189  0.013339  0.076104  0.024277  0.067343  0.049387
+['2 clusters', '3 clusters', '4 clusters', '5 clusters', '6 clusters']
+['2% sup']
+2025-05-28 01:58:41.165 python[50902:2319242] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
