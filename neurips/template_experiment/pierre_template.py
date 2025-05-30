@@ -1661,9 +1661,9 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         # build your GNN graph once
         from sklearn.neighbors import NearestNeighbors
         knn = NearestNeighbors(n_neighbors=22, algorithm="auto").fit(X_all)
-        adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
+        adj = knn.kneighbors_graph(X_all, mode="distance").tocoo()
         edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
-        edge_weights = None
+        edge_weights = torch.tensor(adj.data, dtype=torch.float)
         # edge_weights = None  # not used in this experiment
         # sigma = adj.data.mean()
         # sim   = np.exp(- (adj.data**2) / (2 * sigma**2))
