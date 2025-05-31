@@ -307,7 +307,7 @@ def run_gnn_bridged( X, y_lab, sup_mask,
         edge_attr=edge_weights if edge_weights is not None else None
     )
     model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=hidden_dim, n_clusters=n_clusters, tau=tau)
-    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-5)
+    opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     # loss_history = []
     for epoch in range(epochs):
         model.train()
@@ -1497,7 +1497,7 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     )
     Y_gnn_inf = Y_gnn[inf_mask]
     # — KNN
-    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
+    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(len(X) * sup_frac)))
 
     # — Mean Teacher
     mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
@@ -1716,7 +1716,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         summary_df_constrained = pd.DataFrame(rows_constrained).set_index('sup_frac')
         # print(summary_df)
         print(summary_df_constrained)
-        output_dir = "results"
+    output_dir = "testing_baseAdam"
     os.makedirs(output_dir, exist_ok=True)
 
     for j, sup_frac in enumerate(sup_fracs):
