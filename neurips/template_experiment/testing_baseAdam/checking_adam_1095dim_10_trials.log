@@ -1,0 +1,382 @@
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images:   0%|          | 0/98 [00:00<?, ?it/s]Encoding images:   1%|          | 1/98 [00:00<00:17,  5.68it/s]Encoding images:   3%|▎         | 3/98 [00:00<00:10,  9.14it/s]Encoding images:   5%|▌         | 5/98 [00:00<00:08, 10.48it/s]Encoding images:   7%|▋         | 7/98 [00:00<00:08, 11.15it/s]Encoding images:   9%|▉         | 9/98 [00:00<00:08, 10.35it/s]Encoding images:  11%|█         | 11/98 [00:01<00:09,  8.79it/s]Encoding images:  13%|█▎        | 13/98 [00:01<00:08,  9.65it/s]Encoding images:  15%|█▌        | 15/98 [00:01<00:08, 10.27it/s]Encoding images:  17%|█▋        | 17/98 [00:01<00:07, 10.84it/s]Encoding images:  19%|█▉        | 19/98 [00:01<00:07, 11.25it/s]Encoding images:  21%|██▏       | 21/98 [00:02<00:06, 11.63it/s]Encoding images:  23%|██▎       | 23/98 [00:02<00:06, 11.75it/s]Encoding images:  26%|██▌       | 25/98 [00:02<00:06, 11.92it/s]Encoding images:  28%|██▊       | 27/98 [00:02<00:05, 12.08it/s]Encoding images:  30%|██▉       | 29/98 [00:02<00:05, 12.18it/s]Encoding images:  32%|███▏      | 31/98 [00:02<00:05, 12.29it/s]Encoding images:  34%|███▎      | 33/98 [00:02<00:05, 12.47it/s]Encoding images:  36%|███▌      | 35/98 [00:03<00:05, 12.46it/s]Encoding images:  38%|███▊      | 37/98 [00:03<00:04, 12.41it/s]Encoding images:  40%|███▉      | 39/98 [00:03<00:04, 12.49it/s]Encoding images:  42%|████▏     | 41/98 [00:03<00:04, 12.57it/s]Encoding images:  44%|████▍     | 43/98 [00:03<00:04, 12.55it/s]Encoding images:  46%|████▌     | 45/98 [00:03<00:04, 12.52it/s]Encoding images:  48%|████▊     | 47/98 [00:04<00:04, 12.51it/s]Encoding images:  50%|█████     | 49/98 [00:04<00:04, 12.09it/s]Encoding images:  52%|█████▏    | 51/98 [00:04<00:03, 12.05it/s]Encoding images:  54%|█████▍    | 53/98 [00:04<00:03, 12.03it/s]Encoding images:  56%|█████▌    | 55/98 [00:04<00:03, 12.16it/s]Encoding images:  58%|█████▊    | 57/98 [00:04<00:03, 12.16it/s]Encoding images:  60%|██████    | 59/98 [00:05<00:03, 12.13it/s]Encoding images:  62%|██████▏   | 61/98 [00:05<00:03, 12.19it/s]Encoding images:  64%|██████▍   | 63/98 [00:05<00:02, 12.02it/s]Encoding images:  66%|██████▋   | 65/98 [00:05<00:02, 12.11it/s]Encoding images:  68%|██████▊   | 67/98 [00:05<00:02, 12.27it/s]Encoding images:  70%|███████   | 69/98 [00:05<00:02, 12.43it/s]Encoding images:  72%|███████▏  | 71/98 [00:06<00:02, 12.45it/s]Encoding images:  74%|███████▍  | 73/98 [00:06<00:02, 12.29it/s]Encoding images:  77%|███████▋  | 75/98 [00:06<00:01, 12.17it/s]Encoding images:  79%|███████▊  | 77/98 [00:06<00:01, 12.23it/s]Encoding images:  81%|████████  | 79/98 [00:06<00:01, 12.30it/s]Encoding images:  83%|████████▎ | 81/98 [00:06<00:01, 12.42it/s]Encoding images:  85%|████████▍ | 83/98 [00:07<00:01, 12.40it/s]Encoding images:  87%|████████▋ | 85/98 [00:07<00:01, 12.39it/s]Encoding images:  89%|████████▉ | 87/98 [00:07<00:00, 12.50it/s]Encoding images:  91%|█████████ | 89/98 [00:07<00:00, 12.50it/s]Encoding images:  93%|█████████▎| 91/98 [00:07<00:00, 12.05it/s]Encoding images:  95%|█████████▍| 93/98 [00:07<00:00, 12.14it/s]Encoding images:  97%|█████████▋| 95/98 [00:08<00:00, 12.20it/s]Encoding images:  99%|█████████▉| 97/98 [00:08<00:00, 12.31it/s]Encoding images: 100%|██████████| 98/98 [00:08<00:00, 11.87it/s]
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.927,  NMI: 0.690
+    BC           MAE (constrained) = 0.0083
+    Softmax-BC   MAE (constrained) = 0.0083
+    GNN-BC       MAE (constrained) = 0.0082
+    KNN          MAE (constrained) = 0.0114
+    MeanTeacher  MAE (constrained) = 0.0375
+    LapRLS       MAE (constrained) = 0.0112
+    TSVR         MAE (constrained) = 0.0113
+    TNNR         MAE (constrained) = 0.0814
+    UCVME        MAE (constrained) = 0.0289
+    RankUp       MAE (constrained) = 0.0672
+    AGDN         MAE (constrained) = 0.0527
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.945,  NMI: 0.746
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0094
+    KNN          MAE (constrained) = 0.0091
+    MeanTeacher  MAE (constrained) = 0.0314
+    LapRLS       MAE (constrained) = 0.0087
+    TSVR         MAE (constrained) = 0.0092
+    TNNR         MAE (constrained) = 0.0768
+    UCVME        MAE (constrained) = 0.0304
+    RankUp       MAE (constrained) = 0.0655
+    AGDN         MAE (constrained) = 0.0529
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.964,  NMI: 0.810
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0091
+    KNN          MAE (constrained) = 0.0088
+    MeanTeacher  MAE (constrained) = 0.0326
+    LapRLS       MAE (constrained) = 0.0087
+    TSVR         MAE (constrained) = 0.0088
+    TNNR         MAE (constrained) = 0.0747
+    UCVME        MAE (constrained) = 0.0278
+    RankUp       MAE (constrained) = 0.0613
+    AGDN         MAE (constrained) = 0.0519
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.964,  NMI: 0.810
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0097
+    KNN          MAE (constrained) = 0.0106
+    MeanTeacher  MAE (constrained) = 0.0353
+    LapRLS       MAE (constrained) = 0.0115
+    TSVR         MAE (constrained) = 0.0107
+    TNNR         MAE (constrained) = 0.0779
+    UCVME        MAE (constrained) = 0.0286
+    RankUp       MAE (constrained) = 0.0663
+    AGDN         MAE (constrained) = 0.0532
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.927,  NMI: 0.690
+    BC           MAE (constrained) = 0.0088
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0096
+    KNN          MAE (constrained) = 0.0107
+    MeanTeacher  MAE (constrained) = 0.0324
+    LapRLS       MAE (constrained) = 0.0104
+    TSVR         MAE (constrained) = 0.0107
+    TNNR         MAE (constrained) = 0.0765
+    UCVME        MAE (constrained) = 0.0296
+    RankUp       MAE (constrained) = 0.0656
+    AGDN         MAE (constrained) = 0.0508
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.945,  NMI: 0.746
+    BC           MAE (constrained) = 0.0092
+    Softmax-BC   MAE (constrained) = 0.0092
+    GNN-BC       MAE (constrained) = 0.0094
+    KNN          MAE (constrained) = 0.0102
+    MeanTeacher  MAE (constrained) = 0.0259
+    LapRLS       MAE (constrained) = 0.0099
+    TSVR         MAE (constrained) = 0.0101
+    TNNR         MAE (constrained) = 0.0778
+    UCVME        MAE (constrained) = 0.0324
+    RankUp       MAE (constrained) = 0.0680
+    AGDN         MAE (constrained) = 0.0545
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.927,  NMI: 0.690
+    BC           MAE (constrained) = 0.0092
+    Softmax-BC   MAE (constrained) = 0.0093
+    GNN-BC       MAE (constrained) = 0.0092
+    KNN          MAE (constrained) = 0.0081
+    MeanTeacher  MAE (constrained) = 0.0241
+    LapRLS       MAE (constrained) = 0.0086
+    TSVR         MAE (constrained) = 0.0081
+    TNNR         MAE (constrained) = 0.0753
+    UCVME        MAE (constrained) = 0.0278
+    RankUp       MAE (constrained) = 0.0671
+    AGDN         MAE (constrained) = 0.0509
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.982,  NMI: 0.887
+    BC           MAE (constrained) = 0.0098
+    Softmax-BC   MAE (constrained) = 0.0098
+    GNN-BC       MAE (constrained) = 0.0097
+    KNN          MAE (constrained) = 0.0095
+    MeanTeacher  MAE (constrained) = 0.0217
+    LapRLS       MAE (constrained) = 0.0086
+    TSVR         MAE (constrained) = 0.0094
+    TNNR         MAE (constrained) = 0.0771
+    UCVME        MAE (constrained) = 0.0297
+    RankUp       MAE (constrained) = 0.0644
+    AGDN         MAE (constrained) = 0.0486
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.964,  NMI: 0.810
+    BC           MAE (constrained) = 0.0085
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0085
+    KNN          MAE (constrained) = 0.0076
+    MeanTeacher  MAE (constrained) = 0.0188
+    LapRLS       MAE (constrained) = 0.0078
+    TSVR         MAE (constrained) = 0.0075
+    TNNR         MAE (constrained) = 0.0749
+    UCVME        MAE (constrained) = 0.0289
+    RankUp       MAE (constrained) = 0.0603
+    AGDN         MAE (constrained) = 0.0503
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.964,  NMI: 0.810
+    BC           MAE (constrained) = 0.0096
+    Softmax-BC   MAE (constrained) = 0.0096
+    GNN-BC       MAE (constrained) = 0.0097
+    KNN          MAE (constrained) = 0.0076
+    MeanTeacher  MAE (constrained) = 0.0264
+    LapRLS       MAE (constrained) = 0.0079
+    TSVR         MAE (constrained) = 0.0076
+    TNNR         MAE (constrained) = 0.0735
+    UCVME        MAE (constrained) = 0.0265
+    RankUp       MAE (constrained) = 0.0643
+    AGDN         MAE (constrained) = 0.0517
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0090
+    Softmax-BC   avg MAE (constrained) = 0.0090
+    GNN-BC       avg MAE (constrained) = 0.0093
+    KNN          avg MAE (constrained) = 0.0094
+    MeanTeacher  avg MAE (constrained) = 0.0286
+    LapRLS       avg MAE (constrained) = 0.0093
+    TSVR         avg MAE (constrained) = 0.0093
+    TNNR         avg MAE (constrained) = 0.0766
+    UCVME        avg MAE (constrained) = 0.0291
+    RankUp       avg MAE (constrained) = 0.0650
+    AGDN         avg MAE (constrained) = 0.0517
+
+-- Supervision = 7.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.983,  NMI: 0.893
+    BC           MAE (constrained) = 0.0086
+    Softmax-BC   MAE (constrained) = 0.0086
+    GNN-BC       MAE (constrained) = 0.0086
+    KNN          MAE (constrained) = 0.0092
+    MeanTeacher  MAE (constrained) = 0.0206
+    LapRLS       MAE (constrained) = 0.0085
+    TSVR         MAE (constrained) = 0.0099
+    TNNR         MAE (constrained) = 0.0743
+    UCVME        MAE (constrained) = 0.0250
+    RankUp       MAE (constrained) = 0.0604
+    AGDN         MAE (constrained) = 0.0403
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.983,  NMI: 0.893
+    BC           MAE (constrained) = 0.0096
+    Softmax-BC   MAE (constrained) = 0.0096
+    GNN-BC       MAE (constrained) = 0.0096
+    KNN          MAE (constrained) = 0.0094
+    MeanTeacher  MAE (constrained) = 0.0185
+    LapRLS       MAE (constrained) = 0.0090
+    TSVR         MAE (constrained) = 0.0098
+    TNNR         MAE (constrained) = 0.0747
+    UCVME        MAE (constrained) = 0.0257
+    RankUp       MAE (constrained) = 0.0670
+    AGDN         MAE (constrained) = 0.0409
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.932,  NMI: 0.654
+    BC           MAE (constrained) = 0.0085
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0082
+    KNN          MAE (constrained) = 0.0091
+    MeanTeacher  MAE (constrained) = 0.0185
+    LapRLS       MAE (constrained) = 0.0093
+    TSVR         MAE (constrained) = 0.0101
+    TNNR         MAE (constrained) = 0.0720
+    UCVME        MAE (constrained) = 0.0270
+    RankUp       MAE (constrained) = 0.0620
+    AGDN         MAE (constrained) = 0.0418
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.966,  NMI: 0.786
+    BC           MAE (constrained) = 0.0094
+    Softmax-BC   MAE (constrained) = 0.0094
+    GNN-BC       MAE (constrained) = 0.0094
+    KNN          MAE (constrained) = 0.0103
+    MeanTeacher  MAE (constrained) = 0.0204
+    LapRLS       MAE (constrained) = 0.0092
+    TSVR         MAE (constrained) = 0.0111
+    TNNR         MAE (constrained) = 0.0750
+    UCVME        MAE (constrained) = 0.0272
+    RankUp       MAE (constrained) = 0.0715
+    AGDN         MAE (constrained) = 0.0413
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.966,  NMI: 0.819
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0090
+    KNN          MAE (constrained) = 0.0095
+    MeanTeacher  MAE (constrained) = 0.0184
+    LapRLS       MAE (constrained) = 0.0091
+    TSVR         MAE (constrained) = 0.0105
+    TNNR         MAE (constrained) = 0.0749
+    UCVME        MAE (constrained) = 0.0260
+    RankUp       MAE (constrained) = 0.0626
+    AGDN         MAE (constrained) = 0.0388
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.966,  NMI: 0.819
+    BC           MAE (constrained) = 0.0087
+    Softmax-BC   MAE (constrained) = 0.0087
+    GNN-BC       MAE (constrained) = 0.0088
+    KNN          MAE (constrained) = 0.0089
+    MeanTeacher  MAE (constrained) = 0.0210
+    LapRLS       MAE (constrained) = 0.0082
+    TSVR         MAE (constrained) = 0.0094
+    TNNR         MAE (constrained) = 0.0743
+    UCVME        MAE (constrained) = 0.0225
+    RankUp       MAE (constrained) = 0.0618
+    AGDN         MAE (constrained) = 0.0406
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.949,  NMI: 0.758
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0100
+    KNN          MAE (constrained) = 0.0089
+    MeanTeacher  MAE (constrained) = 0.0208
+    LapRLS       MAE (constrained) = 0.0085
+    TSVR         MAE (constrained) = 0.0096
+    TNNR         MAE (constrained) = 0.0745
+    UCVME        MAE (constrained) = 0.0285
+    RankUp       MAE (constrained) = 0.0666
+    AGDN         MAE (constrained) = 0.0403
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.949,  NMI: 0.714
+    BC           MAE (constrained) = 0.0084
+    Softmax-BC   MAE (constrained) = 0.0084
+    GNN-BC       MAE (constrained) = 0.0086
+    KNN          MAE (constrained) = 0.0092
+    MeanTeacher  MAE (constrained) = 0.0202
+    LapRLS       MAE (constrained) = 0.0086
+    TSVR         MAE (constrained) = 0.0100
+    TNNR         MAE (constrained) = 0.0724
+    UCVME        MAE (constrained) = 0.0266
+    RankUp       MAE (constrained) = 0.0603
+    AGDN         MAE (constrained) = 0.0391
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.966,  NMI: 0.819
+    BC           MAE (constrained) = 0.0088
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0099
+    KNN          MAE (constrained) = 0.0104
+    MeanTeacher  MAE (constrained) = 0.0229
+    LapRLS       MAE (constrained) = 0.0100
+    TSVR         MAE (constrained) = 0.0115
+    TNNR         MAE (constrained) = 0.0755
+    UCVME        MAE (constrained) = 0.0244
+    RankUp       MAE (constrained) = 0.0688
+    AGDN         MAE (constrained) = 0.0410
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.949,  NMI: 0.758
+    BC           MAE (constrained) = 0.0094
+    Softmax-BC   MAE (constrained) = 0.0094
+    GNN-BC       MAE (constrained) = 0.0094
+    KNN          MAE (constrained) = 0.0107
+    MeanTeacher  MAE (constrained) = 0.0204
+    LapRLS       MAE (constrained) = 0.0103
+    TSVR         MAE (constrained) = 0.0119
+    TNNR         MAE (constrained) = 0.0744
+    UCVME        MAE (constrained) = 0.0265
+    RankUp       MAE (constrained) = 0.0664
+    AGDN         MAE (constrained) = 0.0420
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0090
+    Softmax-BC   avg MAE (constrained) = 0.0090
+    GNN-BC       avg MAE (constrained) = 0.0091
+    KNN          avg MAE (constrained) = 0.0096
+    MeanTeacher  avg MAE (constrained) = 0.0202
+    LapRLS       avg MAE (constrained) = 0.0091
+    TSVR         avg MAE (constrained) = 0.0104
+    TNNR         avg MAE (constrained) = 0.0742
+    UCVME        avg MAE (constrained) = 0.0259
+    RankUp       avg MAE (constrained) = 0.0647
+    AGDN         avg MAE (constrained) = 0.0406
+
+-- Supervision = 15.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.970,  NMI: 0.806
+    BC           MAE (constrained) = 0.0088
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0087
+    KNN          MAE (constrained) = 0.0088
+    MeanTeacher  MAE (constrained) = 0.0157
+    LapRLS       MAE (constrained) = 0.0083
+    TSVR         MAE (constrained) = 0.0108
+    TNNR         MAE (constrained) = 0.0712
+    UCVME        MAE (constrained) = 0.0229
+    RankUp       MAE (constrained) = 0.0631
+    AGDN         MAE (constrained) = 0.0318
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.955,  NMI: 0.740
+    BC           MAE (constrained) = 0.0089
+    Softmax-BC   MAE (constrained) = 0.0089
+    GNN-BC       MAE (constrained) = 0.0091
+    KNN          MAE (constrained) = 0.0099
+    MeanTeacher  MAE (constrained) = 0.0192
+    LapRLS       MAE (constrained) = 0.0106
+    TSVR         MAE (constrained) = 0.0133
+    TNNR         MAE (constrained) = 0.0706
+    UCVME        MAE (constrained) = 0.0238
+    RankUp       MAE (constrained) = 0.0619
+    AGDN         MAE (constrained) = 0.0341
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.903
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0090
+    KNN          MAE (constrained) = 0.0098
+    MeanTeacher  MAE (constrained) = 0.0189
+    LapRLS       MAE (constrained) = 0.0092
+    TSVR         MAE (constrained) = 0.0120
+    TNNR         MAE (constrained) = 0.0743
+    UCVME        MAE (constrained) = 0.0257
+    RankUp       MAE (constrained) = 0.0571
+    AGDN         MAE (constrained) = 0.0333
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.970,  NMI: 0.806
+    BC           MAE (constrained) = 0.0088
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0090
+    KNN          MAE (constrained) = 0.0106
+    MeanTeacher  MAE (constrained) = 0.0204
+    LapRLS       MAE (constrained) = 0.0109
+    TSVR         MAE (constrained) = 0.0134
+    TNNR         MAE (constrained) = 0.0738
+    UCVME        MAE (constrained) = 0.0274
+    RankUp       MAE (constrained) = 0.0653
+    AGDN         MAE (constrained) = 0.0333
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.970,  NMI: 0.835
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0093
+    GNN-BC       MAE (constrained) = 0.0095
+    KNN          MAE (constrained) = 0.0095
+    MeanTeacher  MAE (constrained) = 0.0168
+    LapRLS       MAE (constrained) = 0.0094
+    TSVR         MAE (constrained) = 0.0117
+    TNNR         MAE (constrained) = 0.0737
