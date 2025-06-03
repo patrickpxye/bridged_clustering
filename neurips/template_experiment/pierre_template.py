@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score, mean_squared_error, mean_absolute_error
 from sklearn.metrics import r2_score
 from scipy.stats import gaussian_kde
+from scipy.optimize import linear_sum_assignment
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.random_projection import GaussianRandomProjection
 from sklearn.metrics import pairwise_distances
@@ -59,10 +60,10 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = [2, 3, 4, 5, 6, 10] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.07, 0.15, 0.3] # supervised sample fractions (0.0205 = 1/49)
-OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
-N_TRIALS        = 10
+N_CLUSTERS      = [2, 3, 4, 5, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+SUP_FRACS       = [0.0205, 0.07, 0.1] # supervised sample fractions (0.0205 = 1/49)
+OUT_FRAC        = 0.8    # fraction of "output-only" samples for Y-clustering
+N_TRIALS        = 5
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
 #############################
@@ -229,6 +230,98 @@ def learn_bridge(x_lab, y_lab, sup_mask, n_clusters):
     for c in range(n_clusters):
         mask = (x_lab == c) & sup_mask
         if mask.any(): mapping[c] = np.bincount(y_lab[mask], minlength=n_clusters).argmax()
+    return mapping
+import numpy as np
+from scipy.optimize import linear_sum_assignment
+
+def learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters):
+    """
+    Build a K×K association matrix only over supervised samples, then
+    solve a max‑weight one‑to‑one matching via Hungarian algorithm.
+    Any X‐cluster that has zero supervised points will map to 0.
+    """
+    K = n_clusters
+    # 1) build association counts
+    assoc = np.zeros((K, K), dtype=int)
+    sup_idxs = np.where(sup_mask)[0]
+    for idx in sup_idxs:
+        i = int(x_lab[idx])
+        j = int(y_lab[idx])
+        assoc[i, j] += 1
+
+    # 2) handle clusters with no supervised rows by leaving them unmatched:
+    #    We'll mark them with -1 at the end
+    zero_rows = np.where(assoc.sum(axis=1) == 0)[0]
+
+    # 3) solve max‑weight matching on -assoc (Hungarian solves *min*).
+    #    We only match the rows that actually have at least one supervised point.
+    #    To keep it simple, we call linear_sum_assignment on the full K×K,
+    #    but we’ll ignore rows with no support.
+    row_idx, col_idx = linear_sum_assignment(-assoc)
+
+    mapping = np.full(K, 0, dtype=int)
+    # fill in matches only for rows whose assoc sum > 0
+    for r, c in zip(row_idx, col_idx):
+        if assoc[r, c] > 0:
+            mapping[r] = c
+        # if assoc[r,c]==0 (no co‐occurrence), we keep mapping[r] = 0
+
+    # (Optional) If you prefer a one‑to‑many or many‑to‑one instead of strict one-to-one,
+    # you could relax this. But as written, this is a strict one-to-one matching.
+    return mapping
+
+def learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters, threshold=0.7, eps=1e-9):
+    """
+    Build a K×K float matrix of supervision counts, convert to probabilities
+    per-row, then only accept a mapping if p >= threshold. Otherwise 0.
+    """
+    K = n_clusters
+    assoc = np.zeros((K, K), dtype=float)
+    sup_idxs = np.where(sup_mask)[0]
+    for idx in sup_idxs:
+        i = int(x_lab[idx])
+        j = int(y_lab[idx])
+        assoc[i, j] += 1.0
+
+    # normalize each row into a distribution
+    row_sums = assoc.sum(axis=1, keepdims=True) + eps  # (K,1)
+    probs = assoc / row_sums
+
+    # pick best j for each i only if its probability ≥ threshold
+    mapping = np.full(K, 0, dtype=int)
+    best_j = np.argmax(probs, axis=1)  # (K,)
+    best_prob = probs[np.arange(K), best_j]
+    mapping[best_prob >= threshold] = best_j[best_prob >= threshold]
+    # rows where best_prob < threshold remain 0
+    return mapping
+
+def learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters, margin=0.4, eps=1e-9):
+    """
+    For each X‐cluster i, look at assoc[i], find the two highest counts.
+    If (top1 - top2)/(top1 + ε) ≥ margin, accept i → top1; else 0.
+    """
+    K = n_clusters
+    assoc = np.zeros((K, K), dtype=int)
+    sup_idxs = np.where(sup_mask)[0]
+    for idx in sup_idxs:
+        i = int(x_lab[idx])
+        j = int(y_lab[idx])
+        assoc[i, j] += 1
+
+    mapping = np.full(K, 0, dtype=int)
+    for i in range(K):
+        row = assoc[i]
+        if row.sum() == 0:
+            continue  # no supervised points for this X‐cluster
+
+        # find top two j’s and their counts
+        top2 = np.argsort(row)[::-1][:2]
+        top1, top2_idx = top2[0], top2[1]
+        c1, c2 = row[top1], row[top2_idx]
+        gap = (c1 - c2) / (c1 + eps)
+        if gap >= margin:
+            mapping[i] = top1
+        # else leave mapping[i] = 0
     return mapping
 
 def compute_centroids(Y, y_lab, n_clusters):
@@ -1471,7 +1564,7 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     })
 
     # 4) compute our three baselines
-    # — BKM
+    # — BKM (Majority Vote)
     mapping   = learn_bridge(x_lab, y_lab, sup_mask, n_clusters)
     centroids = compute_centroids(Y_true, y_lab, n_clusters)
     Yb_all    = predict_bridge(x_lab, mapping, centroids)
@@ -1496,47 +1589,136 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
         X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
     )
     Y_gnn_inf = Y_gnn[inf_mask]
-    # — KNN
-    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(len(X) * sup_frac)))
+    ######
+    # - BKM (Hungarian)
+    mapping_h = learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters)
+    centroids_h = compute_centroids(Y_true, y_lab, n_clusters)
 
-    # — Mean Teacher
-    mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
+    Yb_all    = predict_bridge(x_lab, mapping, centroids)
 
-    # # 3) XGBoost
-    # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
+    Y_hard_inf_h = Yb_all[inf_mask]
+    Y_true_inf_h = Y_true[inf_mask]
 
-    # 4) LapRLS
-    lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+    # # choose tau heuristically
+    # from sklearn.metrics import pairwise_distances
+    # cd   = pairwise_distances(centroids)
+    tau_h  = 0.2
 
-    # 5) Twin-NN regressor
-    tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
+    # compute Y_soft for the inference set
+    Y_soft_inf_h = []
+    for yc in Yb_all[inf_mask]:
+        r = responsibilities(yc, centroids, tau_h)
+        Y_soft_inf_h.append(r.dot(centroids))
+    Y_soft_inf_h = np.vstack(Y_soft_inf_h)
 
-    # 6) Transductive SVR
-    tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
+    # - GNN-bridge
+    Y_gnn_h = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_h, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    )
+    Y_gnn_inf_h = Y_gnn_h[inf_mask]
 
-    # 7) UCVME
-    ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
+    # - BKM (Threshold)
+    mapping_t = learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters)
+    centroids_t = compute_centroids(Y_true, y_lab, n_clusters)
+    Yb_all_t    = predict_bridge(x_lab, mapping_t, centroids_t)
+    Y_hard_inf_t = Yb_all_t[inf_mask]
+    Y_true_inf_t = Y_true[inf_mask]
+    # compute Y_soft for the inference set
+    Y_soft_inf_t = []
+    for yc in Yb_all_t[inf_mask]:
+        r = responsibilities(yc, centroids_t, tau)
+        Y_soft_inf_t.append(r.dot(centroids_t))
+    Y_soft_inf_t = np.vstack(Y_soft_inf_t)
+    # - GNN-bridge
+    Y_gnn_t = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_t, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    )
+    Y_gnn_inf_t = Y_gnn_t[inf_mask]
 
-    # 8) RankUp
-    rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
+    # - BKM (Margin)
+    mapping_m = learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters)
+    centroids_m = compute_centroids(Y_true, y_lab, n_clusters)
+    Yb_all_m    = predict_bridge(x_lab, mapping_m, centroids_m)
+    Y_hard_inf_m = Yb_all_m[inf_mask]
+    Y_true_inf_m = Y_true[inf_mask]
+    # compute Y_soft for the inference set
+    Y_soft_inf_m = []
+    for yc in Yb_all_m[inf_mask]:
+        r = responsibilities(yc, centroids_m, tau)
+        Y_soft_inf_m.append(r.dot(centroids_m))
+    Y_soft_inf_m = np.vstack(Y_soft_inf_m)
+    # - GNN-bridge
+    Y_gnn_m = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_m, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    )
+    Y_gnn_inf_m = Y_gnn_m[inf_mask]
 
-    # 9) AGDN
-    agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
 
-    # now compute MAE on each:
+
+
+
+
+
+
+
+
+
+    # # — KNN
+    # Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(len(X) * sup_frac)))
+
+    # # — Mean Teacher
+    # mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
+
+    # # # 3) XGBoost
+    # # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
+
+    # # 4) LapRLS
+    # lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+
+    # # 5) Twin-NN regressor
+    # tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
+
+    # # 6) Transductive SVR
+    # tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
+
+    # # 7) UCVME
+    # ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
+
+    # # 8) RankUp
+    # rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
+
+    # # 9) AGDN
+    # agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
+
+    # # now compute MAE on each:
+    # results = {
+    #   "BC":          mean_absolute_error(Y_true_inf,    Y_hard_inf),
+    #   "Softmax-BC":  mean_absolute_error(Y_true_inf,    Y_soft_inf),
+    #   "GNN-BC":      mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+    #   "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
+    #   "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
+    # #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
+    #   "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
+    #   "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
+    #   "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
+    #   "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
+    #   "RankUp":      mean_absolute_error(rank_y,        rank_preds),
+    #   "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
+    # }
+
     results = {
-      "BC":          mean_absolute_error(Y_true_inf,    Y_hard_inf),
-      "Softmax-BC":  mean_absolute_error(Y_true_inf,    Y_soft_inf),
-      "GNN-BC":      mean_absolute_error(Y_true_inf,    Y_gnn_inf),
-      "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
-      "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
-    #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
-      "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
-      "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
-      "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
-      "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
-      "RankUp":      mean_absolute_error(rank_y,        rank_preds),
-      "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
+        "BC":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
+        "Softmax-BC":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
+        "GNN-BC":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+        "BC_h":    mean_absolute_error(Y_true_inf_h,  Y_hard_inf_h),
+        "Softmax-BC_h": mean_absolute_error(Y_true_inf_h,  Y_soft_inf_h),
+        "GNN-BC_h": mean_absolute_error(Y_true_inf_h,  Y_gnn_inf_h),
+        "BC_t":    mean_absolute_error(Y_true_inf_t,  Y_hard_inf_t),
+        "Softmax-BC_t": mean_absolute_error(Y_true_inf_t,  Y_soft_inf_t),
+        "GNN-BC_t": mean_absolute_error(Y_true_inf_t,  Y_gnn_inf_t),
+        "BC_m":    mean_absolute_error(Y_true_inf_m,  Y_hard_inf_m),
+        "Softmax-BC_m": mean_absolute_error(Y_true_inf_m,  Y_soft_inf_m),
+        "GNN-BC_m": mean_absolute_error(Y_true_inf_m,  Y_gnn_inf_m),
     }
 
     # # GNN‐bridge
@@ -1629,19 +1811,33 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
       - loss_data: shape (len(cluster_vals), len(sup_fracs), num_models, n_trials)
       - model_names: the list of model keys, in the order used in loss_data
     """
+    # model_names = [
+    #   "BC",
+    #   "Softmax-BC",
+    #   "GNN-BC",
+    #   "KNN",
+    #   "MeanTeacher",
+    # #   "XGBoost",
+    #   "LapRLS",
+    #   "TSVR",
+    #   "TNNR",
+    #   "UCVME",
+    #   "RankUp",
+    #   "AGDN",
+    # ]
     model_names = [
-      "BC",
-      "Softmax-BC",
-      "GNN-BC",
-      "KNN",
-      "MeanTeacher",
-    #   "XGBoost",
-      "LapRLS",
-      "TSVR",
-      "TNNR",
-      "UCVME",
-      "RankUp",
-      "AGDN",
+        "BC",
+        "Softmax-BC",
+        "GNN-BC",
+        "BC_h",
+        "Softmax-BC_h",
+        "GNN-BC_h",
+        "BC_t",
+        "Softmax-BC_t",
+        "GNN-BC_t",
+        "BC_m",
+        "Softmax-BC_m",
+        "GNN-BC_m",
     ]
     num_h1 = len(cluster_vals)
     num_h2 = len(sup_fracs)
@@ -1716,7 +1912,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         summary_df_constrained = pd.DataFrame(rows_constrained).set_index('sup_frac')
         # print(summary_df)
         print(summary_df_constrained)
-    output_dir = "testing_baseAdam"
+    output_dir = "testing_voting_results"
     os.makedirs(output_dir, exist_ok=True)
 
     for j, sup_frac in enumerate(sup_fracs):
@@ -1747,7 +1943,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         
         # save it
         pct = int(sup_frac * 100)
-        fname = os.path.join(output_dir, f"10trials_summary_supervised_{pct}pct.png")
+        fname = os.path.join(output_dir, f"5trials_summary_supervised_{pct}pct.png")
         fig.savefig(fname, dpi=300, bbox_inches="tight")
         plt.close(fig)
         
@@ -1950,7 +2146,7 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
                             hyperparam1_labels=["30", "60", "90", "120", "150"],
                             hyperparam2_labels=["1% supervision", "5% supervision", "10% supervision", "15% supervision"],
                             model_labels=["Bridged Clustering", "KNN", "Mean Teacher", "GCN", "AGDN", "Bridged AGDN"],
-                            log_scale=False):
+                            log_scale=True):
     """
     Create a figure with 5 subplots (one for each value of hyperparameter 1).
     In each subplot the loss distributions are shown as grouped boxplots for the
@@ -2028,7 +2224,7 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
         
         # Create the boxplots for this subplot.
         bp = ax.boxplot(data_all, positions=positions, widths=0.6,
-                        patch_artist=True, showfliers=True)
+                        patch_artist=True, showfliers=True,  medianprops=dict(color="white", linewidth=2))
         
         # Color each box based on its model. Since for each group the boxes
         # appear in order (model 0 through model 4), we use modulo arithmetic.
@@ -2039,8 +2235,8 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
         # Set the x-axis ticks at the centers of each hyperparam2 group.
         ax.set_xticks(group_centers)
         ax.set_xticklabels(hyperparam2_labels, fontsize=10)
-        ax.set_ylabel("MAE", fontsize=12)
-        ax.set_title(f"MAE Distributions for {hyperparam1_labels[i]}", fontsize=14)
+        ax.set_ylabel("Log MAE", fontsize=12)
+        ax.set_title(f"Log MAE Distributions for {hyperparam1_labels[i]}", fontsize=14)
         if log_scale:
             ax.set_yscale("log")
     
@@ -2216,13 +2412,13 @@ if __name__ == '__main__':
     print(hyperparam2_labels)
 
     # finally, plot
-    # plot_boxplots_by_hyper1(
-    #     loss_data,
-    #     hyperparam1_labels=hyperparam1_labels,
-    #     hyperparam2_labels=hyperparam2_labels,
-    #     model_labels=model_labels,
-    #     log_scale=False
-    # )
+    plot_boxplots_by_hyper1(
+        loss_data,
+        hyperparam1_labels=hyperparam1_labels,
+        hyperparam2_labels=hyperparam2_labels,
+        model_labels=model_labels,
+        log_scale=False
+    )
     # run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
     # param_grid = {
     # 'tau':        [0.4, 0.5, 0.75],
