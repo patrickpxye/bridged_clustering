@@ -1,0 +1,2589 @@
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images:   0%|          | 0/150 [00:00<?, ?it/s]Encoding images:   1%|          | 1/150 [00:00<00:25,  5.89it/s]Encoding images:   2%|▏         | 3/150 [00:00<00:15,  9.36it/s]Encoding images:   3%|▎         | 5/150 [00:00<00:13, 10.60it/s]Encoding images:   5%|▍         | 7/150 [00:00<00:12, 11.25it/s]Encoding images:   6%|▌         | 9/150 [00:00<00:12, 11.52it/s]Encoding images:   7%|▋         | 11/150 [00:00<00:11, 11.71it/s]Encoding images:   9%|▊         | 13/150 [00:01<00:11, 11.79it/s]Encoding images:  10%|█         | 15/150 [00:01<00:11, 11.84it/s]Encoding images:  11%|█▏        | 17/150 [00:01<00:11, 11.95it/s]Encoding images:  13%|█▎        | 19/150 [00:01<00:10, 12.02it/s]Encoding images:  14%|█▍        | 21/150 [00:01<00:10, 12.11it/s]Encoding images:  15%|█▌        | 23/150 [00:01<00:10, 12.17it/s]Encoding images:  17%|█▋        | 25/150 [00:02<00:10, 12.17it/s]Encoding images:  18%|█▊        | 27/150 [00:02<00:10, 12.17it/s]Encoding images:  19%|█▉        | 29/150 [00:02<00:10, 12.08it/s]Encoding images:  21%|██        | 31/150 [00:02<00:09, 12.14it/s]Encoding images:  22%|██▏       | 33/150 [00:02<00:09, 12.10it/s]Encoding images:  23%|██▎       | 35/150 [00:02<00:09, 12.10it/s]Encoding images:  25%|██▍       | 37/150 [00:03<00:09, 12.20it/s]Encoding images:  26%|██▌       | 39/150 [00:03<00:09, 12.17it/s]Encoding images:  27%|██▋       | 41/150 [00:03<00:08, 12.22it/s]Encoding images:  29%|██▊       | 43/150 [00:03<00:08, 12.26it/s]Encoding images:  30%|███       | 45/150 [00:03<00:08, 12.26it/s]Encoding images:  31%|███▏      | 47/150 [00:03<00:08, 12.37it/s]Encoding images:  33%|███▎      | 49/150 [00:04<00:08, 12.32it/s]Encoding images:  34%|███▍      | 51/150 [00:04<00:08, 12.33it/s]Encoding images:  35%|███▌      | 53/150 [00:04<00:07, 12.24it/s]Encoding images:  37%|███▋      | 55/150 [00:04<00:07, 12.30it/s]Encoding images:  38%|███▊      | 57/150 [00:04<00:07, 12.30it/s]Encoding images:  39%|███▉      | 59/150 [00:04<00:07, 12.18it/s]Encoding images:  41%|████      | 61/150 [00:05<00:07, 11.66it/s]Encoding images:  42%|████▏     | 63/150 [00:05<00:07, 11.85it/s]Encoding images:  43%|████▎     | 65/150 [00:05<00:07, 11.93it/s]Encoding images:  45%|████▍     | 67/150 [00:05<00:06, 11.99it/s]Encoding images:  46%|████▌     | 69/150 [00:05<00:06, 12.11it/s]Encoding images:  47%|████▋     | 71/150 [00:05<00:06, 12.13it/s]Encoding images:  49%|████▊     | 73/150 [00:06<00:06, 12.22it/s]Encoding images:  50%|█████     | 75/150 [00:06<00:06, 12.18it/s]Encoding images:  51%|█████▏    | 77/150 [00:06<00:05, 12.18it/s]Encoding images:  53%|█████▎    | 79/150 [00:06<00:05, 12.18it/s]Encoding images:  54%|█████▍    | 81/150 [00:06<00:05, 12.28it/s]Encoding images:  55%|█████▌    | 83/150 [00:06<00:05, 12.27it/s]Encoding images:  57%|█████▋    | 85/150 [00:07<00:05, 12.28it/s]Encoding images:  58%|█████▊    | 87/150 [00:07<00:05, 12.20it/s]Encoding images:  59%|█████▉    | 89/150 [00:07<00:04, 12.24it/s]Encoding images:  61%|██████    | 91/150 [00:07<00:04, 12.15it/s]Encoding images:  62%|██████▏   | 93/150 [00:07<00:04, 12.21it/s]Encoding images:  63%|██████▎   | 95/150 [00:07<00:04, 12.23it/s]Encoding images:  65%|██████▍   | 97/150 [00:08<00:04, 12.11it/s]Encoding images:  66%|██████▌   | 99/150 [00:08<00:04, 12.15it/s]Encoding images:  67%|██████▋   | 101/150 [00:08<00:04, 12.19it/s]Encoding images:  69%|██████▊   | 103/150 [00:08<00:03, 12.19it/s]Encoding images:  70%|███████   | 105/150 [00:08<00:03, 12.20it/s]Encoding images:  71%|███████▏  | 107/150 [00:08<00:03, 12.30it/s]Encoding images:  73%|███████▎  | 109/150 [00:09<00:03, 12.22it/s]Encoding images:  74%|███████▍  | 111/150 [00:09<00:03, 12.17it/s]Encoding images:  75%|███████▌  | 113/150 [00:09<00:03, 11.22it/s]Encoding images:  77%|███████▋  | 115/150 [00:09<00:03, 11.55it/s]Encoding images:  78%|███████▊  | 117/150 [00:09<00:02, 11.73it/s]Encoding images:  79%|███████▉  | 119/150 [00:09<00:02, 11.93it/s]Encoding images:  81%|████████  | 121/150 [00:10<00:02, 12.06it/s]Encoding images:  82%|████████▏ | 123/150 [00:10<00:02, 12.14it/s]Encoding images:  83%|████████▎ | 125/150 [00:10<00:02, 12.15it/s]Encoding images:  85%|████████▍ | 127/150 [00:10<00:01, 12.23it/s]Encoding images:  86%|████████▌ | 129/150 [00:10<00:01, 12.14it/s]Encoding images:  87%|████████▋ | 131/150 [00:10<00:01, 12.11it/s]Encoding images:  89%|████████▊ | 133/150 [00:11<00:01, 12.13it/s]Encoding images:  90%|█████████ | 135/150 [00:11<00:01, 12.10it/s]Encoding images:  91%|█████████▏| 137/150 [00:11<00:01, 12.08it/s]Encoding images:  93%|█████████▎| 139/150 [00:11<00:00, 12.07it/s]Encoding images:  94%|█████████▍| 141/150 [00:11<00:00, 12.13it/s]Encoding images:  95%|█████████▌| 143/150 [00:11<00:00, 12.16it/s]Encoding images:  97%|█████████▋| 145/150 [00:12<00:00, 12.13it/s]Encoding images:  98%|█████████▊| 147/150 [00:12<00:00, 12.09it/s]Encoding images:  99%|█████████▉| 149/150 [00:12<00:00, 11.94it/s]Encoding images: 100%|██████████| 150/150 [00:12<00:00, 12.03it/s]
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.659,  NMI: 0.510
+    BC           MAE (constrained) = 0.0104
+    Softmax-BC   MAE (constrained) = 0.0106
+    GNN-BC       MAE (constrained) = 0.0095
+    BC_h         MAE (constrained) = 0.0104
+    Softmax-BC_h MAE (constrained) = 0.0106
+    GNN-BC_h     MAE (constrained) = 0.0095
+    BC_t         MAE (constrained) = 0.0104
+    Softmax-BC_t MAE (constrained) = 0.0106
+    GNN-BC_t     MAE (constrained) = 0.0095
+    BC_m         MAE (constrained) = 0.0104
+    Softmax-BC_m MAE (constrained) = 0.0106
+    GNN-BC_m     MAE (constrained) = 0.0095
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.667,  NMI: 0.517
+    BC           MAE (constrained) = 0.0101
+    Softmax-BC   MAE (constrained) = 0.0103
+    GNN-BC       MAE (constrained) = 0.0095
+    BC_h         MAE (constrained) = 0.0101
+    Softmax-BC_h MAE (constrained) = 0.0103
+    GNN-BC_h     MAE (constrained) = 0.0095
+    BC_t         MAE (constrained) = 0.0101
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0095
+    BC_m         MAE (constrained) = 0.0101
+    Softmax-BC_m MAE (constrained) = 0.0103
+    GNN-BC_m     MAE (constrained) = 0.0095
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.675,  NMI: 0.523
+    BC           MAE (constrained) = 0.0100
+    Softmax-BC   MAE (constrained) = 0.0103
+    GNN-BC       MAE (constrained) = 0.0097
+    BC_h         MAE (constrained) = 0.0100
+    Softmax-BC_h MAE (constrained) = 0.0103
+    GNN-BC_h     MAE (constrained) = 0.0097
+    BC_t         MAE (constrained) = 0.0100
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0101
+    BC_m         MAE (constrained) = 0.0100
+    Softmax-BC_m MAE (constrained) = 0.0103
+    GNN-BC_m     MAE (constrained) = 0.0096
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.659,  NMI: 0.510
+    BC           MAE (constrained) = 0.0109
+    Softmax-BC   MAE (constrained) = 0.0109
+    GNN-BC       MAE (constrained) = 0.0096
+    BC_h         MAE (constrained) = 0.0099
+    Softmax-BC_h MAE (constrained) = 0.0102
+    GNN-BC_h     MAE (constrained) = 0.0097
+    BC_t         MAE (constrained) = 0.0109
+    Softmax-BC_t MAE (constrained) = 0.0109
+    GNN-BC_t     MAE (constrained) = 0.0097
+    BC_m         MAE (constrained) = 0.0109
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0097
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.659,  NMI: 0.510
+    BC           MAE (constrained) = 0.0127
+    Softmax-BC   MAE (constrained) = 0.0123
+    GNN-BC       MAE (constrained) = 0.0112
+    BC_h         MAE (constrained) = 0.0127
+    Softmax-BC_h MAE (constrained) = 0.0123
+    GNN-BC_h     MAE (constrained) = 0.0114
+    BC_t         MAE (constrained) = 0.0127
+    Softmax-BC_t MAE (constrained) = 0.0123
+    GNN-BC_t     MAE (constrained) = 0.0112
+    BC_m         MAE (constrained) = 0.0127
+    Softmax-BC_m MAE (constrained) = 0.0123
+    GNN-BC_m     MAE (constrained) = 0.0112
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.675,  NMI: 0.522
+    BC           MAE (constrained) = 0.0105
+    Softmax-BC   MAE (constrained) = 0.0107
+    GNN-BC       MAE (constrained) = 0.0097
+    BC_h         MAE (constrained) = 0.0105
+    Softmax-BC_h MAE (constrained) = 0.0107
+    GNN-BC_h     MAE (constrained) = 0.0096
+    BC_t         MAE (constrained) = 0.0105
+    Softmax-BC_t MAE (constrained) = 0.0107
+    GNN-BC_t     MAE (constrained) = 0.0098
+    BC_m         MAE (constrained) = 0.0105
+    Softmax-BC_m MAE (constrained) = 0.0107
+    GNN-BC_m     MAE (constrained) = 0.0096
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.634,  NMI: 0.491
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0089
+    BC_h         MAE (constrained) = 0.0093
+    Softmax-BC_h MAE (constrained) = 0.0097
+    GNN-BC_h     MAE (constrained) = 0.0089
+    BC_t         MAE (constrained) = 0.0093
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0093
+    Softmax-BC_m MAE (constrained) = 0.0097
+    GNN-BC_m     MAE (constrained) = 0.0089
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.683,  NMI: 0.530
+    BC           MAE (constrained) = 0.0108
+    Softmax-BC   MAE (constrained) = 0.0109
+    GNN-BC       MAE (constrained) = 0.0094
+    BC_h         MAE (constrained) = 0.0104
+    Softmax-BC_h MAE (constrained) = 0.0106
+    GNN-BC_h     MAE (constrained) = 0.0095
+    BC_t         MAE (constrained) = 0.0108
+    Softmax-BC_t MAE (constrained) = 0.0109
+    GNN-BC_t     MAE (constrained) = 0.0095
+    BC_m         MAE (constrained) = 0.0108
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0095
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.650,  NMI: 0.506
+    BC           MAE (constrained) = 0.0113
+    Softmax-BC   MAE (constrained) = 0.0113
+    GNN-BC       MAE (constrained) = 0.0113
+    BC_h         MAE (constrained) = 0.0098
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0113
+    BC_t         MAE (constrained) = 0.0113
+    Softmax-BC_t MAE (constrained) = 0.0113
+    GNN-BC_t     MAE (constrained) = 0.0113
+    BC_m         MAE (constrained) = 0.0113
+    Softmax-BC_m MAE (constrained) = 0.0113
+    GNN-BC_m     MAE (constrained) = 0.0113
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.634,  NMI: 0.492
+    BC           MAE (constrained) = 0.0110
+    Softmax-BC   MAE (constrained) = 0.0110
+    GNN-BC       MAE (constrained) = 0.0113
+    BC_h         MAE (constrained) = 0.0128
+    Softmax-BC_h MAE (constrained) = 0.0124
+    GNN-BC_h     MAE (constrained) = 0.0113
+    BC_t         MAE (constrained) = 0.0110
+    Softmax-BC_t MAE (constrained) = 0.0110
+    GNN-BC_t     MAE (constrained) = 0.0113
+    BC_m         MAE (constrained) = 0.0110
+    Softmax-BC_m MAE (constrained) = 0.0110
+    GNN-BC_m     MAE (constrained) = 0.0113
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0107
+    Softmax-BC   avg MAE (constrained) = 0.0108
+    GNN-BC       avg MAE (constrained) = 0.0100
+    BC_h         avg MAE (constrained) = 0.0106
+    Softmax-BC_h avg MAE (constrained) = 0.0107
+    GNN-BC_h     avg MAE (constrained) = 0.0100
+    BC_t         avg MAE (constrained) = 0.0107
+    Softmax-BC_t avg MAE (constrained) = 0.0108
+    GNN-BC_t     avg MAE (constrained) = 0.0101
+    BC_m         avg MAE (constrained) = 0.0107
+    Softmax-BC_m avg MAE (constrained) = 0.0108
+    GNN-BC_m     avg MAE (constrained) = 0.0100
+
+-- Supervision = 7.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.638,  NMI: 0.495
+    BC           MAE (constrained) = 0.0116
+    Softmax-BC   MAE (constrained) = 0.0114
+    GNN-BC       MAE (constrained) = 0.0123
+    BC_h         MAE (constrained) = 0.0116
+    Softmax-BC_h MAE (constrained) = 0.0114
+    GNN-BC_h     MAE (constrained) = 0.0113
+    BC_t         MAE (constrained) = 0.0116
+    Softmax-BC_t MAE (constrained) = 0.0114
+    GNN-BC_t     MAE (constrained) = 0.0116
+    BC_m         MAE (constrained) = 0.0116
+    Softmax-BC_m MAE (constrained) = 0.0114
+    GNN-BC_m     MAE (constrained) = 0.0116
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.677,  NMI: 0.524
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0094
+    BC_h         MAE (constrained) = 0.0093
+    Softmax-BC_h MAE (constrained) = 0.0097
+    GNN-BC_h     MAE (constrained) = 0.0094
+    BC_t         MAE (constrained) = 0.0093
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0093
+    BC_m         MAE (constrained) = 0.0093
+    Softmax-BC_m MAE (constrained) = 0.0097
+    GNN-BC_m     MAE (constrained) = 0.0094
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.662,  NMI: 0.512
+    BC           MAE (constrained) = 0.0108
+    Softmax-BC   MAE (constrained) = 0.0109
+    GNN-BC       MAE (constrained) = 0.0108
+    BC_h         MAE (constrained) = 0.0095
+    Softmax-BC_h MAE (constrained) = 0.0099
+    GNN-BC_h     MAE (constrained) = 0.0108
+    BC_t         MAE (constrained) = 0.0108
+    Softmax-BC_t MAE (constrained) = 0.0109
+    GNN-BC_t     MAE (constrained) = 0.0108
+    BC_m         MAE (constrained) = 0.0108
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0108
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.638,  NMI: 0.497
+    BC           MAE (constrained) = 0.0105
+    Softmax-BC   MAE (constrained) = 0.0105
+    GNN-BC       MAE (constrained) = 0.0088
+    BC_h         MAE (constrained) = 0.0095
+    Softmax-BC_h MAE (constrained) = 0.0098
+    GNN-BC_h     MAE (constrained) = 0.0088
+    BC_t         MAE (constrained) = 0.0105
+    Softmax-BC_t MAE (constrained) = 0.0105
+    GNN-BC_t     MAE (constrained) = 0.0088
+    BC_m         MAE (constrained) = 0.0095
+    Softmax-BC_m MAE (constrained) = 0.0098
+    GNN-BC_m     MAE (constrained) = 0.0088
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.685,  NMI: 0.530
+    BC           MAE (constrained) = 0.0116
+    Softmax-BC   MAE (constrained) = 0.0116
+    GNN-BC       MAE (constrained) = 0.0096
+    BC_h         MAE (constrained) = 0.0100
+    Softmax-BC_h MAE (constrained) = 0.0104
+    GNN-BC_h     MAE (constrained) = 0.0097
+    BC_t         MAE (constrained) = 0.0116
+    Softmax-BC_t MAE (constrained) = 0.0116
+    GNN-BC_t     MAE (constrained) = 0.0098
+    BC_m         MAE (constrained) = 0.0116
+    Softmax-BC_m MAE (constrained) = 0.0116
+    GNN-BC_m     MAE (constrained) = 0.0099
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.646,  NMI: 0.507
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0095
+    GNN-BC       MAE (constrained) = 0.0093
+    BC_h         MAE (constrained) = 0.0090
+    Softmax-BC_h MAE (constrained) = 0.0095
+    GNN-BC_h     MAE (constrained) = 0.0094
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0095
+    GNN-BC_t     MAE (constrained) = 0.0092
+    BC_m         MAE (constrained) = 0.0090
+    Softmax-BC_m MAE (constrained) = 0.0095
+    GNN-BC_m     MAE (constrained) = 0.0094
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.662,  NMI: 0.512
+    BC           MAE (constrained) = 0.0098
+    Softmax-BC   MAE (constrained) = 0.0101
+    GNN-BC       MAE (constrained) = 0.0090
+    BC_h         MAE (constrained) = 0.0098
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0098
+    Softmax-BC_t MAE (constrained) = 0.0101
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0098
+    Softmax-BC_m MAE (constrained) = 0.0101
+    GNN-BC_m     MAE (constrained) = 0.0090
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.646,  NMI: 0.504
+    BC           MAE (constrained) = 0.0101
+    Softmax-BC   MAE (constrained) = 0.0103
+    GNN-BC       MAE (constrained) = 0.0087
+    BC_h         MAE (constrained) = 0.0101
+    Softmax-BC_h MAE (constrained) = 0.0103
+    GNN-BC_h     MAE (constrained) = 0.0087
+    BC_t         MAE (constrained) = 0.0101
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0087
+    BC_m         MAE (constrained) = 0.0101
+    Softmax-BC_m MAE (constrained) = 0.0103
+    GNN-BC_m     MAE (constrained) = 0.0087
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.662,  NMI: 0.512
+    BC           MAE (constrained) = 0.0107
+    Softmax-BC   MAE (constrained) = 0.0107
+    GNN-BC       MAE (constrained) = 0.0102
+    BC_h         MAE (constrained) = 0.0094
+    Softmax-BC_h MAE (constrained) = 0.0097
+    GNN-BC_h     MAE (constrained) = 0.0101
+    BC_t         MAE (constrained) = 0.0107
+    Softmax-BC_t MAE (constrained) = 0.0107
+    GNN-BC_t     MAE (constrained) = 0.0101
+    BC_m         MAE (constrained) = 0.0107
+    Softmax-BC_m MAE (constrained) = 0.0107
+    GNN-BC_m     MAE (constrained) = 0.0101
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.677,  NMI: 0.524
+    BC           MAE (constrained) = 0.0101
+    Softmax-BC   MAE (constrained) = 0.0104
+    GNN-BC       MAE (constrained) = 0.0101
+    BC_h         MAE (constrained) = 0.0101
+    Softmax-BC_h MAE (constrained) = 0.0104
+    GNN-BC_h     MAE (constrained) = 0.0100
+    BC_t         MAE (constrained) = 0.0101
+    Softmax-BC_t MAE (constrained) = 0.0104
+    GNN-BC_t     MAE (constrained) = 0.0100
+    BC_m         MAE (constrained) = 0.0113
+    Softmax-BC_m MAE (constrained) = 0.0113
+    GNN-BC_m     MAE (constrained) = 0.0102
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0104
+    Softmax-BC   avg MAE (constrained) = 0.0105
+    GNN-BC       avg MAE (constrained) = 0.0098
+    BC_h         avg MAE (constrained) = 0.0098
+    Softmax-BC_h avg MAE (constrained) = 0.0101
+    GNN-BC_h     avg MAE (constrained) = 0.0097
+    BC_t         avg MAE (constrained) = 0.0104
+    Softmax-BC_t avg MAE (constrained) = 0.0105
+    GNN-BC_t     avg MAE (constrained) = 0.0097
+    BC_m         avg MAE (constrained) = 0.0104
+    Softmax-BC_m avg MAE (constrained) = 0.0105
+    GNN-BC_m     avg MAE (constrained) = 0.0098
+
+-- Supervision = 10.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.681,  NMI: 0.536
+    BC           MAE (constrained) = 0.0119
+    Softmax-BC   MAE (constrained) = 0.0119
+    GNN-BC       MAE (constrained) = 0.0109
+    BC_h         MAE (constrained) = 0.0119
+    Softmax-BC_h MAE (constrained) = 0.0119
+    GNN-BC_h     MAE (constrained) = 0.0109
+    BC_t         MAE (constrained) = 0.0119
+    Softmax-BC_t MAE (constrained) = 0.0119
+    GNN-BC_t     MAE (constrained) = 0.0109
+    BC_m         MAE (constrained) = 0.0132
+    Softmax-BC_m MAE (constrained) = 0.0129
+    GNN-BC_m     MAE (constrained) = 0.0108
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.681,  NMI: 0.528
+    BC           MAE (constrained) = 0.0114
+    Softmax-BC   MAE (constrained) = 0.0114
+    GNN-BC       MAE (constrained) = 0.0093
+    BC_h         MAE (constrained) = 0.0095
+    Softmax-BC_h MAE (constrained) = 0.0099
+    GNN-BC_h     MAE (constrained) = 0.0093
+    BC_t         MAE (constrained) = 0.0114
+    Softmax-BC_t MAE (constrained) = 0.0114
+    GNN-BC_t     MAE (constrained) = 0.0093
+    BC_m         MAE (constrained) = 0.0114
+    Softmax-BC_m MAE (constrained) = 0.0114
+    GNN-BC_m     MAE (constrained) = 0.0093
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.681,  NMI: 0.527
+    BC           MAE (constrained) = 0.0112
+    Softmax-BC   MAE (constrained) = 0.0113
+    GNN-BC       MAE (constrained) = 0.0110
+    BC_h         MAE (constrained) = 0.0105
+    Softmax-BC_h MAE (constrained) = 0.0107
+    GNN-BC_h     MAE (constrained) = 0.0110
+    BC_t         MAE (constrained) = 0.0112
+    Softmax-BC_t MAE (constrained) = 0.0113
+    GNN-BC_t     MAE (constrained) = 0.0110
+    BC_m         MAE (constrained) = 0.0112
+    Softmax-BC_m MAE (constrained) = 0.0113
+    GNN-BC_m     MAE (constrained) = 0.0111
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.659,  NMI: 0.510
+    BC           MAE (constrained) = 0.0095
+    Softmax-BC   MAE (constrained) = 0.0098
+    GNN-BC       MAE (constrained) = 0.0092
+    BC_h         MAE (constrained) = 0.0095
+    Softmax-BC_h MAE (constrained) = 0.0098
+    GNN-BC_h     MAE (constrained) = 0.0092
+    BC_t         MAE (constrained) = 0.0095
+    Softmax-BC_t MAE (constrained) = 0.0098
+    GNN-BC_t     MAE (constrained) = 0.0092
+    BC_m         MAE (constrained) = 0.0095
+    Softmax-BC_m MAE (constrained) = 0.0098
+    GNN-BC_m     MAE (constrained) = 0.0091
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.659,  NMI: 0.510
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0094
+    GNN-BC       MAE (constrained) = 0.0088
+    BC_h         MAE (constrained) = 0.0090
+    Softmax-BC_h MAE (constrained) = 0.0094
+    GNN-BC_h     MAE (constrained) = 0.0088
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0094
+    GNN-BC_t     MAE (constrained) = 0.0088
+    BC_m         MAE (constrained) = 0.0090
+    Softmax-BC_m MAE (constrained) = 0.0094
+    GNN-BC_m     MAE (constrained) = 0.0089
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.674,  NMI: 0.522
+    BC           MAE (constrained) = 0.0121
+    Softmax-BC   MAE (constrained) = 0.0121
+    GNN-BC       MAE (constrained) = 0.0103
+    BC_h         MAE (constrained) = 0.0099
+    Softmax-BC_h MAE (constrained) = 0.0104
+    GNN-BC_h     MAE (constrained) = 0.0103
+    BC_t         MAE (constrained) = 0.0121
+    Softmax-BC_t MAE (constrained) = 0.0121
+    GNN-BC_t     MAE (constrained) = 0.0103
+    BC_m         MAE (constrained) = 0.0121
+    Softmax-BC_m MAE (constrained) = 0.0121
+    GNN-BC_m     MAE (constrained) = 0.0103
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.667,  NMI: 0.516
+    BC           MAE (constrained) = 0.0095
+    Softmax-BC   MAE (constrained) = 0.0098
+    GNN-BC       MAE (constrained) = 0.0096
+    BC_h         MAE (constrained) = 0.0095
+    Softmax-BC_h MAE (constrained) = 0.0098
+    GNN-BC_h     MAE (constrained) = 0.0095
+    BC_t         MAE (constrained) = 0.0095
+    Softmax-BC_t MAE (constrained) = 0.0098
+    GNN-BC_t     MAE (constrained) = 0.0096
+    BC_m         MAE (constrained) = 0.0095
+    Softmax-BC_m MAE (constrained) = 0.0098
+    GNN-BC_m     MAE (constrained) = 0.0096
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.681,  NMI: 0.527
+    BC           MAE (constrained) = 0.0121
+    Softmax-BC   MAE (constrained) = 0.0119
+    GNN-BC       MAE (constrained) = 0.0096
+    BC_h         MAE (constrained) = 0.0099
+    Softmax-BC_h MAE (constrained) = 0.0103
+    GNN-BC_h     MAE (constrained) = 0.0097
+    BC_t         MAE (constrained) = 0.0121
+    Softmax-BC_t MAE (constrained) = 0.0119
+    GNN-BC_t     MAE (constrained) = 0.0096
+    BC_m         MAE (constrained) = 0.0121
+    Softmax-BC_m MAE (constrained) = 0.0119
+    GNN-BC_m     MAE (constrained) = 0.0098
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.674,  NMI: 0.523
+    BC           MAE (constrained) = 0.0100
+    Softmax-BC   MAE (constrained) = 0.0103
+    GNN-BC       MAE (constrained) = 0.0099
+    BC_h         MAE (constrained) = 0.0100
+    Softmax-BC_h MAE (constrained) = 0.0103
+    GNN-BC_h     MAE (constrained) = 0.0100
+    BC_t         MAE (constrained) = 0.0100
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0099
+    BC_m         MAE (constrained) = 0.0100
+    Softmax-BC_m MAE (constrained) = 0.0103
+    GNN-BC_m     MAE (constrained) = 0.0099
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.620,  NMI: 0.380
+  → Y-cluster purity (constrained): 0.674,  NMI: 0.522
+    BC           MAE (constrained) = 0.0116
+    Softmax-BC   MAE (constrained) = 0.0116
+    GNN-BC       MAE (constrained) = 0.0103
+    BC_h         MAE (constrained) = 0.0101
+    Softmax-BC_h MAE (constrained) = 0.0105
+    GNN-BC_h     MAE (constrained) = 0.0103
+    BC_t         MAE (constrained) = 0.0116
+    Softmax-BC_t MAE (constrained) = 0.0116
+    GNN-BC_t     MAE (constrained) = 0.0104
+    BC_m         MAE (constrained) = 0.0101
+    Softmax-BC_m MAE (constrained) = 0.0105
+    GNN-BC_m     MAE (constrained) = 0.0103
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0108
+    Softmax-BC   avg MAE (constrained) = 0.0109
+    GNN-BC       avg MAE (constrained) = 0.0099
+    BC_h         avg MAE (constrained) = 0.0100
+    Softmax-BC_h avg MAE (constrained) = 0.0103
+    GNN-BC_h     avg MAE (constrained) = 0.0099
+    BC_t         avg MAE (constrained) = 0.0108
+    Softmax-BC_t avg MAE (constrained) = 0.0109
+    GNN-BC_t     avg MAE (constrained) = 0.0099
+    BC_m         avg MAE (constrained) = 0.0108
+    Softmax-BC_m avg MAE (constrained) = 0.0109
+    GNN-BC_m     avg MAE (constrained) = 0.0099
+
+=== SUMMARY TABLE for 2 clusters ===
+                            BC  Softmax-BC  ...  Softmax-BC_m  GNN-BC_m
+sup_frac                                    ...                        
+2.05% (constrained)   0.010694    0.010811  ...      0.010811  0.010006
+7.00% (constrained)   0.010354    0.010519  ...      0.010538  0.009801
+10.00% (constrained)  0.010834    0.010947  ...      0.010939  0.009916
+
+[3 rows x 12 columns]
+
+=== RUNNING for 3 clusters ===
+→ Using cuisines for 3 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images:   0%|          | 0/150 [00:00<?, ?it/s]Encoding images:   1%|▏         | 2/150 [00:00<00:12, 11.92it/s]Encoding images:   3%|▎         | 4/150 [00:00<00:12, 11.84it/s]Encoding images:   4%|▍         | 6/150 [00:00<00:11, 12.05it/s]Encoding images:   5%|▌         | 8/150 [00:00<00:11, 12.13it/s]Encoding images:   7%|▋         | 10/150 [00:00<00:11, 12.21it/s]Encoding images:   8%|▊         | 12/150 [00:00<00:11, 12.19it/s]Encoding images:   9%|▉         | 14/150 [00:01<00:11, 12.15it/s]Encoding images:  11%|█         | 16/150 [00:01<00:11, 12.11it/s]Encoding images:  12%|█▏        | 18/150 [00:01<00:10, 12.16it/s]Encoding images:  13%|█▎        | 20/150 [00:01<00:10, 12.12it/s]Encoding images:  15%|█▍        | 22/150 [00:01<00:10, 12.08it/s]Encoding images:  16%|█▌        | 24/150 [00:01<00:10, 12.11it/s]Encoding images:  17%|█▋        | 26/150 [00:02<00:10, 12.09it/s]Encoding images:  19%|█▊        | 28/150 [00:02<00:10, 12.20it/s]Encoding images:  20%|██        | 30/150 [00:02<00:09, 12.20it/s]Encoding images:  21%|██▏       | 32/150 [00:02<00:09, 12.26it/s]Encoding images:  23%|██▎       | 34/150 [00:02<00:09, 12.20it/s]Encoding images:  24%|██▍       | 36/150 [00:02<00:09, 12.01it/s]Encoding images:  25%|██▌       | 38/150 [00:03<00:09, 12.03it/s]Encoding images:  27%|██▋       | 40/150 [00:03<00:09, 12.11it/s]Encoding images:  28%|██▊       | 42/150 [00:03<00:08, 12.12it/s]Encoding images:  29%|██▉       | 44/150 [00:03<00:08, 12.13it/s]Encoding images:  31%|███       | 46/150 [00:03<00:08, 12.15it/s]Encoding images:  32%|███▏      | 48/150 [00:03<00:08, 12.15it/s]Encoding images:  33%|███▎      | 50/150 [00:04<00:08, 12.13it/s]Encoding images:  35%|███▍      | 52/150 [00:04<00:08, 12.14it/s]Encoding images:  36%|███▌      | 54/150 [00:04<00:07, 12.01it/s]Encoding images:  37%|███▋      | 56/150 [00:04<00:07, 12.00it/s]Encoding images:  39%|███▊      | 58/150 [00:04<00:07, 12.10it/s]Encoding images:  40%|████      | 60/150 [00:04<00:07, 12.11it/s]Encoding images:  41%|████▏     | 62/150 [00:05<00:07, 12.12it/s]Encoding images:  43%|████▎     | 64/150 [00:05<00:07, 12.20it/s]Encoding images:  44%|████▍     | 66/150 [00:05<00:06, 12.22it/s]Encoding images:  45%|████▌     | 68/150 [00:05<00:06, 12.16it/s]Encoding images:  47%|████▋     | 70/150 [00:05<00:06, 12.11it/s]Encoding images:  48%|████▊     | 72/150 [00:05<00:06, 12.07it/s]Encoding images:  49%|████▉     | 74/150 [00:06<00:06, 12.14it/s]Encoding images:  51%|█████     | 76/150 [00:06<00:06, 12.16it/s]Encoding images:  52%|█████▏    | 78/150 [00:06<00:05, 12.19it/s]Encoding images:  53%|█████▎    | 80/150 [00:06<00:05, 12.14it/s]Encoding images:  55%|█████▍    | 82/150 [00:06<00:05, 12.13it/s]Encoding images:  56%|█████▌    | 84/150 [00:06<00:05, 12.17it/s]Encoding images:  57%|█████▋    | 86/150 [00:07<00:05, 12.13it/s]Encoding images:  59%|█████▊    | 88/150 [00:07<00:05, 12.18it/s]Encoding images:  60%|██████    | 90/150 [00:07<00:04, 12.25it/s]Encoding images:  61%|██████▏   | 92/150 [00:07<00:05, 11.49it/s]Encoding images:  63%|██████▎   | 94/150 [00:07<00:04, 11.59it/s]Encoding images:  64%|██████▍   | 96/150 [00:07<00:04, 11.74it/s]Encoding images:  65%|██████▌   | 98/150 [00:08<00:07,  6.89it/s]Encoding images:  66%|██████▌   | 99/150 [00:08<00:07,  7.28it/s]Encoding images:  67%|██████▋   | 101/150 [00:08<00:06,  7.97it/s]Encoding images:  68%|██████▊   | 102/150 [00:08<00:05,  8.06it/s]Encoding images:  69%|██████▊   | 103/150 [00:09<00:07,  6.60it/s]Encoding images:  70%|███████   | 105/150 [00:09<00:05,  7.85it/s]Encoding images:  71%|███████▏  | 107/150 [00:09<00:04,  8.99it/s]Encoding images:  72%|███████▏  | 108/150 [00:09<00:05,  7.97it/s]Encoding images:  73%|███████▎  | 110/150 [00:09<00:04,  9.12it/s]Encoding images:  74%|███████▍  | 111/150 [00:09<00:04,  9.19it/s]Encoding images:  75%|███████▍  | 112/150 [00:10<00:04,  9.15it/s]Encoding images:  75%|███████▌  | 113/150 [00:10<00:04,  9.01it/s]Encoding images:  77%|███████▋  | 115/150 [00:10<00:03, 10.06it/s]Encoding images:  78%|███████▊  | 117/150 [00:10<00:03, 10.68it/s]Encoding images:  79%|███████▉  | 119/150 [00:10<00:02, 11.14it/s]Encoding images:  81%|████████  | 121/150 [00:10<00:02, 11.46it/s]Encoding images:  82%|████████▏ | 123/150 [00:11<00:02, 11.70it/s]Encoding images:  83%|████████▎ | 125/150 [00:11<00:02, 11.77it/s]Encoding images:  85%|████████▍ | 127/150 [00:11<00:01, 11.90it/s]Encoding images:  86%|████████▌ | 129/150 [00:11<00:01, 11.99it/s]Encoding images:  87%|████████▋ | 131/150 [00:11<00:01, 11.96it/s]Encoding images:  89%|████████▊ | 133/150 [00:11<00:01, 12.09it/s]Encoding images:  90%|█████████ | 135/150 [00:12<00:01, 11.48it/s]Encoding images:  91%|█████████▏| 137/150 [00:12<00:01, 11.34it/s]Encoding images:  93%|█████████▎| 139/150 [00:12<00:00, 11.51it/s]Encoding images:  94%|█████████▍| 141/150 [00:12<00:00, 11.68it/s]Encoding images:  95%|█████████▌| 143/150 [00:12<00:00, 11.81it/s]Encoding images:  97%|█████████▋| 145/150 [00:12<00:00, 11.81it/s]Encoding images:  98%|█████████▊| 147/150 [00:13<00:00, 11.83it/s]Encoding images:  99%|█████████▉| 149/150 [00:13<00:00, 11.90it/s]Encoding images: 100%|██████████| 150/150 [00:13<00:00, 11.26it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.984,  NMI: 0.930
+    BC           MAE (constrained) = 0.0063
+    Softmax-BC   MAE (constrained) = 0.0071
+    GNN-BC       MAE (constrained) = 0.0070
+    BC_h         MAE (constrained) = 0.0063
+    Softmax-BC_h MAE (constrained) = 0.0071
+    GNN-BC_h     MAE (constrained) = 0.0072
+    BC_t         MAE (constrained) = 0.0063
+    Softmax-BC_t MAE (constrained) = 0.0071
+    GNN-BC_t     MAE (constrained) = 0.0071
+    BC_m         MAE (constrained) = 0.0063
+    Softmax-BC_m MAE (constrained) = 0.0071
+    GNN-BC_m     MAE (constrained) = 0.0072
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.967,  NMI: 0.885
+    BC           MAE (constrained) = 0.0079
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0079
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0077
+    BC_t         MAE (constrained) = 0.0079
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0077
+    BC_m         MAE (constrained) = 0.0079
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0077
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.967,  NMI: 0.885
+    BC           MAE (constrained) = 0.0066
+    Softmax-BC   MAE (constrained) = 0.0074
+    GNN-BC       MAE (constrained) = 0.0067
+    BC_h         MAE (constrained) = 0.0066
+    Softmax-BC_h MAE (constrained) = 0.0074
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0066
+    Softmax-BC_t MAE (constrained) = 0.0074
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0066
+    Softmax-BC_m MAE (constrained) = 0.0074
+    GNN-BC_m     MAE (constrained) = 0.0072
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.959,  NMI: 0.866
+    BC           MAE (constrained) = 0.0075
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0075
+    BC_h         MAE (constrained) = 0.0114
+    Softmax-BC_h MAE (constrained) = 0.0114
+    GNN-BC_h     MAE (constrained) = 0.0075
+    BC_t         MAE (constrained) = 0.0075
+    Softmax-BC_t MAE (constrained) = 0.0081
+    GNN-BC_t     MAE (constrained) = 0.0075
+    BC_m         MAE (constrained) = 0.0075
+    Softmax-BC_m MAE (constrained) = 0.0081
+    GNN-BC_m     MAE (constrained) = 0.0075
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.965
+    BC           MAE (constrained) = 0.0074
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0073
+    BC_h         MAE (constrained) = 0.0074
+    Softmax-BC_h MAE (constrained) = 0.0081
+    GNN-BC_h     MAE (constrained) = 0.0072
+    BC_t         MAE (constrained) = 0.0074
+    Softmax-BC_t MAE (constrained) = 0.0081
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0074
+    Softmax-BC_m MAE (constrained) = 0.0081
+    GNN-BC_m     MAE (constrained) = 0.0073
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.965
+    BC           MAE (constrained) = 0.0073
+    Softmax-BC   MAE (constrained) = 0.0080
+    GNN-BC       MAE (constrained) = 0.0075
+    BC_h         MAE (constrained) = 0.0073
+    Softmax-BC_h MAE (constrained) = 0.0080
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0073
+    Softmax-BC_t MAE (constrained) = 0.0080
+    GNN-BC_t     MAE (constrained) = 0.0074
+    BC_m         MAE (constrained) = 0.0073
+    Softmax-BC_m MAE (constrained) = 0.0080
+    GNN-BC_m     MAE (constrained) = 0.0074
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.976,  NMI: 0.920
+    BC           MAE (constrained) = 0.0074
+    Softmax-BC   MAE (constrained) = 0.0082
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0074
+    Softmax-BC_h MAE (constrained) = 0.0082
+    GNN-BC_h     MAE (constrained) = 0.0076
+    BC_t         MAE (constrained) = 0.0074
+    Softmax-BC_t MAE (constrained) = 0.0082
+    GNN-BC_t     MAE (constrained) = 0.0077
+    BC_m         MAE (constrained) = 0.0074
+    Softmax-BC_m MAE (constrained) = 0.0082
+    GNN-BC_m     MAE (constrained) = 0.0078
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.984,  NMI: 0.940
+    BC           MAE (constrained) = 0.0067
+    Softmax-BC   MAE (constrained) = 0.0075
+    GNN-BC       MAE (constrained) = 0.0066
+    BC_h         MAE (constrained) = 0.0067
+    Softmax-BC_h MAE (constrained) = 0.0075
+    GNN-BC_h     MAE (constrained) = 0.0066
+    BC_t         MAE (constrained) = 0.0067
+    Softmax-BC_t MAE (constrained) = 0.0075
+    GNN-BC_t     MAE (constrained) = 0.0066
+    BC_m         MAE (constrained) = 0.0067
+    Softmax-BC_m MAE (constrained) = 0.0075
+    GNN-BC_m     MAE (constrained) = 0.0068
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.976,  NMI: 0.905
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0093
+    GNN-BC       MAE (constrained) = 0.0091
+    BC_h         MAE (constrained) = 0.0091
+    Softmax-BC_h MAE (constrained) = 0.0093
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0091
+    Softmax-BC_t MAE (constrained) = 0.0093
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0091
+    Softmax-BC_m MAE (constrained) = 0.0093
+    GNN-BC_m     MAE (constrained) = 0.0091
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.976,  NMI: 0.920
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0092
+    GNN-BC       MAE (constrained) = 0.0090
+    BC_h         MAE (constrained) = 0.0102
+    Softmax-BC_h MAE (constrained) = 0.0102
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0092
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0090
+    Softmax-BC_m MAE (constrained) = 0.0092
+    GNN-BC_m     MAE (constrained) = 0.0090
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0075
+    Softmax-BC   avg MAE (constrained) = 0.0081
+    GNN-BC       avg MAE (constrained) = 0.0076
+    BC_h         avg MAE (constrained) = 0.0080
+    Softmax-BC_h avg MAE (constrained) = 0.0086
+    GNN-BC_h     avg MAE (constrained) = 0.0076
+    BC_t         avg MAE (constrained) = 0.0075
+    Softmax-BC_t avg MAE (constrained) = 0.0081
+    GNN-BC_t     avg MAE (constrained) = 0.0076
+    BC_m         avg MAE (constrained) = 0.0075
+    Softmax-BC_m avg MAE (constrained) = 0.0081
+    GNN-BC_m     avg MAE (constrained) = 0.0077
+
+-- Supervision = 7.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.943
+    BC           MAE (constrained) = 0.0078
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0078
+    BC_h         MAE (constrained) = 0.0078
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0078
+    BC_t         MAE (constrained) = 0.0078
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0078
+    BC_m         MAE (constrained) = 0.0078
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0078
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.933
+    BC           MAE (constrained) = 0.0070
+    Softmax-BC   MAE (constrained) = 0.0077
+    GNN-BC       MAE (constrained) = 0.0067
+    BC_h         MAE (constrained) = 0.0070
+    Softmax-BC_h MAE (constrained) = 0.0077
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0070
+    Softmax-BC_t MAE (constrained) = 0.0077
+    GNN-BC_t     MAE (constrained) = 0.0069
+    BC_m         MAE (constrained) = 0.0073
+    Softmax-BC_m MAE (constrained) = 0.0079
+    GNN-BC_m     MAE (constrained) = 0.0067
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.977,  NMI: 0.910
+    BC           MAE (constrained) = 0.0060
+    Softmax-BC   MAE (constrained) = 0.0069
+    GNN-BC       MAE (constrained) = 0.0064
+    BC_h         MAE (constrained) = 0.0060
+    Softmax-BC_h MAE (constrained) = 0.0069
+    GNN-BC_h     MAE (constrained) = 0.0064
+    BC_t         MAE (constrained) = 0.0060
+    Softmax-BC_t MAE (constrained) = 0.0069
+    GNN-BC_t     MAE (constrained) = 0.0064
+    BC_m         MAE (constrained) = 0.0060
+    Softmax-BC_m MAE (constrained) = 0.0069
+    GNN-BC_m     MAE (constrained) = 0.0064
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.962,  NMI: 0.866
+    BC           MAE (constrained) = 0.0084
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0102
+    BC_h         MAE (constrained) = 0.0084
+    Softmax-BC_h MAE (constrained) = 0.0090
+    GNN-BC_h     MAE (constrained) = 0.0102
+    BC_t         MAE (constrained) = 0.0102
+    Softmax-BC_t MAE (constrained) = 0.0105
+    GNN-BC_t     MAE (constrained) = 0.0105
+    BC_m         MAE (constrained) = 0.0102
+    Softmax-BC_m MAE (constrained) = 0.0105
+    GNN-BC_m     MAE (constrained) = 0.0101
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.967
+    BC           MAE (constrained) = 0.0062
+    Softmax-BC   MAE (constrained) = 0.0069
+    GNN-BC       MAE (constrained) = 0.0065
+    BC_h         MAE (constrained) = 0.0062
+    Softmax-BC_h MAE (constrained) = 0.0069
+    GNN-BC_h     MAE (constrained) = 0.0065
+    BC_t         MAE (constrained) = 0.0062
+    Softmax-BC_t MAE (constrained) = 0.0069
+    GNN-BC_t     MAE (constrained) = 0.0065
+    BC_m         MAE (constrained) = 0.0062
+    Softmax-BC_m MAE (constrained) = 0.0069
+    GNN-BC_m     MAE (constrained) = 0.0065
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.943
+    BC           MAE (constrained) = 0.0078
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0078
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0084
+    BC_t         MAE (constrained) = 0.0078
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0095
+    Softmax-BC_m MAE (constrained) = 0.0099
+    GNN-BC_m     MAE (constrained) = 0.0085
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.943
+    BC           MAE (constrained) = 0.0070
+    Softmax-BC   MAE (constrained) = 0.0077
+    GNN-BC       MAE (constrained) = 0.0074
+    BC_h         MAE (constrained) = 0.0070
+    Softmax-BC_h MAE (constrained) = 0.0077
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0070
+    Softmax-BC_t MAE (constrained) = 0.0077
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0070
+    Softmax-BC_m MAE (constrained) = 0.0077
+    GNN-BC_m     MAE (constrained) = 0.0073
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.962,  NMI: 0.871
+    BC           MAE (constrained) = 0.0084
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0081
+    BC_h         MAE (constrained) = 0.0084
+    Softmax-BC_h MAE (constrained) = 0.0090
+    GNN-BC_h     MAE (constrained) = 0.0081
+    BC_t         MAE (constrained) = 0.0084
+    Softmax-BC_t MAE (constrained) = 0.0090
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0084
+    Softmax-BC_m MAE (constrained) = 0.0090
+    GNN-BC_m     MAE (constrained) = 0.0081
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.943
+    BC           MAE (constrained) = 0.0075
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0078
+    BC_h         MAE (constrained) = 0.0075
+    Softmax-BC_h MAE (constrained) = 0.0081
+    GNN-BC_h     MAE (constrained) = 0.0079
+    BC_t         MAE (constrained) = 0.0075
+    Softmax-BC_t MAE (constrained) = 0.0081
+    GNN-BC_t     MAE (constrained) = 0.0078
+    BC_m         MAE (constrained) = 0.0075
+    Softmax-BC_m MAE (constrained) = 0.0081
+    GNN-BC_m     MAE (constrained) = 0.0078
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.967
+    BC           MAE (constrained) = 0.0072
+    Softmax-BC   MAE (constrained) = 0.0079
+    GNN-BC       MAE (constrained) = 0.0072
+    BC_h         MAE (constrained) = 0.0072
+    Softmax-BC_h MAE (constrained) = 0.0079
+    GNN-BC_h     MAE (constrained) = 0.0072
+    BC_t         MAE (constrained) = 0.0072
+    Softmax-BC_t MAE (constrained) = 0.0079
+    GNN-BC_t     MAE (constrained) = 0.0072
+    BC_m         MAE (constrained) = 0.0072
+    Softmax-BC_m MAE (constrained) = 0.0079
+    GNN-BC_m     MAE (constrained) = 0.0072
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0073
+    Softmax-BC   avg MAE (constrained) = 0.0080
+    GNN-BC       avg MAE (constrained) = 0.0077
+    BC_h         avg MAE (constrained) = 0.0073
+    Softmax-BC_h avg MAE (constrained) = 0.0080
+    GNN-BC_h     avg MAE (constrained) = 0.0077
+    BC_t         avg MAE (constrained) = 0.0075
+    Softmax-BC_t avg MAE (constrained) = 0.0082
+    GNN-BC_t     avg MAE (constrained) = 0.0077
+    BC_m         avg MAE (constrained) = 0.0077
+    Softmax-BC_m avg MAE (constrained) = 0.0083
+    GNN-BC_m     avg MAE (constrained) = 0.0076
+
+-- Supervision = 10.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.945
+    BC           MAE (constrained) = 0.0061
+    Softmax-BC   MAE (constrained) = 0.0068
+    GNN-BC       MAE (constrained) = 0.0058
+    BC_h         MAE (constrained) = 0.0061
+    Softmax-BC_h MAE (constrained) = 0.0068
+    GNN-BC_h     MAE (constrained) = 0.0058
+    BC_t         MAE (constrained) = 0.0061
+    Softmax-BC_t MAE (constrained) = 0.0068
+    GNN-BC_t     MAE (constrained) = 0.0058
+    BC_m         MAE (constrained) = 0.0061
+    Softmax-BC_m MAE (constrained) = 0.0068
+    GNN-BC_m     MAE (constrained) = 0.0058
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.968
+    BC           MAE (constrained) = 0.0067
+    Softmax-BC   MAE (constrained) = 0.0075
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0067
+    Softmax-BC_h MAE (constrained) = 0.0075
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0067
+    Softmax-BC_t MAE (constrained) = 0.0075
+    GNN-BC_t     MAE (constrained) = 0.0072
+    BC_m         MAE (constrained) = 0.0067
+    Softmax-BC_m MAE (constrained) = 0.0075
+    GNN-BC_m     MAE (constrained) = 0.0070
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.968
+    BC           MAE (constrained) = 0.0075
+    Softmax-BC   MAE (constrained) = 0.0082
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0075
+    Softmax-BC_h MAE (constrained) = 0.0082
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0075
+    Softmax-BC_t MAE (constrained) = 0.0082
+    GNN-BC_t     MAE (constrained) = 0.0071
+    BC_m         MAE (constrained) = 0.0075
+    Softmax-BC_m MAE (constrained) = 0.0082
+    GNN-BC_m     MAE (constrained) = 0.0072
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 1.000,  NMI: 1.000
+    BC           MAE (constrained) = 0.0070
+    Softmax-BC   MAE (constrained) = 0.0078
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0070
+    Softmax-BC_h MAE (constrained) = 0.0078
+    GNN-BC_h     MAE (constrained) = 0.0075
+    BC_t         MAE (constrained) = 0.0070
+    Softmax-BC_t MAE (constrained) = 0.0078
+    GNN-BC_t     MAE (constrained) = 0.0076
+    BC_m         MAE (constrained) = 0.0087
+    Softmax-BC_m MAE (constrained) = 0.0092
+    GNN-BC_m     MAE (constrained) = 0.0074
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.945
+    BC           MAE (constrained) = 0.0081
+    Softmax-BC   MAE (constrained) = 0.0087
+    GNN-BC       MAE (constrained) = 0.0080
+    BC_h         MAE (constrained) = 0.0081
+    Softmax-BC_h MAE (constrained) = 0.0087
+    GNN-BC_h     MAE (constrained) = 0.0081
+    BC_t         MAE (constrained) = 0.0081
+    Softmax-BC_t MAE (constrained) = 0.0087
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0081
+    Softmax-BC_m MAE (constrained) = 0.0087
+    GNN-BC_m     MAE (constrained) = 0.0079
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 1.000,  NMI: 1.000
+    BC           MAE (constrained) = 0.0062
+    Softmax-BC   MAE (constrained) = 0.0070
+    GNN-BC       MAE (constrained) = 0.0066
+    BC_h         MAE (constrained) = 0.0062
+    Softmax-BC_h MAE (constrained) = 0.0070
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0062
+    Softmax-BC_t MAE (constrained) = 0.0070
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0062
+    Softmax-BC_m MAE (constrained) = 0.0070
+    GNN-BC_m     MAE (constrained) = 0.0067
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.945
+    BC           MAE (constrained) = 0.0082
+    Softmax-BC   MAE (constrained) = 0.0087
+    GNN-BC       MAE (constrained) = 0.0079
+    BC_h         MAE (constrained) = 0.0082
+    Softmax-BC_h MAE (constrained) = 0.0087
+    GNN-BC_h     MAE (constrained) = 0.0080
+    BC_t         MAE (constrained) = 0.0082
+    Softmax-BC_t MAE (constrained) = 0.0087
+    GNN-BC_t     MAE (constrained) = 0.0080
+    BC_m         MAE (constrained) = 0.0082
+    Softmax-BC_m MAE (constrained) = 0.0087
+    GNN-BC_m     MAE (constrained) = 0.0084
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.978,  NMI: 0.925
+    BC           MAE (constrained) = 0.0085
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0083
+    BC_h         MAE (constrained) = 0.0085
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0084
+    BC_t         MAE (constrained) = 0.0085
+    Softmax-BC_t MAE (constrained) = 0.0091
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0085
+    Softmax-BC_m MAE (constrained) = 0.0091
+    GNN-BC_m     MAE (constrained) = 0.0083
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.963,  NMI: 0.870
+    BC           MAE (constrained) = 0.0051
+    Softmax-BC   MAE (constrained) = 0.0061
+    GNN-BC       MAE (constrained) = 0.0052
+    BC_h         MAE (constrained) = 0.0051
+    Softmax-BC_h MAE (constrained) = 0.0061
+    GNN-BC_h     MAE (constrained) = 0.0052
+    BC_t         MAE (constrained) = 0.0051
+    Softmax-BC_t MAE (constrained) = 0.0061
+    GNN-BC_t     MAE (constrained) = 0.0051
+    BC_m         MAE (constrained) = 0.0051
+    Softmax-BC_m MAE (constrained) = 0.0061
+    GNN-BC_m     MAE (constrained) = 0.0051
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.978,  NMI: 0.912
+    BC           MAE (constrained) = 0.0059
+    Softmax-BC   MAE (constrained) = 0.0067
+    GNN-BC       MAE (constrained) = 0.0059
+    BC_h         MAE (constrained) = 0.0059
+    Softmax-BC_h MAE (constrained) = 0.0067
+    GNN-BC_h     MAE (constrained) = 0.0061
+    BC_t         MAE (constrained) = 0.0059
+    Softmax-BC_t MAE (constrained) = 0.0067
+    GNN-BC_t     MAE (constrained) = 0.0059
+    BC_m         MAE (constrained) = 0.0059
+    Softmax-BC_m MAE (constrained) = 0.0067
+    GNN-BC_m     MAE (constrained) = 0.0060
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0069
+    Softmax-BC   avg MAE (constrained) = 0.0077
+    GNN-BC       avg MAE (constrained) = 0.0069
+    BC_h         avg MAE (constrained) = 0.0069
+    Softmax-BC_h avg MAE (constrained) = 0.0077
+    GNN-BC_h     avg MAE (constrained) = 0.0070
+    BC_t         avg MAE (constrained) = 0.0069
+    Softmax-BC_t avg MAE (constrained) = 0.0077
+    GNN-BC_t     avg MAE (constrained) = 0.0070
+    BC_m         avg MAE (constrained) = 0.0071
+    Softmax-BC_m avg MAE (constrained) = 0.0078
+    GNN-BC_m     avg MAE (constrained) = 0.0070
+
+=== SUMMARY TABLE for 3 clusters ===
+                            BC  Softmax-BC  ...  Softmax-BC_m  GNN-BC_m
+sup_frac                                    ...                        
+2.05% (constrained)   0.007543    0.008127  ...      0.008127  0.007710
+7.00% (constrained)   0.007320    0.008015  ...      0.008343  0.007626
+10.00% (constrained)  0.006945    0.007670  ...      0.007814  0.006988
+
+[3 rows x 12 columns]
+
+=== RUNNING for 4 clusters ===
+→ Using cuisines for 4 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images:   0%|          | 0/150 [00:00<?, ?it/s]Encoding images:   1%|▏         | 2/150 [00:00<00:12, 12.22it/s]Encoding images:   3%|▎         | 4/150 [00:00<00:11, 12.18it/s]Encoding images:   4%|▍         | 6/150 [00:00<00:11, 12.17it/s]Encoding images:   5%|▌         | 8/150 [00:00<00:11, 12.24it/s]Encoding images:   7%|▋         | 10/150 [00:00<00:11, 12.08it/s]Encoding images:   8%|▊         | 12/150 [00:00<00:11, 12.16it/s]Encoding images:   9%|▉         | 14/150 [00:01<00:11, 12.09it/s]Encoding images:  11%|█         | 16/150 [00:01<00:11, 12.03it/s]Encoding images:  12%|█▏        | 18/150 [00:01<00:10, 12.03it/s]Encoding images:  13%|█▎        | 20/150 [00:01<00:10, 11.93it/s]Encoding images:  15%|█▍        | 22/150 [00:01<00:10, 11.95it/s]Encoding images:  16%|█▌        | 24/150 [00:01<00:10, 12.08it/s]Encoding images:  17%|█▋        | 26/150 [00:02<00:10, 12.00it/s]Encoding images:  19%|█▊        | 28/150 [00:02<00:10, 12.02it/s]Encoding images:  20%|██        | 30/150 [00:02<00:09, 12.11it/s]Encoding images:  21%|██▏       | 32/150 [00:02<00:09, 12.02it/s]Encoding images:  23%|██▎       | 34/150 [00:02<00:10, 11.30it/s]Encoding images:  24%|██▍       | 36/150 [00:03<00:09, 11.60it/s]Encoding images:  25%|██▌       | 38/150 [00:03<00:09, 11.75it/s]Encoding images:  27%|██▋       | 40/150 [00:03<00:09, 11.89it/s]Encoding images:  28%|██▊       | 42/150 [00:03<00:09, 11.96it/s]Encoding images:  29%|██▉       | 44/150 [00:03<00:08, 11.79it/s]Encoding images:  31%|███       | 46/150 [00:03<00:08, 11.91it/s]Encoding images:  32%|███▏      | 48/150 [00:04<00:08, 12.01it/s]Encoding images:  33%|███▎      | 50/150 [00:04<00:08, 12.15it/s]Encoding images:  35%|███▍      | 52/150 [00:04<00:08, 12.14it/s]Encoding images:  36%|███▌      | 54/150 [00:04<00:07, 12.15it/s]Encoding images:  37%|███▋      | 56/150 [00:04<00:07, 12.22it/s]Encoding images:  39%|███▊      | 58/150 [00:04<00:07, 12.19it/s]Encoding images:  40%|████      | 60/150 [00:05<00:07, 11.86it/s]Encoding images:  41%|████▏     | 62/150 [00:05<00:10,  8.55it/s]Encoding images:  42%|████▏     | 63/150 [00:05<00:12,  7.08it/s]Encoding images:  43%|████▎     | 64/150 [00:05<00:12,  6.86it/s]Encoding images:  43%|████▎     | 65/150 [00:05<00:12,  7.03it/s]Encoding images:  44%|████▍     | 66/150 [00:06<00:11,  7.51it/s]Encoding images:  45%|████▍     | 67/150 [00:06<00:11,  7.34it/s]Encoding images:  45%|████▌     | 68/150 [00:06<00:14,  5.56it/s]Encoding images:  46%|████▌     | 69/150 [00:06<00:16,  5.01it/s]Encoding images:  47%|████▋     | 70/150 [00:06<00:13,  5.78it/s]Encoding images:  48%|████▊     | 72/150 [00:07<00:10,  7.28it/s]Encoding images:  49%|████▊     | 73/150 [00:07<00:10,  7.70it/s]Encoding images:  49%|████▉     | 74/150 [00:07<00:09,  7.86it/s]Encoding images:  50%|█████     | 75/150 [00:07<00:09,  8.30it/s]Encoding images:  51%|█████     | 76/150 [00:07<00:08,  8.60it/s]Encoding images:  52%|█████▏    | 78/150 [00:07<00:07,  9.47it/s]Encoding images:  53%|█████▎    | 79/150 [00:07<00:07,  9.25it/s]Encoding images:  53%|█████▎    | 80/150 [00:07<00:07,  9.21it/s]Encoding images:  54%|█████▍    | 81/150 [00:07<00:07,  8.98it/s]Encoding images:  55%|█████▍    | 82/150 [00:08<00:07,  8.78it/s]Encoding images:  55%|█████▌    | 83/150 [00:08<00:07,  8.77it/s]Encoding images:  56%|█████▌    | 84/150 [00:08<00:07,  8.85it/s]Encoding images:  57%|█████▋    | 85/150 [00:08<00:07,  9.01it/s]Encoding images:  57%|█████▋    | 86/150 [00:08<00:07,  8.73it/s]Encoding images:  58%|█████▊    | 87/150 [00:08<00:07,  8.87it/s]Encoding images:  59%|█████▉    | 89/150 [00:08<00:06,  9.80it/s]Encoding images:  61%|██████    | 91/150 [00:09<00:05, 10.28it/s]Encoding images:  62%|██████▏   | 93/150 [00:09<00:05, 10.37it/s]Encoding images:  63%|██████▎   | 95/150 [00:09<00:05,  9.90it/s]Encoding images:  64%|██████▍   | 96/150 [00:09<00:05,  9.58it/s]Encoding images:  65%|██████▍   | 97/150 [00:09<00:05,  9.34it/s]Encoding images:  65%|██████▌   | 98/150 [00:09<00:05,  9.28it/s]Encoding images:  66%|██████▌   | 99/150 [00:09<00:05,  8.96it/s]Encoding images:  67%|██████▋   | 100/150 [00:10<00:05,  9.13it/s]Encoding images:  68%|██████▊   | 102/150 [00:10<00:05,  9.25it/s]Encoding images:  69%|██████▊   | 103/150 [00:10<00:05,  8.96it/s]Encoding images:  69%|██████▉   | 104/150 [00:10<00:05,  8.97it/s]Encoding images:  70%|███████   | 105/150 [00:10<00:05,  8.85it/s]Encoding images:  71%|███████   | 106/150 [00:10<00:05,  8.56it/s]Encoding images:  71%|███████▏  | 107/150 [00:10<00:05,  8.37it/s]Encoding images:  72%|███████▏  | 108/150 [00:10<00:04,  8.41it/s]Encoding images:  73%|███████▎  | 109/150 [00:11<00:04,  8.40it/s]Encoding images:  73%|███████▎  | 110/150 [00:11<00:04,  8.37it/s]Encoding images:  74%|███████▍  | 111/150 [00:11<00:04,  8.45it/s]Encoding images:  75%|███████▍  | 112/150 [00:11<00:04,  8.38it/s]Encoding images:  75%|███████▌  | 113/150 [00:11<00:04,  8.32it/s]Encoding images:  76%|███████▌  | 114/150 [00:11<00:04,  8.40it/s]Encoding images:  77%|███████▋  | 116/150 [00:11<00:03,  9.21it/s]Encoding images:  78%|███████▊  | 117/150 [00:11<00:03,  9.10it/s]Encoding images:  79%|███████▊  | 118/150 [00:12<00:03,  8.96it/s]Encoding images:  79%|███████▉  | 119/150 [00:12<00:03,  9.02it/s]Encoding images:  80%|████████  | 120/150 [00:12<00:03,  9.09it/s]Encoding images:  81%|████████  | 121/150 [00:12<00:03,  9.14it/s]Encoding images:  81%|████████▏ | 122/150 [00:12<00:03,  9.08it/s]Encoding images:  82%|████████▏ | 123/150 [00:12<00:03,  8.77it/s]Encoding images:  83%|████████▎ | 125/150 [00:12<00:02,  9.71it/s]Encoding images:  85%|████████▍ | 127/150 [00:13<00:02, 10.23it/s]Encoding images:  85%|████████▌ | 128/150 [00:13<00:02,  9.84it/s]Encoding images:  86%|████████▌ | 129/150 [00:13<00:02,  9.23it/s]Encoding images:  87%|████████▋ | 130/150 [00:13<00:02,  8.91it/s]Encoding images:  87%|████████▋ | 131/150 [00:13<00:02,  8.56it/s]Encoding images:  88%|████████▊ | 132/150 [00:13<00:02,  8.31it/s]Encoding images:  89%|████████▊ | 133/150 [00:13<00:02,  8.34it/s]Encoding images:  89%|████████▉ | 134/150 [00:13<00:01,  8.28it/s]Encoding images:  90%|█████████ | 135/150 [00:14<00:01,  8.12it/s]Encoding images:  91%|█████████ | 136/150 [00:14<00:01,  8.15it/s]Encoding images:  91%|█████████▏| 137/150 [00:14<00:01,  8.01it/s]Encoding images:  92%|█████████▏| 138/150 [00:14<00:01,  8.02it/s]Encoding images:  93%|█████████▎| 139/150 [00:14<00:01,  8.00it/s]Encoding images:  93%|█████████▎| 140/150 [00:14<00:01,  8.01it/s]Encoding images:  94%|█████████▍| 141/150 [00:14<00:01,  8.03it/s]Encoding images:  95%|█████████▍| 142/150 [00:14<00:00,  8.06it/s]Encoding images:  95%|█████████▌| 143/150 [00:15<00:00,  7.99it/s]Encoding images:  96%|█████████▌| 144/150 [00:15<00:00,  8.24it/s]Encoding images:  97%|█████████▋| 145/150 [00:15<00:00,  8.45it/s]Encoding images:  97%|█████████▋| 146/150 [00:15<00:00,  8.48it/s]Encoding images:  98%|█████████▊| 147/150 [00:15<00:00,  8.03it/s]Encoding images:  99%|█████████▊| 148/150 [00:15<00:00,  8.24it/s]Encoding images: 100%|██████████| 150/150 [00:15<00:00,  9.52it/s]Encoding images: 100%|██████████| 150/150 [00:15<00:00,  9.51it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.863,  NMI: 0.668
+    BC           MAE (constrained) = 0.0081
+    Softmax-BC   MAE (constrained) = 0.0089
+    GNN-BC       MAE (constrained) = 0.0079
+    BC_h         MAE (constrained) = 0.0081
+    Softmax-BC_h MAE (constrained) = 0.0089
+    GNN-BC_h     MAE (constrained) = 0.0079
+    BC_t         MAE (constrained) = 0.0081
+    Softmax-BC_t MAE (constrained) = 0.0089
+    GNN-BC_t     MAE (constrained) = 0.0079
+    BC_m         MAE (constrained) = 0.0081
+    Softmax-BC_m MAE (constrained) = 0.0089
+    GNN-BC_m     MAE (constrained) = 0.0076
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.855,  NMI: 0.666
+    BC           MAE (constrained) = 0.0081
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0075
+    BC_h         MAE (constrained) = 0.0107
+    Softmax-BC_h MAE (constrained) = 0.0110
+    GNN-BC_h     MAE (constrained) = 0.0076
+    BC_t         MAE (constrained) = 0.0081
+    Softmax-BC_t MAE (constrained) = 0.0088
+    GNN-BC_t     MAE (constrained) = 0.0076
+    BC_m         MAE (constrained) = 0.0081
+    Softmax-BC_m MAE (constrained) = 0.0088
+    GNN-BC_m     MAE (constrained) = 0.0076
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.839,  NMI: 0.664
+    BC           MAE (constrained) = 0.0098
+    Softmax-BC   MAE (constrained) = 0.0103
+    GNN-BC       MAE (constrained) = 0.0094
+    BC_h         MAE (constrained) = 0.0106
+    Softmax-BC_h MAE (constrained) = 0.0109
+    GNN-BC_h     MAE (constrained) = 0.0094
+    BC_t         MAE (constrained) = 0.0098
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0094
+    BC_m         MAE (constrained) = 0.0098
+    Softmax-BC_m MAE (constrained) = 0.0103
+    GNN-BC_m     MAE (constrained) = 0.0094
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.855,  NMI: 0.666
+    BC           MAE (constrained) = 0.0095
+    Softmax-BC   MAE (constrained) = 0.0100
+    GNN-BC       MAE (constrained) = 0.0093
+    BC_h         MAE (constrained) = 0.0095
+    Softmax-BC_h MAE (constrained) = 0.0100
+    GNN-BC_h     MAE (constrained) = 0.0091
+    BC_t         MAE (constrained) = 0.0095
+    Softmax-BC_t MAE (constrained) = 0.0100
+    GNN-BC_t     MAE (constrained) = 0.0093
+    BC_m         MAE (constrained) = 0.0095
+    Softmax-BC_m MAE (constrained) = 0.0100
+    GNN-BC_m     MAE (constrained) = 0.0093
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.879,  NMI: 0.651
+    BC           MAE (constrained) = 0.0064
+    Softmax-BC   MAE (constrained) = 0.0075
+    GNN-BC       MAE (constrained) = 0.0063
+    BC_h         MAE (constrained) = 0.0064
+    Softmax-BC_h MAE (constrained) = 0.0075
+    GNN-BC_h     MAE (constrained) = 0.0059
+    BC_t         MAE (constrained) = 0.0064
+    Softmax-BC_t MAE (constrained) = 0.0075
+    GNN-BC_t     MAE (constrained) = 0.0057
+    BC_m         MAE (constrained) = 0.0064
+    Softmax-BC_m MAE (constrained) = 0.0075
+    GNN-BC_m     MAE (constrained) = 0.0067
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.839,  NMI: 0.663
+    BC           MAE (constrained) = 0.0092
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0073
+    BC_h         MAE (constrained) = 0.0098
+    Softmax-BC_h MAE (constrained) = 0.0102
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0092
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0092
+    Softmax-BC_m MAE (constrained) = 0.0097
+    GNN-BC_m     MAE (constrained) = 0.0076
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.855,  NMI: 0.666
+    BC           MAE (constrained) = 0.0085
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0080
+    BC_h         MAE (constrained) = 0.0123
+    Softmax-BC_h MAE (constrained) = 0.0121
+    GNN-BC_h     MAE (constrained) = 0.0080
+    BC_t         MAE (constrained) = 0.0085
+    Softmax-BC_t MAE (constrained) = 0.0090
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0085
+    Softmax-BC_m MAE (constrained) = 0.0090
+    GNN-BC_m     MAE (constrained) = 0.0080
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.839,  NMI: 0.663
+    BC           MAE (constrained) = 0.0109
+    Softmax-BC   MAE (constrained) = 0.0111
+    GNN-BC       MAE (constrained) = 0.0107
+    BC_h         MAE (constrained) = 0.0117
+    Softmax-BC_h MAE (constrained) = 0.0116
+    GNN-BC_h     MAE (constrained) = 0.0107
+    BC_t         MAE (constrained) = 0.0109
+    Softmax-BC_t MAE (constrained) = 0.0111
+    GNN-BC_t     MAE (constrained) = 0.0108
+    BC_m         MAE (constrained) = 0.0109
+    Softmax-BC_m MAE (constrained) = 0.0111
+    GNN-BC_m     MAE (constrained) = 0.0108
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.847,  NMI: 0.668
+    BC           MAE (constrained) = 0.0087
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0087
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0087
+    Softmax-BC_t MAE (constrained) = 0.0091
+    GNN-BC_t     MAE (constrained) = 0.0071
+    BC_m         MAE (constrained) = 0.0087
+    Softmax-BC_m MAE (constrained) = 0.0091
+    GNN-BC_m     MAE (constrained) = 0.0071
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.847,  NMI: 0.664
+    BC           MAE (constrained) = 0.0072
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0069
+    BC_h         MAE (constrained) = 0.0072
+    Softmax-BC_h MAE (constrained) = 0.0081
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0072
+    Softmax-BC_t MAE (constrained) = 0.0081
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0072
+    Softmax-BC_m MAE (constrained) = 0.0081
+    GNN-BC_m     MAE (constrained) = 0.0067
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0086
+    Softmax-BC   avg MAE (constrained) = 0.0093
+    GNN-BC       avg MAE (constrained) = 0.0080
+    BC_h         avg MAE (constrained) = 0.0095
+    Softmax-BC_h avg MAE (constrained) = 0.0099
+    GNN-BC_h     avg MAE (constrained) = 0.0080
+    BC_t         avg MAE (constrained) = 0.0086
+    Softmax-BC_t avg MAE (constrained) = 0.0093
+    GNN-BC_t     avg MAE (constrained) = 0.0080
+    BC_m         avg MAE (constrained) = 0.0086
+    Softmax-BC_m avg MAE (constrained) = 0.0093
+    GNN-BC_m     avg MAE (constrained) = 0.0081
+
+-- Supervision = 7.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.854,  NMI: 0.669
+    BC           MAE (constrained) = 0.0117
+    Softmax-BC   MAE (constrained) = 0.0116
+    GNN-BC       MAE (constrained) = 0.0094
+    BC_h         MAE (constrained) = 0.0117
+    Softmax-BC_h MAE (constrained) = 0.0116
+    GNN-BC_h     MAE (constrained) = 0.0093
+    BC_t         MAE (constrained) = 0.0106
+    Softmax-BC_t MAE (constrained) = 0.0109
+    GNN-BC_t     MAE (constrained) = 0.0092
+    BC_m         MAE (constrained) = 0.0106
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0094
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.838,  NMI: 0.667
+    BC           MAE (constrained) = 0.0072
+    Softmax-BC   MAE (constrained) = 0.0083
+    GNN-BC       MAE (constrained) = 0.0077
+    BC_h         MAE (constrained) = 0.0072
+    Softmax-BC_h MAE (constrained) = 0.0083
+    GNN-BC_h     MAE (constrained) = 0.0078
+    BC_t         MAE (constrained) = 0.0072
+    Softmax-BC_t MAE (constrained) = 0.0083
+    GNN-BC_t     MAE (constrained) = 0.0078
+    BC_m         MAE (constrained) = 0.0086
+    Softmax-BC_m MAE (constrained) = 0.0092
+    GNN-BC_m     MAE (constrained) = 0.0078
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.846,  NMI: 0.668
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0100
+    BC_h         MAE (constrained) = 0.0106
+    Softmax-BC_h MAE (constrained) = 0.0108
+    GNN-BC_h     MAE (constrained) = 0.0095
+    BC_t         MAE (constrained) = 0.0095
+    Softmax-BC_t MAE (constrained) = 0.0098
+    GNN-BC_t     MAE (constrained) = 0.0097
+    BC_m         MAE (constrained) = 0.0108
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0094
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.854,  NMI: 0.668
+    BC           MAE (constrained) = 0.0092
+    Softmax-BC   MAE (constrained) = 0.0099
+    GNN-BC       MAE (constrained) = 0.0087
+    BC_h         MAE (constrained) = 0.0096
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0084
+    BC_t         MAE (constrained) = 0.0109
+    Softmax-BC_t MAE (constrained) = 0.0111
+    GNN-BC_t     MAE (constrained) = 0.0092
+    BC_m         MAE (constrained) = 0.0109
+    Softmax-BC_m MAE (constrained) = 0.0111
+    GNN-BC_m     MAE (constrained) = 0.0086
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.854,  NMI: 0.672
+    BC           MAE (constrained) = 0.0094
+    Softmax-BC   MAE (constrained) = 0.0099
+    GNN-BC       MAE (constrained) = 0.0087
+    BC_h         MAE (constrained) = 0.0087
+    Softmax-BC_h MAE (constrained) = 0.0094
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0099
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0086
+    BC_m         MAE (constrained) = 0.0099
+    Softmax-BC_m MAE (constrained) = 0.0103
+    GNN-BC_m     MAE (constrained) = 0.0093
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.862,  NMI: 0.671
+    BC           MAE (constrained) = 0.0076
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0076
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0079
+    BC_t         MAE (constrained) = 0.0076
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0076
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0068
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.846,  NMI: 0.668
+    BC           MAE (constrained) = 0.0078
+    Softmax-BC   MAE (constrained) = 0.0086
+    GNN-BC       MAE (constrained) = 0.0075
+    BC_h         MAE (constrained) = 0.0078
+    Softmax-BC_h MAE (constrained) = 0.0086
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0078
+    Softmax-BC_t MAE (constrained) = 0.0086
+    GNN-BC_t     MAE (constrained) = 0.0074
+    BC_m         MAE (constrained) = 0.0078
+    Softmax-BC_m MAE (constrained) = 0.0086
+    GNN-BC_m     MAE (constrained) = 0.0075
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.846,  NMI: 0.668
+    BC           MAE (constrained) = 0.0097
+    Softmax-BC   MAE (constrained) = 0.0103
+    GNN-BC       MAE (constrained) = 0.0090
+    BC_h         MAE (constrained) = 0.0109
+    Softmax-BC_h MAE (constrained) = 0.0112
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0097
+    Softmax-BC_t MAE (constrained) = 0.0103
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0105
+    Softmax-BC_m MAE (constrained) = 0.0108
+    GNN-BC_m     MAE (constrained) = 0.0090
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.862,  NMI: 0.673
+    BC           MAE (constrained) = 0.0092
+    Softmax-BC   MAE (constrained) = 0.0095
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0127
+    Softmax-BC_h MAE (constrained) = 0.0122
+    GNN-BC_h     MAE (constrained) = 0.0073
+    BC_t         MAE (constrained) = 0.0092
+    Softmax-BC_t MAE (constrained) = 0.0095
+    GNN-BC_t     MAE (constrained) = 0.0072
+    BC_m         MAE (constrained) = 0.0101
+    Softmax-BC_m MAE (constrained) = 0.0102
+    GNN-BC_m     MAE (constrained) = 0.0074
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.854,  NMI: 0.668
+    BC           MAE (constrained) = 0.0101
+    Softmax-BC   MAE (constrained) = 0.0105
+    GNN-BC       MAE (constrained) = 0.0090
+    BC_h         MAE (constrained) = 0.0101
+    Softmax-BC_h MAE (constrained) = 0.0105
+    GNN-BC_h     MAE (constrained) = 0.0088
+    BC_t         MAE (constrained) = 0.0115
+    Softmax-BC_t MAE (constrained) = 0.0116
+    GNN-BC_t     MAE (constrained) = 0.0085
+    BC_m         MAE (constrained) = 0.0115
+    Softmax-BC_m MAE (constrained) = 0.0116
+    GNN-BC_m     MAE (constrained) = 0.0087
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0091
+    Softmax-BC   avg MAE (constrained) = 0.0097
+    GNN-BC       avg MAE (constrained) = 0.0085
+    BC_h         avg MAE (constrained) = 0.0097
+    Softmax-BC_h avg MAE (constrained) = 0.0101
+    GNN-BC_h     avg MAE (constrained) = 0.0084
+    BC_t         avg MAE (constrained) = 0.0094
+    Softmax-BC_t avg MAE (constrained) = 0.0099
+    GNN-BC_t     avg MAE (constrained) = 0.0083
+    BC_m         avg MAE (constrained) = 0.0098
+    Softmax-BC_m avg MAE (constrained) = 0.0102
+    GNN-BC_m     avg MAE (constrained) = 0.0084
+
+-- Supervision = 10.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.859,  NMI: 0.672
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0074
+    BC_h         MAE (constrained) = 0.0072
+    Softmax-BC_h MAE (constrained) = 0.0082
+    GNN-BC_h     MAE (constrained) = 0.0075
+    BC_t         MAE (constrained) = 0.0084
+    Softmax-BC_t MAE (constrained) = 0.0091
+    GNN-BC_t     MAE (constrained) = 0.0075
+    BC_m         MAE (constrained) = 0.0086
+    Softmax-BC_m MAE (constrained) = 0.0092
+    GNN-BC_m     MAE (constrained) = 0.0076
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.859,  NMI: 0.671
+    BC           MAE (constrained) = 0.0082
+    Softmax-BC   MAE (constrained) = 0.0090
+    GNN-BC       MAE (constrained) = 0.0081
+    BC_h         MAE (constrained) = 0.0057
+    Softmax-BC_h MAE (constrained) = 0.0070
+    GNN-BC_h     MAE (constrained) = 0.0080
+    BC_t         MAE (constrained) = 0.0082
+    Softmax-BC_t MAE (constrained) = 0.0090
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0111
+    Softmax-BC_m MAE (constrained) = 0.0110
+    GNN-BC_m     MAE (constrained) = 0.0083
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.852,  NMI: 0.671
+    BC           MAE (constrained) = 0.0064
+    Softmax-BC   MAE (constrained) = 0.0073
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0063
+    Softmax-BC_h MAE (constrained) = 0.0073
+    GNN-BC_h     MAE (constrained) = 0.0075
+    BC_t         MAE (constrained) = 0.0062
+    Softmax-BC_t MAE (constrained) = 0.0072
+    GNN-BC_t     MAE (constrained) = 0.0076
+    BC_m         MAE (constrained) = 0.0102
+    Softmax-BC_m MAE (constrained) = 0.0104
+    GNN-BC_m     MAE (constrained) = 0.0075
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.844,  NMI: 0.669
+    BC           MAE (constrained) = 0.0096
+    Softmax-BC   MAE (constrained) = 0.0101
+    GNN-BC       MAE (constrained) = 0.0089
+    BC_h         MAE (constrained) = 0.0084
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0089
+    BC_t         MAE (constrained) = 0.0095
+    Softmax-BC_t MAE (constrained) = 0.0100
+    GNN-BC_t     MAE (constrained) = 0.0092
+    BC_m         MAE (constrained) = 0.0100
+    Softmax-BC_m MAE (constrained) = 0.0104
+    GNN-BC_m     MAE (constrained) = 0.0092
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.852,  NMI: 0.669
+    BC           MAE (constrained) = 0.0107
+    Softmax-BC   MAE (constrained) = 0.0111
+    GNN-BC       MAE (constrained) = 0.0095
+    BC_h         MAE (constrained) = 0.0089
+    Softmax-BC_h MAE (constrained) = 0.0096
+    GNN-BC_h     MAE (constrained) = 0.0095
+    BC_t         MAE (constrained) = 0.0109
+    Softmax-BC_t MAE (constrained) = 0.0112
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0115
+    Softmax-BC_m MAE (constrained) = 0.0116
+    GNN-BC_m     MAE (constrained) = 0.0090
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.852,  NMI: 0.671
+    BC           MAE (constrained) = 0.0054
+    Softmax-BC   MAE (constrained) = 0.0067
+    GNN-BC       MAE (constrained) = 0.0057
+    BC_h         MAE (constrained) = 0.0062
+    Softmax-BC_h MAE (constrained) = 0.0073
+    GNN-BC_h     MAE (constrained) = 0.0060
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0093
+    GNN-BC_t     MAE (constrained) = 0.0060
+    BC_m         MAE (constrained) = 0.0090
+    Softmax-BC_m MAE (constrained) = 0.0093
+    GNN-BC_m     MAE (constrained) = 0.0057
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.844,  NMI: 0.670
+    BC           MAE (constrained) = 0.0072
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0066
+    BC_h         MAE (constrained) = 0.0072
+    Softmax-BC_h MAE (constrained) = 0.0081
+    GNN-BC_h     MAE (constrained) = 0.0068
+    BC_t         MAE (constrained) = 0.0072
+    Softmax-BC_t MAE (constrained) = 0.0081
+    GNN-BC_t     MAE (constrained) = 0.0070
+    BC_m         MAE (constrained) = 0.0072
+    Softmax-BC_m MAE (constrained) = 0.0081
+    GNN-BC_m     MAE (constrained) = 0.0069
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.867,  NMI: 0.674
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0091
+    Softmax-BC_h MAE (constrained) = 0.0097
+    GNN-BC_h     MAE (constrained) = 0.0086
+    BC_t         MAE (constrained) = 0.0091
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0085
+    BC_m         MAE (constrained) = 0.0091
+    Softmax-BC_m MAE (constrained) = 0.0097
+    GNN-BC_m     MAE (constrained) = 0.0086
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.852,  NMI: 0.674
+    BC           MAE (constrained) = 0.0092
+    Softmax-BC   MAE (constrained) = 0.0098
+    GNN-BC       MAE (constrained) = 0.0090
+    BC_h         MAE (constrained) = 0.0090
+    Softmax-BC_h MAE (constrained) = 0.0096
+    GNN-BC_h     MAE (constrained) = 0.0089
+    BC_t         MAE (constrained) = 0.0092
+    Softmax-BC_t MAE (constrained) = 0.0098
+    GNN-BC_t     MAE (constrained) = 0.0091
+    BC_m         MAE (constrained) = 0.0097
+    Softmax-BC_m MAE (constrained) = 0.0101
+    GNN-BC_m     MAE (constrained) = 0.0091
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.597
+  → Y-cluster purity (constrained): 0.844,  NMI: 0.669
+    BC           MAE (constrained) = 0.0082
+    Softmax-BC   MAE (constrained) = 0.0089
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0082
+    Softmax-BC_h MAE (constrained) = 0.0089
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0082
+    Softmax-BC_t MAE (constrained) = 0.0089
+    GNN-BC_t     MAE (constrained) = 0.0070
+    BC_m         MAE (constrained) = 0.0082
+    Softmax-BC_m MAE (constrained) = 0.0089
+    GNN-BC_m     MAE (constrained) = 0.0071
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0082
+    Softmax-BC   avg MAE (constrained) = 0.0089
+    GNN-BC       avg MAE (constrained) = 0.0078
+    BC_h         avg MAE (constrained) = 0.0076
+    Softmax-BC_h avg MAE (constrained) = 0.0085
+    GNN-BC_h     avg MAE (constrained) = 0.0079
+    BC_t         avg MAE (constrained) = 0.0086
+    Softmax-BC_t avg MAE (constrained) = 0.0092
+    GNN-BC_t     avg MAE (constrained) = 0.0078
+    BC_m         avg MAE (constrained) = 0.0095
+    Softmax-BC_m avg MAE (constrained) = 0.0099
+    GNN-BC_m     avg MAE (constrained) = 0.0079
+
+=== SUMMARY TABLE for 4 clusters ===
+                            BC  Softmax-BC  ...  Softmax-BC_m  GNN-BC_m
+sup_frac                                    ...                        
+2.05% (constrained)   0.008639    0.009254  ...      0.009254  0.008084
+7.00% (constrained)   0.009122    0.009681  ...      0.010214  0.008392
+10.00% (constrained)  0.008213    0.008943  ...      0.009878  0.007900
+
+[3 rows x 12 columns]
+
+=== RUNNING for 5 clusters ===
+→ Using cuisines for 5 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images:   0%|          | 0/150 [00:00<?, ?it/s]Encoding images:   1%|▏         | 2/150 [00:00<00:12, 11.86it/s]Encoding images:   3%|▎         | 4/150 [00:00<00:12, 11.90it/s]Encoding images:   4%|▍         | 6/150 [00:00<00:11, 12.10it/s]Encoding images:   5%|▌         | 8/150 [00:00<00:11, 12.16it/s]Encoding images:   7%|▋         | 10/150 [00:00<00:11, 12.13it/s]Encoding images:   8%|▊         | 12/150 [00:00<00:11, 12.14it/s]Encoding images:   9%|▉         | 14/150 [00:01<00:11, 12.22it/s]Encoding images:  11%|█         | 16/150 [00:01<00:10, 12.19it/s]Encoding images:  12%|█▏        | 18/150 [00:01<00:10, 12.12it/s]Encoding images:  13%|█▎        | 20/150 [00:01<00:10, 12.02it/s]Encoding images:  15%|█▍        | 22/150 [00:01<00:10, 11.67it/s]Encoding images:  16%|█▌        | 24/150 [00:02<00:10, 11.82it/s]Encoding images:  17%|█▋        | 26/150 [00:02<00:10, 11.84it/s]Encoding images:  19%|█▊        | 28/150 [00:02<00:12,  9.89it/s]Encoding images:  20%|██        | 30/150 [00:02<00:11, 10.32it/s]Encoding images:  21%|██▏       | 32/150 [00:02<00:10, 10.77it/s]Encoding images:  23%|██▎       | 34/150 [00:02<00:10, 10.90it/s]Encoding images:  24%|██▍       | 36/150 [00:03<00:10, 11.20it/s]Encoding images:  25%|██▌       | 38/150 [00:03<00:09, 11.35it/s]Encoding images:  27%|██▋       | 40/150 [00:03<00:09, 11.63it/s]Encoding images:  28%|██▊       | 42/150 [00:03<00:09, 11.72it/s]Encoding images:  29%|██▉       | 44/150 [00:03<00:08, 11.92it/s]Encoding images:  31%|███       | 46/150 [00:03<00:08, 12.00it/s]Encoding images:  32%|███▏      | 48/150 [00:04<00:08, 12.05it/s]Encoding images:  33%|███▎      | 50/150 [00:04<00:08, 12.11it/s]Encoding images:  35%|███▍      | 52/150 [00:04<00:08, 12.18it/s]Encoding images:  36%|███▌      | 54/150 [00:04<00:07, 12.04it/s]Encoding images:  37%|███▋      | 56/150 [00:04<00:07, 12.15it/s]Encoding images:  39%|███▊      | 58/150 [00:04<00:07, 12.10it/s]Encoding images:  40%|████      | 60/150 [00:05<00:07, 12.14it/s]Encoding images:  41%|████▏     | 62/150 [00:05<00:07, 12.18it/s]Encoding images:  43%|████▎     | 64/150 [00:05<00:07, 12.26it/s]Encoding images:  44%|████▍     | 66/150 [00:05<00:07, 11.49it/s]Encoding images:  45%|████▌     | 68/150 [00:05<00:07, 11.66it/s]Encoding images:  47%|████▋     | 70/150 [00:05<00:06, 11.83it/s]Encoding images:  48%|████▊     | 72/150 [00:06<00:06, 12.00it/s]Encoding images:  49%|████▉     | 74/150 [00:06<00:06, 12.12it/s]Encoding images:  51%|█████     | 76/150 [00:06<00:06, 12.13it/s]Encoding images:  52%|█████▏    | 78/150 [00:06<00:05, 12.06it/s]Encoding images:  53%|█████▎    | 80/150 [00:06<00:05, 12.10it/s]Encoding images:  55%|█████▍    | 82/150 [00:06<00:05, 12.13it/s]Encoding images:  56%|█████▌    | 84/150 [00:07<00:05, 12.15it/s]Encoding images:  57%|█████▋    | 86/150 [00:07<00:05, 12.13it/s]Encoding images:  59%|█████▊    | 88/150 [00:07<00:05, 12.24it/s]Encoding images:  60%|██████    | 90/150 [00:07<00:04, 12.26it/s]Encoding images:  61%|██████▏   | 92/150 [00:07<00:04, 12.23it/s]Encoding images:  63%|██████▎   | 94/150 [00:07<00:04, 12.22it/s]Encoding images:  64%|██████▍   | 96/150 [00:08<00:04, 12.22it/s]Encoding images:  65%|██████▌   | 98/150 [00:08<00:04, 12.03it/s]Encoding images:  67%|██████▋   | 100/150 [00:08<00:04, 11.99it/s]Encoding images:  68%|██████▊   | 102/150 [00:08<00:03, 12.07it/s]Encoding images:  69%|██████▉   | 104/150 [00:08<00:03, 12.04it/s]Encoding images:  71%|███████   | 106/150 [00:08<00:03, 12.03it/s]Encoding images:  72%|███████▏  | 108/150 [00:09<00:03, 12.03it/s]Encoding images:  73%|███████▎  | 110/150 [00:09<00:03, 12.20it/s]Encoding images:  75%|███████▍  | 112/150 [00:09<00:03, 12.22it/s]Encoding images:  76%|███████▌  | 114/150 [00:09<00:02, 12.18it/s]Encoding images:  77%|███████▋  | 116/150 [00:09<00:02, 12.14it/s]Encoding images:  79%|███████▊  | 118/150 [00:09<00:02, 12.16it/s]Encoding images:  80%|████████  | 120/150 [00:10<00:02, 12.19it/s]Encoding images:  81%|████████▏ | 122/150 [00:10<00:02, 12.20it/s]Encoding images:  83%|████████▎ | 124/150 [00:10<00:02, 12.18it/s]Encoding images:  84%|████████▍ | 126/150 [00:10<00:01, 12.15it/s]Encoding images:  85%|████████▌ | 128/150 [00:10<00:01, 12.16it/s]Encoding images:  87%|████████▋ | 130/150 [00:10<00:01, 12.24it/s]Encoding images:  88%|████████▊ | 132/150 [00:11<00:01, 11.89it/s]Encoding images:  89%|████████▉ | 134/150 [00:11<00:01, 11.95it/s]Encoding images:  91%|█████████ | 136/150 [00:11<00:01, 11.97it/s]Encoding images:  92%|█████████▏| 138/150 [00:11<00:01, 11.95it/s]Encoding images:  93%|█████████▎| 140/150 [00:11<00:00, 11.96it/s]Encoding images:  95%|█████████▍| 142/150 [00:11<00:00, 12.00it/s]Encoding images:  96%|█████████▌| 144/150 [00:12<00:00, 12.02it/s]Encoding images:  97%|█████████▋| 146/150 [00:12<00:00, 12.11it/s]Encoding images:  99%|█████████▊| 148/150 [00:12<00:00, 12.09it/s]Encoding images: 100%|██████████| 150/150 [00:12<00:00, 12.13it/s]Encoding images: 100%|██████████| 150/150 [00:12<00:00, 11.94it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.920,  NMI: 0.666
+    BC           MAE (constrained) = 0.0063
+    Softmax-BC   MAE (constrained) = 0.0075
+    GNN-BC       MAE (constrained) = 0.0060
+    BC_h         MAE (constrained) = 0.0079
+    Softmax-BC_h MAE (constrained) = 0.0087
+    GNN-BC_h     MAE (constrained) = 0.0058
+    BC_t         MAE (constrained) = 0.0063
+    Softmax-BC_t MAE (constrained) = 0.0075
+    GNN-BC_t     MAE (constrained) = 0.0061
+    BC_m         MAE (constrained) = 0.0063
+    Softmax-BC_m MAE (constrained) = 0.0075
+    GNN-BC_m     MAE (constrained) = 0.0061
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.880,  NMI: 0.633
+    BC           MAE (constrained) = 0.0097
+    Softmax-BC   MAE (constrained) = 0.0100
+    GNN-BC       MAE (constrained) = 0.0091
+    BC_h         MAE (constrained) = 0.0097
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0097
+    Softmax-BC_t MAE (constrained) = 0.0100
+    GNN-BC_t     MAE (constrained) = 0.0091
+    BC_m         MAE (constrained) = 0.0097
+    Softmax-BC_m MAE (constrained) = 0.0100
+    GNN-BC_m     MAE (constrained) = 0.0091
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.864,  NMI: 0.624
+    BC           MAE (constrained) = 0.0074
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0062
+    BC_h         MAE (constrained) = 0.0074
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0062
+    BC_t         MAE (constrained) = 0.0074
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0063
+    BC_m         MAE (constrained) = 0.0074
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0062
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.896,  NMI: 0.648
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0094
+    GNN-BC       MAE (constrained) = 0.0089
+    BC_h         MAE (constrained) = 0.0081
+    Softmax-BC_h MAE (constrained) = 0.0088
+    GNN-BC_h     MAE (constrained) = 0.0088
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0094
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0090
+    Softmax-BC_m MAE (constrained) = 0.0094
+    GNN-BC_m     MAE (constrained) = 0.0089
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.872,  NMI: 0.614
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0089
+    BC_h         MAE (constrained) = 0.0080
+    Softmax-BC_h MAE (constrained) = 0.0088
+    GNN-BC_h     MAE (constrained) = 0.0088
+    BC_t         MAE (constrained) = 0.0080
+    Softmax-BC_t MAE (constrained) = 0.0088
+    GNN-BC_t     MAE (constrained) = 0.0089
+    BC_m         MAE (constrained) = 0.0080
+    Softmax-BC_m MAE (constrained) = 0.0088
+    GNN-BC_m     MAE (constrained) = 0.0089
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.896,  NMI: 0.634
+    BC           MAE (constrained) = 0.0063
+    Softmax-BC   MAE (constrained) = 0.0074
+    GNN-BC       MAE (constrained) = 0.0064
+    BC_h         MAE (constrained) = 0.0065
+    Softmax-BC_h MAE (constrained) = 0.0075
+    GNN-BC_h     MAE (constrained) = 0.0064
+    BC_t         MAE (constrained) = 0.0063
+    Softmax-BC_t MAE (constrained) = 0.0074
+    GNN-BC_t     MAE (constrained) = 0.0062
+    BC_m         MAE (constrained) = 0.0063
+    Softmax-BC_m MAE (constrained) = 0.0074
+    GNN-BC_m     MAE (constrained) = 0.0063
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.880,  NMI: 0.594
+    BC           MAE (constrained) = 0.0076
+    Softmax-BC   MAE (constrained) = 0.0085
+    GNN-BC       MAE (constrained) = 0.0069
+    BC_h         MAE (constrained) = 0.0076
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0076
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0065
+    BC_m         MAE (constrained) = 0.0076
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0069
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.880,  NMI: 0.631
+    BC           MAE (constrained) = 0.0101
+    Softmax-BC   MAE (constrained) = 0.0104
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0110
+    Softmax-BC_h MAE (constrained) = 0.0111
+    GNN-BC_h     MAE (constrained) = 0.0086
+    BC_t         MAE (constrained) = 0.0101
+    Softmax-BC_t MAE (constrained) = 0.0104
+    GNN-BC_t     MAE (constrained) = 0.0085
+    BC_m         MAE (constrained) = 0.0101
+    Softmax-BC_m MAE (constrained) = 0.0104
+    GNN-BC_m     MAE (constrained) = 0.0087
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.880,  NMI: 0.599
+    BC           MAE (constrained) = 0.0086
+    Softmax-BC   MAE (constrained) = 0.0092
+    GNN-BC       MAE (constrained) = 0.0074
+    BC_h         MAE (constrained) = 0.0076
+    Softmax-BC_h MAE (constrained) = 0.0086
+    GNN-BC_h     MAE (constrained) = 0.0072
+    BC_t         MAE (constrained) = 0.0086
+    Softmax-BC_t MAE (constrained) = 0.0092
+    GNN-BC_t     MAE (constrained) = 0.0071
+    BC_m         MAE (constrained) = 0.0086
+    Softmax-BC_m MAE (constrained) = 0.0092
+    GNN-BC_m     MAE (constrained) = 0.0072
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.864,  NMI: 0.602
+    BC           MAE (constrained) = 0.0074
+    Softmax-BC   MAE (constrained) = 0.0084
+    GNN-BC       MAE (constrained) = 0.0074
+    BC_h         MAE (constrained) = 0.0093
+    Softmax-BC_h MAE (constrained) = 0.0097
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0074
+    Softmax-BC_t MAE (constrained) = 0.0084
+    GNN-BC_t     MAE (constrained) = 0.0074
+    BC_m         MAE (constrained) = 0.0074
+    Softmax-BC_m MAE (constrained) = 0.0084
+    GNN-BC_m     MAE (constrained) = 0.0074
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0080
+    Softmax-BC   avg MAE (constrained) = 0.0088
+    GNN-BC       avg MAE (constrained) = 0.0076
+    BC_h         avg MAE (constrained) = 0.0083
+    Softmax-BC_h avg MAE (constrained) = 0.0090
+    GNN-BC_h     avg MAE (constrained) = 0.0075
+    BC_t         avg MAE (constrained) = 0.0080
+    Softmax-BC_t avg MAE (constrained) = 0.0088
+    GNN-BC_t     avg MAE (constrained) = 0.0075
+    BC_m         avg MAE (constrained) = 0.0080
+    Softmax-BC_m avg MAE (constrained) = 0.0088
+    GNN-BC_m     avg MAE (constrained) = 0.0076
+
+-- Supervision = 7.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.877,  NMI: 0.612
+    BC           MAE (constrained) = 0.0099
+    Softmax-BC   MAE (constrained) = 0.0101
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0099
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0089
+    BC_t         MAE (constrained) = 0.0110
+    Softmax-BC_t MAE (constrained) = 0.0110
+    GNN-BC_t     MAE (constrained) = 0.0087
+    BC_m         MAE (constrained) = 0.0109
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0088
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.869,  NMI: 0.605
+    BC           MAE (constrained) = 0.0088
+    Softmax-BC   MAE (constrained) = 0.0096
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0087
+    Softmax-BC_h MAE (constrained) = 0.0094
+    GNN-BC_h     MAE (constrained) = 0.0087
+    BC_t         MAE (constrained) = 0.0101
+    Softmax-BC_t MAE (constrained) = 0.0105
+    GNN-BC_t     MAE (constrained) = 0.0086
+    BC_m         MAE (constrained) = 0.0101
+    Softmax-BC_m MAE (constrained) = 0.0105
+    GNN-BC_m     MAE (constrained) = 0.0087
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.885,  NMI: 0.634
+    BC           MAE (constrained) = 0.0096
+    Softmax-BC   MAE (constrained) = 0.0100
+    GNN-BC       MAE (constrained) = 0.0097
+    BC_h         MAE (constrained) = 0.0100
+    Softmax-BC_h MAE (constrained) = 0.0102
+    GNN-BC_h     MAE (constrained) = 0.0096
+    BC_t         MAE (constrained) = 0.0101
+    Softmax-BC_t MAE (constrained) = 0.0104
+    GNN-BC_t     MAE (constrained) = 0.0098
+    BC_m         MAE (constrained) = 0.0104
+    Softmax-BC_m MAE (constrained) = 0.0106
+    GNN-BC_m     MAE (constrained) = 0.0100
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.885,  NMI: 0.634
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0097
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0089
+    BC_t         MAE (constrained) = 0.0104
+    Softmax-BC_t MAE (constrained) = 0.0107
+    GNN-BC_t     MAE (constrained) = 0.0088
+    BC_m         MAE (constrained) = 0.0104
+    Softmax-BC_m MAE (constrained) = 0.0107
+    GNN-BC_m     MAE (constrained) = 0.0087
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.862,  NMI: 0.624
+    BC           MAE (constrained) = 0.0094
+    Softmax-BC   MAE (constrained) = 0.0099
+    GNN-BC       MAE (constrained) = 0.0083
+    BC_h         MAE (constrained) = 0.0090
+    Softmax-BC_h MAE (constrained) = 0.0096
+    GNN-BC_h     MAE (constrained) = 0.0083
+    BC_t         MAE (constrained) = 0.0098
+    Softmax-BC_t MAE (constrained) = 0.0102
+    GNN-BC_t     MAE (constrained) = 0.0082
+    BC_m         MAE (constrained) = 0.0098
+    Softmax-BC_m MAE (constrained) = 0.0102
+    GNN-BC_m     MAE (constrained) = 0.0081
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.862,  NMI: 0.624
+    BC           MAE (constrained) = 0.0086
+    Softmax-BC   MAE (constrained) = 0.0092
+    GNN-BC       MAE (constrained) = 0.0084
+    BC_h         MAE (constrained) = 0.0086
+    Softmax-BC_h MAE (constrained) = 0.0092
+    GNN-BC_h     MAE (constrained) = 0.0085
+    BC_t         MAE (constrained) = 0.0086
+    Softmax-BC_t MAE (constrained) = 0.0092
+    GNN-BC_t     MAE (constrained) = 0.0085
+    BC_m         MAE (constrained) = 0.0086
+    Softmax-BC_m MAE (constrained) = 0.0092
+    GNN-BC_m     MAE (constrained) = 0.0084
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.885,  NMI: 0.607
+    BC           MAE (constrained) = 0.0071
+    Softmax-BC   MAE (constrained) = 0.0080
+    GNN-BC       MAE (constrained) = 0.0063
+    BC_h         MAE (constrained) = 0.0083
+    Softmax-BC_h MAE (constrained) = 0.0089
+    GNN-BC_h     MAE (constrained) = 0.0063
+    BC_t         MAE (constrained) = 0.0077
+    Softmax-BC_t MAE (constrained) = 0.0085
+    GNN-BC_t     MAE (constrained) = 0.0062
+    BC_m         MAE (constrained) = 0.0077
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0061
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.892,  NMI: 0.643
+    BC           MAE (constrained) = 0.0097
+    Softmax-BC   MAE (constrained) = 0.0102
+    GNN-BC       MAE (constrained) = 0.0084
+    BC_h         MAE (constrained) = 0.0111
+    Softmax-BC_h MAE (constrained) = 0.0113
+    GNN-BC_h     MAE (constrained) = 0.0085
+    BC_t         MAE (constrained) = 0.0105
+    Softmax-BC_t MAE (constrained) = 0.0109
+    GNN-BC_t     MAE (constrained) = 0.0087
+    BC_m         MAE (constrained) = 0.0104
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0085
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.838,  NMI: 0.562
+    BC           MAE (constrained) = 0.0090
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0084
+    BC_h         MAE (constrained) = 0.0090
+    Softmax-BC_h MAE (constrained) = 0.0097
+    GNN-BC_h     MAE (constrained) = 0.0080
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0090
+    Softmax-BC_m MAE (constrained) = 0.0097
+    GNN-BC_m     MAE (constrained) = 0.0081
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.846,  NMI: 0.615
+    BC           MAE (constrained) = 0.0087
+    Softmax-BC   MAE (constrained) = 0.0093
+    GNN-BC       MAE (constrained) = 0.0081
+    BC_h         MAE (constrained) = 0.0092
+    Softmax-BC_h MAE (constrained) = 0.0096
+    GNN-BC_h     MAE (constrained) = 0.0080
+    BC_t         MAE (constrained) = 0.0093
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0099
+    Softmax-BC_m MAE (constrained) = 0.0102
+    GNN-BC_m     MAE (constrained) = 0.0081
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0090
+    Softmax-BC   avg MAE (constrained) = 0.0096
+    GNN-BC       avg MAE (constrained) = 0.0084
+    BC_h         avg MAE (constrained) = 0.0093
+    Softmax-BC_h avg MAE (constrained) = 0.0098
+    GNN-BC_h     avg MAE (constrained) = 0.0084
+    BC_t         avg MAE (constrained) = 0.0096
+    Softmax-BC_t avg MAE (constrained) = 0.0101
+    GNN-BC_t     avg MAE (constrained) = 0.0084
+    BC_m         avg MAE (constrained) = 0.0097
+    Softmax-BC_m avg MAE (constrained) = 0.0101
+    GNN-BC_m     avg MAE (constrained) = 0.0083
+
+-- Supervision = 10.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.881,  NMI: 0.632
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0074
+    BC_h         MAE (constrained) = 0.0096
+    Softmax-BC_h MAE (constrained) = 0.0098
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0098
+    Softmax-BC_t MAE (constrained) = 0.0101
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0098
+    Softmax-BC_m MAE (constrained) = 0.0101
+    GNN-BC_m     MAE (constrained) = 0.0075
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.889,  NMI: 0.616
+    BC           MAE (constrained) = 0.0105
+    Softmax-BC   MAE (constrained) = 0.0108
+    GNN-BC       MAE (constrained) = 0.0100
+    BC_h         MAE (constrained) = 0.0105
+    Softmax-BC_h MAE (constrained) = 0.0108
+    GNN-BC_h     MAE (constrained) = 0.0100
+    BC_t         MAE (constrained) = 0.0105
+    Softmax-BC_t MAE (constrained) = 0.0108
+    GNN-BC_t     MAE (constrained) = 0.0096
+    BC_m         MAE (constrained) = 0.0105
+    Softmax-BC_m MAE (constrained) = 0.0108
+    GNN-BC_m     MAE (constrained) = 0.0098
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.852,  NMI: 0.624
+    BC           MAE (constrained) = 0.0099
+    Softmax-BC   MAE (constrained) = 0.0102
+    GNN-BC       MAE (constrained) = 0.0095
+    BC_h         MAE (constrained) = 0.0102
+    Softmax-BC_h MAE (constrained) = 0.0104
+    GNN-BC_h     MAE (constrained) = 0.0096
+    BC_t         MAE (constrained) = 0.0102
+    Softmax-BC_t MAE (constrained) = 0.0104
+    GNN-BC_t     MAE (constrained) = 0.0096
+    BC_m         MAE (constrained) = 0.0110
+    Softmax-BC_m MAE (constrained) = 0.0110
+    GNN-BC_m     MAE (constrained) = 0.0095
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.844,  NMI: 0.594
+    BC           MAE (constrained) = 0.0072
+    Softmax-BC   MAE (constrained) = 0.0083
+    GNN-BC       MAE (constrained) = 0.0072
+    BC_h         MAE (constrained) = 0.0080
+    Softmax-BC_h MAE (constrained) = 0.0090
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0088
+    Softmax-BC_t MAE (constrained) = 0.0096
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0092
+    Softmax-BC_m MAE (constrained) = 0.0099
+    GNN-BC_m     MAE (constrained) = 0.0074
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.859,  NMI: 0.620
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0088
+    BC_h         MAE (constrained) = 0.0097
+    Softmax-BC_h MAE (constrained) = 0.0100
+    GNN-BC_h     MAE (constrained) = 0.0086
+    BC_t         MAE (constrained) = 0.0091
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0086
+    BC_m         MAE (constrained) = 0.0094
+    Softmax-BC_m MAE (constrained) = 0.0099
+    GNN-BC_m     MAE (constrained) = 0.0087
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.881,  NMI: 0.632
+    BC           MAE (constrained) = 0.0074
+    Softmax-BC   MAE (constrained) = 0.0084
+    GNN-BC       MAE (constrained) = 0.0075
+    BC_h         MAE (constrained) = 0.0077
+    Softmax-BC_h MAE (constrained) = 0.0086
+    GNN-BC_h     MAE (constrained) = 0.0077
+    BC_t         MAE (constrained) = 0.0082
+    Softmax-BC_t MAE (constrained) = 0.0090
+    GNN-BC_t     MAE (constrained) = 0.0075
+    BC_m         MAE (constrained) = 0.0082
+    Softmax-BC_m MAE (constrained) = 0.0090
+    GNN-BC_m     MAE (constrained) = 0.0074
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.881,  NMI: 0.604
+    BC           MAE (constrained) = 0.0089
+    Softmax-BC   MAE (constrained) = 0.0095
+    GNN-BC       MAE (constrained) = 0.0084
+    BC_h         MAE (constrained) = 0.0081
+    Softmax-BC_h MAE (constrained) = 0.0088
+    GNN-BC_h     MAE (constrained) = 0.0083
+    BC_t         MAE (constrained) = 0.0113
+    Softmax-BC_t MAE (constrained) = 0.0112
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0108
+    Softmax-BC_m MAE (constrained) = 0.0109
+    GNN-BC_m     MAE (constrained) = 0.0083
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.874,  NMI: 0.586
+    BC           MAE (constrained) = 0.0089
+    Softmax-BC   MAE (constrained) = 0.0095
+    GNN-BC       MAE (constrained) = 0.0088
+    BC_h         MAE (constrained) = 0.0098
+    Softmax-BC_h MAE (constrained) = 0.0101
+    GNN-BC_h     MAE (constrained) = 0.0090
+    BC_t         MAE (constrained) = 0.0089
+    Softmax-BC_t MAE (constrained) = 0.0095
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0089
+    Softmax-BC_m MAE (constrained) = 0.0095
+    GNN-BC_m     MAE (constrained) = 0.0088
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.867,  NMI: 0.624
+    BC           MAE (constrained) = 0.0097
+    Softmax-BC   MAE (constrained) = 0.0100
+    GNN-BC       MAE (constrained) = 0.0091
+    BC_h         MAE (constrained) = 0.0096
+    Softmax-BC_h MAE (constrained) = 0.0099
+    GNN-BC_h     MAE (constrained) = 0.0092
+    BC_t         MAE (constrained) = 0.0108
+    Softmax-BC_t MAE (constrained) = 0.0108
+    GNN-BC_t     MAE (constrained) = 0.0089
+    BC_m         MAE (constrained) = 0.0108
+    Softmax-BC_m MAE (constrained) = 0.0108
+    GNN-BC_m     MAE (constrained) = 0.0089
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.840,  NMI: 0.524
+  → Y-cluster purity (constrained): 0.867,  NMI: 0.593
+    BC           MAE (constrained) = 0.0089
+    Softmax-BC   MAE (constrained) = 0.0097
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0083
+    Softmax-BC_h MAE (constrained) = 0.0093
+    GNN-BC_h     MAE (constrained) = 0.0085
+    BC_t         MAE (constrained) = 0.0088
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0099
+    Softmax-BC_m MAE (constrained) = 0.0106
+    GNN-BC_m     MAE (constrained) = 0.0087
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0090
+    Softmax-BC   avg MAE (constrained) = 0.0096
+    GNN-BC       avg MAE (constrained) = 0.0085
+    BC_h         avg MAE (constrained) = 0.0091
+    Softmax-BC_h avg MAE (constrained) = 0.0097
+    GNN-BC_h     avg MAE (constrained) = 0.0085
+    BC_t         avg MAE (constrained) = 0.0096
+    Softmax-BC_t avg MAE (constrained) = 0.0101
+    GNN-BC_t     avg MAE (constrained) = 0.0085
+    BC_m         avg MAE (constrained) = 0.0099
+    Softmax-BC_m avg MAE (constrained) = 0.0103
+    GNN-BC_m     avg MAE (constrained) = 0.0085
+
+=== SUMMARY TABLE for 5 clusters ===
+                            BC  Softmax-BC  ...  Softmax-BC_m  GNN-BC_m
+sup_frac                                    ...                        
+2.05% (constrained)   0.008047    0.008803  ...      0.008803  0.007572
+7.00% (constrained)   0.008969    0.009563  ...      0.010148  0.008343
+10.00% (constrained)  0.008984    0.009574  ...      0.010251  0.008494
+
+[3 rows x 12 columns]
+
+=== RUNNING for 6 clusters ===
+→ Using cuisines for 6 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images:   0%|          | 0/150 [00:00<?, ?it/s]Encoding images:   1%|▏         | 2/150 [00:00<00:12, 12.11it/s]Encoding images:   3%|▎         | 4/150 [00:00<00:12, 12.14it/s]Encoding images:   4%|▍         | 6/150 [00:00<00:11, 12.28it/s]Encoding images:   5%|▌         | 8/150 [00:00<00:11, 12.14it/s]Encoding images:   7%|▋         | 10/150 [00:00<00:11, 12.12it/s]Encoding images:   8%|▊         | 12/150 [00:00<00:11, 12.15it/s]Encoding images:   9%|▉         | 14/150 [00:01<00:11, 12.09it/s]Encoding images:  11%|█         | 16/150 [00:01<00:11, 12.06it/s]Encoding images:  12%|█▏        | 18/150 [00:01<00:10, 12.05it/s]Encoding images:  13%|█▎        | 20/150 [00:01<00:10, 12.11it/s]Encoding images:  15%|█▍        | 22/150 [00:01<00:10, 12.24it/s]Encoding images:  16%|█▌        | 24/150 [00:01<00:10, 12.22it/s]Encoding images:  17%|█▋        | 26/150 [00:02<00:10, 12.19it/s]Encoding images:  19%|█▊        | 28/150 [00:02<00:10, 12.16it/s]Encoding images:  20%|██        | 30/150 [00:02<00:09, 12.14it/s]Encoding images:  21%|██▏       | 32/150 [00:02<00:09, 12.14it/s]Encoding images:  23%|██▎       | 34/150 [00:02<00:09, 12.17it/s]Encoding images:  24%|██▍       | 36/150 [00:02<00:09, 12.17it/s]Encoding images:  25%|██▌       | 38/150 [00:03<00:09, 12.19it/s]Encoding images:  27%|██▋       | 40/150 [00:03<00:09, 12.17it/s]Encoding images:  28%|██▊       | 42/150 [00:03<00:08, 12.16it/s]Encoding images:  29%|██▉       | 44/150 [00:03<00:08, 12.17it/s]Encoding images:  31%|███       | 46/150 [00:03<00:08, 12.29it/s]Encoding images:  32%|███▏      | 48/150 [00:03<00:08, 12.34it/s]Encoding images:  33%|███▎      | 50/150 [00:04<00:08, 12.31it/s]Encoding images:  35%|███▍      | 52/150 [00:04<00:07, 12.32it/s]Encoding images:  36%|███▌      | 54/150 [00:04<00:07, 12.39it/s]Encoding images:  37%|███▋      | 56/150 [00:04<00:07, 12.25it/s]Encoding images:  39%|███▊      | 58/150 [00:04<00:07, 12.15it/s]Encoding images:  40%|████      | 60/150 [00:04<00:07, 12.14it/s]Encoding images:  41%|████▏     | 62/150 [00:05<00:07, 12.16it/s]Encoding images:  43%|████▎     | 64/150 [00:05<00:07, 12.15it/s]Encoding images:  44%|████▍     | 66/150 [00:05<00:06, 12.13it/s]Encoding images:  45%|████▌     | 68/150 [00:05<00:06, 12.14it/s]Encoding images:  47%|████▋     | 70/150 [00:05<00:06, 12.16it/s]Encoding images:  48%|████▊     | 72/150 [00:05<00:06, 12.18it/s]Encoding images:  49%|████▉     | 74/150 [00:06<00:06, 12.15it/s]Encoding images:  51%|█████     | 76/150 [00:06<00:06, 12.20it/s]Encoding images:  52%|█████▏    | 78/150 [00:06<00:05, 12.19it/s]Encoding images:  53%|█████▎    | 80/150 [00:06<00:05, 12.17it/s]Encoding images:  55%|█████▍    | 82/150 [00:06<00:05, 12.24it/s]Encoding images:  56%|█████▌    | 84/150 [00:06<00:05, 12.22it/s]Encoding images:  57%|█████▋    | 86/150 [00:07<00:05, 12.24it/s]Encoding images:  59%|█████▊    | 88/150 [00:07<00:05, 12.21it/s]Encoding images:  60%|██████    | 90/150 [00:07<00:04, 12.21it/s]Encoding images:  61%|██████▏   | 92/150 [00:07<00:04, 12.15it/s]Encoding images:  63%|██████▎   | 94/150 [00:07<00:04, 12.10it/s]Encoding images:  64%|██████▍   | 96/150 [00:07<00:04, 12.06it/s]Encoding images:  65%|██████▌   | 98/150 [00:08<00:04, 12.05it/s]Encoding images:  67%|██████▋   | 100/150 [00:08<00:04, 12.09it/s]Encoding images:  68%|██████▊   | 102/150 [00:08<00:03, 12.11it/s]Encoding images:  69%|██████▉   | 104/150 [00:08<00:03, 11.98it/s]Encoding images:  71%|███████   | 106/150 [00:08<00:03, 11.98it/s]Encoding images:  72%|███████▏  | 108/150 [00:08<00:03, 12.02it/s]Encoding images:  73%|███████▎  | 110/150 [00:09<00:03, 12.09it/s]Encoding images:  75%|███████▍  | 112/150 [00:09<00:03, 12.16it/s]Encoding images:  76%|███████▌  | 114/150 [00:09<00:02, 12.10it/s]Encoding images:  77%|███████▋  | 116/150 [00:09<00:02, 11.97it/s]Encoding images:  79%|███████▊  | 118/150 [00:09<00:02, 12.03it/s]Encoding images:  80%|████████  | 120/150 [00:09<00:02, 12.16it/s]Encoding images:  81%|████████▏ | 122/150 [00:10<00:02, 12.21it/s]Encoding images:  83%|████████▎ | 124/150 [00:10<00:02, 12.28it/s]Encoding images:  84%|████████▍ | 126/150 [00:10<00:01, 12.26it/s]Encoding images:  85%|████████▌ | 128/150 [00:10<00:01, 12.15it/s]Encoding images:  87%|████████▋ | 130/150 [00:10<00:01, 12.16it/s]Encoding images:  88%|████████▊ | 132/150 [00:10<00:01, 12.16it/s]Encoding images:  89%|████████▉ | 134/150 [00:11<00:01, 12.18it/s]Encoding images:  91%|█████████ | 136/150 [00:11<00:01, 12.19it/s]Encoding images:  92%|█████████▏| 138/150 [00:11<00:00, 12.13it/s]Encoding images:  93%|█████████▎| 140/150 [00:11<00:00, 12.07it/s]Encoding images:  95%|█████████▍| 142/150 [00:11<00:00, 12.09it/s]Encoding images:  96%|█████████▌| 144/150 [00:11<00:00, 12.18it/s]Encoding images:  97%|█████████▋| 146/150 [00:12<00:00, 12.20it/s]Encoding images:  99%|█████████▊| 148/150 [00:12<00:00, 12.08it/s]Encoding images: 100%|██████████| 150/150 [00:12<00:00, 12.13it/s]Encoding images: 100%|██████████| 150/150 [00:12<00:00, 12.16it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.738
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0086
+    GNN-BC       MAE (constrained) = 0.0075
+    BC_h         MAE (constrained) = 0.0079
+    Softmax-BC_h MAE (constrained) = 0.0085
+    GNN-BC_h     MAE (constrained) = 0.0079
+    BC_t         MAE (constrained) = 0.0080
+    Softmax-BC_t MAE (constrained) = 0.0086
+    GNN-BC_t     MAE (constrained) = 0.0079
+    BC_m         MAE (constrained) = 0.0080
+    Softmax-BC_m MAE (constrained) = 0.0086
+    GNN-BC_m     MAE (constrained) = 0.0078
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.738
+    BC           MAE (constrained) = 0.0063
+    Softmax-BC   MAE (constrained) = 0.0074
+    GNN-BC       MAE (constrained) = 0.0066
+    BC_h         MAE (constrained) = 0.0067
+    Softmax-BC_h MAE (constrained) = 0.0077
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0063
+    Softmax-BC_t MAE (constrained) = 0.0074
+    GNN-BC_t     MAE (constrained) = 0.0068
+    BC_m         MAE (constrained) = 0.0063
+    Softmax-BC_m MAE (constrained) = 0.0074
+    GNN-BC_m     MAE (constrained) = 0.0069
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.984,  NMI: 0.716
+    BC           MAE (constrained) = 0.0071
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0068
+    BC_h         MAE (constrained) = 0.0085
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0071
+    Softmax-BC_t MAE (constrained) = 0.0081
+    GNN-BC_t     MAE (constrained) = 0.0074
+    BC_m         MAE (constrained) = 0.0071
+    Softmax-BC_m MAE (constrained) = 0.0081
+    GNN-BC_m     MAE (constrained) = 0.0067
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.968,  NMI: 0.688
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0087
+    Softmax-BC_h MAE (constrained) = 0.0094
+    GNN-BC_h     MAE (constrained) = 0.0076
+    BC_t         MAE (constrained) = 0.0080
+    Softmax-BC_t MAE (constrained) = 0.0088
+    GNN-BC_t     MAE (constrained) = 0.0075
+    BC_m         MAE (constrained) = 0.0080
+    Softmax-BC_m MAE (constrained) = 0.0088
+    GNN-BC_m     MAE (constrained) = 0.0076
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.984,  NMI: 0.716
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0087
+    GNN-BC       MAE (constrained) = 0.0078
+    BC_h         MAE (constrained) = 0.0093
+    Softmax-BC_h MAE (constrained) = 0.0096
+    GNN-BC_h     MAE (constrained) = 0.0077
+    BC_t         MAE (constrained) = 0.0080
+    Softmax-BC_t MAE (constrained) = 0.0087
+    GNN-BC_t     MAE (constrained) = 0.0080
+    BC_m         MAE (constrained) = 0.0080
+    Softmax-BC_m MAE (constrained) = 0.0087
+    GNN-BC_m     MAE (constrained) = 0.0077
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.968,  NMI: 0.690
+    BC           MAE (constrained) = 0.0089
+    Softmax-BC   MAE (constrained) = 0.0095
+    GNN-BC       MAE (constrained) = 0.0085
+    BC_h         MAE (constrained) = 0.0087
+    Softmax-BC_h MAE (constrained) = 0.0094
+    GNN-BC_h     MAE (constrained) = 0.0084
+    BC_t         MAE (constrained) = 0.0089
+    Softmax-BC_t MAE (constrained) = 0.0095
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0089
+    Softmax-BC_m MAE (constrained) = 0.0095
+    GNN-BC_m     MAE (constrained) = 0.0083
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.976,  NMI: 0.702
+    BC           MAE (constrained) = 0.0071
+    Softmax-BC   MAE (constrained) = 0.0079
+    GNN-BC       MAE (constrained) = 0.0077
+    BC_h         MAE (constrained) = 0.0069
+    Softmax-BC_h MAE (constrained) = 0.0078
+    GNN-BC_h     MAE (constrained) = 0.0078
+    BC_t         MAE (constrained) = 0.0071
+    Softmax-BC_t MAE (constrained) = 0.0079
+    GNN-BC_t     MAE (constrained) = 0.0079
+    BC_m         MAE (constrained) = 0.0071
+    Softmax-BC_m MAE (constrained) = 0.0079
+    GNN-BC_m     MAE (constrained) = 0.0077
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.976,  NMI: 0.701
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0099
+    GNN-BC       MAE (constrained) = 0.0086
+    BC_h         MAE (constrained) = 0.0104
+    Softmax-BC_h MAE (constrained) = 0.0108
+    GNN-BC_h     MAE (constrained) = 0.0086
+    BC_t         MAE (constrained) = 0.0093
+    Softmax-BC_t MAE (constrained) = 0.0099
+    GNN-BC_t     MAE (constrained) = 0.0086
+    BC_m         MAE (constrained) = 0.0093
+    Softmax-BC_m MAE (constrained) = 0.0099
+    GNN-BC_m     MAE (constrained) = 0.0087
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 1.000,  NMI: 0.760
+    BC           MAE (constrained) = 0.0075
+    Softmax-BC   MAE (constrained) = 0.0082
+    GNN-BC       MAE (constrained) = 0.0070
+    BC_h         MAE (constrained) = 0.0086
+    Softmax-BC_h MAE (constrained) = 0.0092
+    GNN-BC_h     MAE (constrained) = 0.0070
+    BC_t         MAE (constrained) = 0.0075
+    Softmax-BC_t MAE (constrained) = 0.0082
+    GNN-BC_t     MAE (constrained) = 0.0069
+    BC_m         MAE (constrained) = 0.0075
+    Softmax-BC_m MAE (constrained) = 0.0082
+    GNN-BC_m     MAE (constrained) = 0.0070
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.976,  NMI: 0.702
+    BC           MAE (constrained) = 0.0066
+    Softmax-BC   MAE (constrained) = 0.0075
+    GNN-BC       MAE (constrained) = 0.0062
+    BC_h         MAE (constrained) = 0.0070
+    Softmax-BC_h MAE (constrained) = 0.0078
+    GNN-BC_h     MAE (constrained) = 0.0064
+    BC_t         MAE (constrained) = 0.0066
+    Softmax-BC_t MAE (constrained) = 0.0075
+    GNN-BC_t     MAE (constrained) = 0.0063
+    BC_m         MAE (constrained) = 0.0066
+    Softmax-BC_m MAE (constrained) = 0.0075
+    GNN-BC_m     MAE (constrained) = 0.0062
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0077
+    Softmax-BC   avg MAE (constrained) = 0.0085
+    GNN-BC       avg MAE (constrained) = 0.0074
+    BC_h         avg MAE (constrained) = 0.0083
+    Softmax-BC_h avg MAE (constrained) = 0.0089
+    GNN-BC_h     avg MAE (constrained) = 0.0075
+    BC_t         avg MAE (constrained) = 0.0077
+    Softmax-BC_t avg MAE (constrained) = 0.0085
+    GNN-BC_t     avg MAE (constrained) = 0.0076
+    BC_m         avg MAE (constrained) = 0.0077
+    Softmax-BC_m avg MAE (constrained) = 0.0085
+    GNN-BC_m     avg MAE (constrained) = 0.0075
+
+-- Supervision = 7.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.739
+    BC           MAE (constrained) = 0.0071
+    Softmax-BC   MAE (constrained) = 0.0080
+    GNN-BC       MAE (constrained) = 0.0071
+    BC_h         MAE (constrained) = 0.0076
+    Softmax-BC_h MAE (constrained) = 0.0084
+    GNN-BC_h     MAE (constrained) = 0.0070
+    BC_t         MAE (constrained) = 0.0081
+    Softmax-BC_t MAE (constrained) = 0.0088
+    GNN-BC_t     MAE (constrained) = 0.0071
+    BC_m         MAE (constrained) = 0.0092
+    Softmax-BC_m MAE (constrained) = 0.0096
+    GNN-BC_m     MAE (constrained) = 0.0070
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.977,  NMI: 0.703
+    BC           MAE (constrained) = 0.0084
+    Softmax-BC   MAE (constrained) = 0.0089
+    GNN-BC       MAE (constrained) = 0.0080
+    BC_h         MAE (constrained) = 0.0084
+    Softmax-BC_h MAE (constrained) = 0.0089
+    GNN-BC_h     MAE (constrained) = 0.0081
+    BC_t         MAE (constrained) = 0.0084
+    Softmax-BC_t MAE (constrained) = 0.0089
+    GNN-BC_t     MAE (constrained) = 0.0081
+    BC_m         MAE (constrained) = 0.0084
+    Softmax-BC_m MAE (constrained) = 0.0089
+    GNN-BC_m     MAE (constrained) = 0.0080
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 1.000,  NMI: 0.760
+    BC           MAE (constrained) = 0.0072
+    Softmax-BC   MAE (constrained) = 0.0078
+    GNN-BC       MAE (constrained) = 0.0073
+    BC_h         MAE (constrained) = 0.0080
+    Softmax-BC_h MAE (constrained) = 0.0086
+    GNN-BC_h     MAE (constrained) = 0.0076
+    BC_t         MAE (constrained) = 0.0072
+    Softmax-BC_t MAE (constrained) = 0.0078
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0072
+    Softmax-BC_m MAE (constrained) = 0.0078
+    GNN-BC_m     MAE (constrained) = 0.0072
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.977,  NMI: 0.713
+    BC           MAE (constrained) = 0.0074
+    Softmax-BC   MAE (constrained) = 0.0080
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0074
+    Softmax-BC_h MAE (constrained) = 0.0081
+    GNN-BC_h     MAE (constrained) = 0.0072
+    BC_t         MAE (constrained) = 0.0076
+    Softmax-BC_t MAE (constrained) = 0.0082
+    GNN-BC_t     MAE (constrained) = 0.0072
+    BC_m         MAE (constrained) = 0.0076
+    Softmax-BC_m MAE (constrained) = 0.0082
+    GNN-BC_m     MAE (constrained) = 0.0076
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.739
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0067
+    BC_h         MAE (constrained) = 0.0083
+    Softmax-BC_h MAE (constrained) = 0.0090
+    GNN-BC_h     MAE (constrained) = 0.0065
+    BC_t         MAE (constrained) = 0.0080
+    Softmax-BC_t MAE (constrained) = 0.0088
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0079
+    Softmax-BC_m MAE (constrained) = 0.0088
+    GNN-BC_m     MAE (constrained) = 0.0066
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.738
+    BC           MAE (constrained) = 0.0068
+    Softmax-BC   MAE (constrained) = 0.0077
+    GNN-BC       MAE (constrained) = 0.0063
+    BC_h         MAE (constrained) = 0.0068
+    Softmax-BC_h MAE (constrained) = 0.0077
+    GNN-BC_h     MAE (constrained) = 0.0063
+    BC_t         MAE (constrained) = 0.0081
+    Softmax-BC_t MAE (constrained) = 0.0089
+    GNN-BC_t     MAE (constrained) = 0.0063
+    BC_m         MAE (constrained) = 0.0080
+    Softmax-BC_m MAE (constrained) = 0.0089
+    GNN-BC_m     MAE (constrained) = 0.0063
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.739
+    BC           MAE (constrained) = 0.0073
+    Softmax-BC   MAE (constrained) = 0.0082
+    GNN-BC       MAE (constrained) = 0.0073
+    BC_h         MAE (constrained) = 0.0089
+    Softmax-BC_h MAE (constrained) = 0.0094
+    GNN-BC_h     MAE (constrained) = 0.0074
+    BC_t         MAE (constrained) = 0.0073
+    Softmax-BC_t MAE (constrained) = 0.0082
+    GNN-BC_t     MAE (constrained) = 0.0073
+    BC_m         MAE (constrained) = 0.0073
+    Softmax-BC_m MAE (constrained) = 0.0082
+    GNN-BC_m     MAE (constrained) = 0.0073
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.717
+    BC           MAE (constrained) = 0.0079
+    Softmax-BC   MAE (constrained) = 0.0087
+    GNN-BC       MAE (constrained) = 0.0083
+    BC_h         MAE (constrained) = 0.0084
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0084
+    BC_t         MAE (constrained) = 0.0079
+    Softmax-BC_t MAE (constrained) = 0.0087
+    GNN-BC_t     MAE (constrained) = 0.0083
+    BC_m         MAE (constrained) = 0.0079
+    Softmax-BC_m MAE (constrained) = 0.0087
+    GNN-BC_m     MAE (constrained) = 0.0083
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.985,  NMI: 0.725
+    BC           MAE (constrained) = 0.0084
+    Softmax-BC   MAE (constrained) = 0.0092
+    GNN-BC       MAE (constrained) = 0.0087
+    BC_h         MAE (constrained) = 0.0085
+    Softmax-BC_h MAE (constrained) = 0.0092
+    GNN-BC_h     MAE (constrained) = 0.0089
+    BC_t         MAE (constrained) = 0.0090
+    Softmax-BC_t MAE (constrained) = 0.0096
+    GNN-BC_t     MAE (constrained) = 0.0090
+    BC_m         MAE (constrained) = 0.0099
+    Softmax-BC_m MAE (constrained) = 0.0104
+    GNN-BC_m     MAE (constrained) = 0.0088
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.977,  NMI: 0.703
+    BC           MAE (constrained) = 0.0083
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0080
+    BC_h         MAE (constrained) = 0.0079
+    Softmax-BC_h MAE (constrained) = 0.0088
+    GNN-BC_h     MAE (constrained) = 0.0079
+    BC_t         MAE (constrained) = 0.0091
+    Softmax-BC_t MAE (constrained) = 0.0097
+    GNN-BC_t     MAE (constrained) = 0.0079
+    BC_m         MAE (constrained) = 0.0091
+    Softmax-BC_m MAE (constrained) = 0.0097
+    GNN-BC_m     MAE (constrained) = 0.0079
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0077
+    Softmax-BC   avg MAE (constrained) = 0.0085
+    GNN-BC       avg MAE (constrained) = 0.0075
+    BC_h         avg MAE (constrained) = 0.0080
+    Softmax-BC_h avg MAE (constrained) = 0.0087
+    GNN-BC_h     avg MAE (constrained) = 0.0075
+    BC_t         avg MAE (constrained) = 0.0081
+    Softmax-BC_t avg MAE (constrained) = 0.0088
+    GNN-BC_t     avg MAE (constrained) = 0.0075
+    BC_m         avg MAE (constrained) = 0.0083
+    Softmax-BC_m avg MAE (constrained) = 0.0089
+    GNN-BC_m     avg MAE (constrained) = 0.0075
+
+-- Supervision = 10.00% --
+ Trial 1/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.739
+    BC           MAE (constrained) = 0.0063
+    Softmax-BC   MAE (constrained) = 0.0072
+    GNN-BC       MAE (constrained) = 0.0060
+    BC_h         MAE (constrained) = 0.0059
+    Softmax-BC_h MAE (constrained) = 0.0070
+    GNN-BC_h     MAE (constrained) = 0.0059
+    BC_t         MAE (constrained) = 0.0064
+    Softmax-BC_t MAE (constrained) = 0.0072
+    GNN-BC_t     MAE (constrained) = 0.0058
+    BC_m         MAE (constrained) = 0.0089
+    Softmax-BC_m MAE (constrained) = 0.0094
+    GNN-BC_m     MAE (constrained) = 0.0059
+ Trial 2/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 1.000,  NMI: 0.760
+    BC           MAE (constrained) = 0.0075
+    Softmax-BC   MAE (constrained) = 0.0081
+    GNN-BC       MAE (constrained) = 0.0069
+    BC_h         MAE (constrained) = 0.0071
+    Softmax-BC_h MAE (constrained) = 0.0079
+    GNN-BC_h     MAE (constrained) = 0.0069
+    BC_t         MAE (constrained) = 0.0084
+    Softmax-BC_t MAE (constrained) = 0.0090
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0092
+    Softmax-BC_m MAE (constrained) = 0.0095
+    GNN-BC_m     MAE (constrained) = 0.0067
+ Trial 3/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.739
+    BC           MAE (constrained) = 0.0055
+    Softmax-BC   MAE (constrained) = 0.0066
+    GNN-BC       MAE (constrained) = 0.0068
+    BC_h         MAE (constrained) = 0.0058
+    Softmax-BC_h MAE (constrained) = 0.0068
+    GNN-BC_h     MAE (constrained) = 0.0065
+    BC_t         MAE (constrained) = 0.0079
+    Softmax-BC_t MAE (constrained) = 0.0087
+    GNN-BC_t     MAE (constrained) = 0.0068
+    BC_m         MAE (constrained) = 0.0079
+    Softmax-BC_m MAE (constrained) = 0.0087
+    GNN-BC_m     MAE (constrained) = 0.0068
+ Trial 4/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 1.000,  NMI: 0.760
+    BC           MAE (constrained) = 0.0064
+    Softmax-BC   MAE (constrained) = 0.0076
+    GNN-BC       MAE (constrained) = 0.0068
+    BC_h         MAE (constrained) = 0.0063
+    Softmax-BC_h MAE (constrained) = 0.0076
+    GNN-BC_h     MAE (constrained) = 0.0069
+    BC_t         MAE (constrained) = 0.0082
+    Softmax-BC_t MAE (constrained) = 0.0091
+    GNN-BC_t     MAE (constrained) = 0.0070
+    BC_m         MAE (constrained) = 0.0082
+    Softmax-BC_m MAE (constrained) = 0.0091
+    GNN-BC_m     MAE (constrained) = 0.0068
+ Trial 5/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.739
+    BC           MAE (constrained) = 0.0059
+    Softmax-BC   MAE (constrained) = 0.0070
+    GNN-BC       MAE (constrained) = 0.0062
+    BC_h         MAE (constrained) = 0.0057
+    Softmax-BC_h MAE (constrained) = 0.0069
+    GNN-BC_h     MAE (constrained) = 0.0065
+    BC_t         MAE (constrained) = 0.0059
+    Softmax-BC_t MAE (constrained) = 0.0070
+    GNN-BC_t     MAE (constrained) = 0.0063
+    BC_m         MAE (constrained) = 0.0076
+    Softmax-BC_m MAE (constrained) = 0.0085
+    GNN-BC_m     MAE (constrained) = 0.0064
+ Trial 6/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 1.000,  NMI: 0.760
+    BC           MAE (constrained) = 0.0081
+    Softmax-BC   MAE (constrained) = 0.0087
+    GNN-BC       MAE (constrained) = 0.0079
+    BC_h         MAE (constrained) = 0.0079
+    Softmax-BC_h MAE (constrained) = 0.0086
+    GNN-BC_h     MAE (constrained) = 0.0081
+    BC_t         MAE (constrained) = 0.0094
+    Softmax-BC_t MAE (constrained) = 0.0098
+    GNN-BC_t     MAE (constrained) = 0.0080
+    BC_m         MAE (constrained) = 0.0095
+    Softmax-BC_m MAE (constrained) = 0.0099
+    GNN-BC_m     MAE (constrained) = 0.0080
+ Trial 7/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.739
+    BC           MAE (constrained) = 0.0064
+    Softmax-BC   MAE (constrained) = 0.0074
+    GNN-BC       MAE (constrained) = 0.0068
+    BC_h         MAE (constrained) = 0.0082
+    Softmax-BC_h MAE (constrained) = 0.0086
+    GNN-BC_h     MAE (constrained) = 0.0065
+    BC_t         MAE (constrained) = 0.0079
+    Softmax-BC_t MAE (constrained) = 0.0084
+    GNN-BC_t     MAE (constrained) = 0.0065
+    BC_m         MAE (constrained) = 0.0124
+    Softmax-BC_m MAE (constrained) = 0.0121
+    GNN-BC_m     MAE (constrained) = 0.0065
+ Trial 8/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 1.000,  NMI: 0.760
+    BC           MAE (constrained) = 0.0068
+    Softmax-BC   MAE (constrained) = 0.0077
+    GNN-BC       MAE (constrained) = 0.0066
+    BC_h         MAE (constrained) = 0.0068
+    Softmax-BC_h MAE (constrained) = 0.0077
+    GNN-BC_h     MAE (constrained) = 0.0066
+    BC_t         MAE (constrained) = 0.0071
+    Softmax-BC_t MAE (constrained) = 0.0079
+    GNN-BC_t     MAE (constrained) = 0.0066
+    BC_m         MAE (constrained) = 0.0071
+    Softmax-BC_m MAE (constrained) = 0.0079
+    GNN-BC_m     MAE (constrained) = 0.0066
+ Trial 9/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.739
+    BC           MAE (constrained) = 0.0067
+    Softmax-BC   MAE (constrained) = 0.0077
+    GNN-BC       MAE (constrained) = 0.0066
+    BC_h         MAE (constrained) = 0.0067
+    Softmax-BC_h MAE (constrained) = 0.0077
+    GNN-BC_h     MAE (constrained) = 0.0068
+    BC_t         MAE (constrained) = 0.0072
+    Softmax-BC_t MAE (constrained) = 0.0080
+    GNN-BC_t     MAE (constrained) = 0.0070
+    BC_m         MAE (constrained) = 0.0089
+    Softmax-BC_m MAE (constrained) = 0.0095
+    GNN-BC_m     MAE (constrained) = 0.0069
+ Trial 10/10:
+  → X-cluster purity (constrained): 0.947,  NMI: 0.628
+  → Y-cluster purity (constrained): 0.993,  NMI: 0.739
+    BC           MAE (constrained) = 0.0075
+    Softmax-BC   MAE (constrained) = 0.0084
+    GNN-BC       MAE (constrained) = 0.0073
+    BC_h         MAE (constrained) = 0.0067
+    Softmax-BC_h MAE (constrained) = 0.0079
+    GNN-BC_h     MAE (constrained) = 0.0071
+    BC_t         MAE (constrained) = 0.0111
+    Softmax-BC_t MAE (constrained) = 0.0112
+    GNN-BC_t     MAE (constrained) = 0.0072
+    BC_m         MAE (constrained) = 0.0114
+    Softmax-BC_m MAE (constrained) = 0.0114
+    GNN-BC_m     MAE (constrained) = 0.0071
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0067
+    Softmax-BC   avg MAE (constrained) = 0.0076
+    GNN-BC       avg MAE (constrained) = 0.0068
+    BC_h         avg MAE (constrained) = 0.0067
+    Softmax-BC_h avg MAE (constrained) = 0.0077
+    GNN-BC_h     avg MAE (constrained) = 0.0068
+    BC_t         avg MAE (constrained) = 0.0079
+    Softmax-BC_t avg MAE (constrained) = 0.0086
+    GNN-BC_t     avg MAE (constrained) = 0.0068
+    BC_m         avg MAE (constrained) = 0.0091
+    Softmax-BC_m avg MAE (constrained) = 0.0096
+    GNN-BC_m     avg MAE (constrained) = 0.0068
+
+=== SUMMARY TABLE for 6 clusters ===
+                            BC  Softmax-BC  ...  Softmax-BC_m  GNN-BC_m
+sup_frac                                    ...                        
+2.05% (constrained)   0.007672    0.008456  ...      0.008456  0.007459
+7.00% (constrained)   0.007685    0.008463  ...      0.008926  0.007515
+10.00% (constrained)  0.006714    0.007638  ...      0.009582  0.006762
+
+[3 rows x 12 columns]
+
+Supervision = 2%
+                    Method         2         3         4         5         6
+BC                      BC  0.010694  0.007543  0.008639  0.008047  0.007672
+Softmax-BC      Softmax-BC  0.010811  0.008127  0.009254  0.008803  0.008456
+GNN-BC              GNN-BC  0.010012  0.007599  0.008034  0.007575  0.007430
+BC_h                  BC_h  0.010590  0.008044  0.009500  0.008329  0.008286
+Softmax-BC_h  Softmax-BC_h  0.010730  0.008555  0.009933  0.009022  0.008929
+GNN-BC_h          GNN-BC_h  0.010031  0.007607  0.007983  0.007507  0.007514
+BC_t                  BC_t  0.010694  0.007543  0.008639  0.008047  0.007672
+Softmax-BC_t  Softmax-BC_t  0.010811  0.008127  0.009254  0.008803  0.008456
+GNN-BC_t          GNN-BC_t  0.010085  0.007612  0.007980  0.007505  0.007580
+BC_m                  BC_m  0.010694  0.007543  0.008639  0.008047  0.007672
+Softmax-BC_m  Softmax-BC_m  0.010811  0.008127  0.009254  0.008803  0.008456
+GNN-BC_m          GNN-BC_m  0.010006  0.007710  0.008084  0.007572  0.007459
+
+Supervision = 7%
+                    Method         2         3         4         5         6
+BC                      BC  0.010354  0.007320  0.009122  0.008969  0.007685
+Softmax-BC      Softmax-BC  0.010519  0.008015  0.009681  0.009563  0.008463
+GNN-BC              GNN-BC  0.009824  0.007668  0.008472  0.008351  0.007546
+BC_h                  BC_h  0.009830  0.007320  0.009693  0.009334  0.008020
+Softmax-BC_h  Softmax-BC_h  0.010114  0.008015  0.010122  0.009803  0.008741
+GNN-BC_h          GNN-BC_h  0.009743  0.007653  0.008426  0.008367  0.007524
+BC_t                  BC_t  0.010354  0.007495  0.009395  0.009635  0.008085
+Softmax-BC_t  Softmax-BC_t  0.010519  0.008168  0.009899  0.010080  0.008782
+GNN-BC_t          GNN-BC_t  0.009740  0.007678  0.008327  0.008369  0.007533
+BC_m                  BC_m  0.010379  0.007698  0.009833  0.009717  0.008261
+Softmax-BC_m  Softmax-BC_m  0.010538  0.008343  0.010214  0.010148  0.008926
+GNN-BC_m          GNN-BC_m  0.009801  0.007626  0.008392  0.008343  0.007515
+
+Supervision = 10%
+2025-06-03 14:01:08.051 python[49153:15027256] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+                    Method         2         3         4         5         6
+BC                      BC  0.010834  0.006945  0.008213  0.008984  0.006714
+Softmax-BC      Softmax-BC  0.010947  0.007670  0.008943  0.009574  0.007638
+GNN-BC              GNN-BC  0.009882  0.006945  0.007800  0.008540  0.006791
+BC_h                  BC_h  0.009980  0.006945  0.007619  0.009145  0.006715
+Softmax-BC_h  Softmax-BC_h  0.010290  0.007670  0.008471  0.009670  0.007657
+GNN-BC_h          GNN-BC_h  0.009904  0.006995  0.007880  0.008536  0.006786
+BC_t                  BC_t  0.010834  0.006945  0.008597  0.009632  0.007943
+Softmax-BC_t  Softmax-BC_t  0.010947  0.007670  0.009229  0.010063  0.008635
+GNN-BC_t          GNN-BC_t  0.009900  0.006990  0.007850  0.008467  0.006780
+BC_m                  BC_m  0.010820  0.007114  0.009458  0.009860  0.009095
+Softmax-BC_m  Softmax-BC_m  0.010939  0.007814  0.009878  0.010251  0.009582
+GNN-BC_m          GNN-BC_m  0.009916  0.006988  0.007900  0.008494  0.006762
+['2 clusters', '3 clusters', '4 clusters', '5 clusters', '6 clusters']
+['2% sup', '7% sup', '10% sup']

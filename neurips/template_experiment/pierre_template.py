@@ -14,6 +14,7 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.random_projection import GaussianRandomProjection
 from sklearn.metrics import pairwise_distances
+from sklearn.decomposition import PCA
 import torch
 import torchvision
 from torchvision import models, transforms
@@ -61,9 +62,9 @@ ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
 N_CLUSTERS      = [2, 3, 4, 5, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.07, 0.1] # supervised sample fractions (0.0205 = 1/49)
-OUT_FRAC        = 0.8    # fraction of "output-only" samples for Y-clustering
-N_TRIALS        = 5
+SUP_FRACS       = [0.0205, 0.07, 0.1195, 0.205] # supervised sample fractions (0.0205 = 1/49) (1 sup, 3, sup, 5 sup, 10 sup)
+OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
+N_TRIALS        = 100 # number of trials for each configuration
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
 #############################
@@ -270,7 +271,7 @@ def learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters):
     # you could relax this. But as written, this is a strict one-to-one matching.
     return mapping
 
-def learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters, threshold=0.7, eps=1e-9):
+def learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters, threshold=0.5, eps=1e-9):
     """
     Build a K×K float matrix of supervision counts, convert to probabilities
     per-row, then only accept a mapping if p >= threshold. Otherwise 0.
@@ -295,7 +296,7 @@ def learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters, threshold=0.7, ep
     # rows where best_prob < threshold remain 0
     return mapping
 
-def learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters, margin=0.4, eps=1e-9):
+def learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters, margin=0.5, eps=1e-9):
     """
     For each X‐cluster i, look at assoc[i], find the two highest counts.
     If (top1 - top2)/(top1 + ε) ≥ margin, accept i → top1; else 0.
@@ -323,6 +324,113 @@ def learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters, margin=0.4, eps=1e-9
             mapping[i] = top1
         # else leave mapping[i] = 0
     return mapping
+def plot_kmeans_constrained_vs_truth(
+    X: np.ndarray,
+    true_labels: np.ndarray,
+    n_clusters: int,
+    kmeans_labels: np.ndarray,
+    size_min: int=None,
+    size_max: int=None,
+    random_state: int=42
+):
+    """
+    1) Runs KMeansConstrained on X to get cluster assignments
+    2) Projects X → 2D via PCA
+    3) Plots two side-by-side scatter plots:
+       - Left: colored by KMeansConstrained cluster index
+       - Right: colored by true_labels
+
+    Arguments:
+      X:             (N, D) feature matrix
+      true_labels:   length-N array of “ground‐truth” labels (ints or strings)
+      n_clusters:    how many clusters for KMeansConstrained
+      size_min:      min cluster‐size for KMeansConstrained (if None, defaults to ⌊N/n_clusters⌋)
+      size_max:      max cluster‐size for KMeansConstrained (if None, defaults to ⌈N/n_clusters⌉)
+      random_state:  random seed for reproducibility
+
+    Returns:
+      fig, axes:     the matplotlib Figure and Axes objects
+      kmeans_labels: length‐N array of cluster assignments from KMeansConstrained
+      X_2d:          (N, 2) PCA embedding of X
+    """
+    N, D = X.shape
+
+    # # If user didn’t pass explicit size_min/size_max, make them roughly balanced:
+    # if size_min is None or size_max is None:
+    #     base_size = N // n_clusters
+    #     size_min = base_size
+    #     size_max = base_size + (1 if (N % n_clusters) else 0)
+
+    # # 1) Fit KMeansConstrained on X
+    # kmeans = KMeansConstrained(
+    #     n_clusters=n_clusters,
+    #     size_min=size_min,
+    #     size_max=size_max,
+    #     random_state=random_state
+    # )
+    # kmeans_labels = kmeans.fit_predict(X)  # shape: (N,)
+
+    # 2) Compute a 2D projection of X (for plotting)
+    pca = PCA(n_components=2, random_state=random_state)
+    X_2d = pca.fit_transform(X)  # shape: (N, 2)
+
+    # 3) Build the figure with two side‐by‐side subplots
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
+    ax1, ax2 = axes
+
+    # Scatter‐plot #1: colored by KMeansConstrained assignment
+    sc1 = ax1.scatter(
+        X_2d[:, 0],
+        X_2d[:, 1],
+        c=kmeans_labels,
+        cmap="tab10",    # adjust if you have >10 clusters
+        s=25,
+        edgecolor="k",
+        linewidth=0.2,
+        alpha=0.8
+    )
+    ax1.set_title(f"KMeansConstrained (K={n_clusters})", fontsize=14)
+    ax1.set_xlabel("PCA 1")
+    ax1.set_ylabel("PCA 2")
+    # Optional: add a legend for cluster‐colors
+    handles, _ = sc1.legend_elements(prop="colors")
+    labels = [f"c={i}" for i in range(n_clusters)]
+    ax1.legend(handles, labels, title="Cluster‐ID", bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    # Scatter‐plot #2: colored by true label
+    # If true_labels are strings, convert them to integer codes first:
+    if true_labels.dtype.kind in {'U', 'S', 'O'}:
+        # map each unique string → integer
+        uniques, inverse = np.unique(true_labels, return_inverse=True)
+        color_indices = inverse
+        true_legend_labels = [str(u) for u in uniques]
+    else:
+        # assume true_labels are already integer‐coded in [0 .. num_classes-1]
+        color_indices = true_labels
+        true_legend_labels = [str(i) for i in np.unique(true_labels)]
+
+    sc2 = ax2.scatter(
+        X_2d[:, 0],
+        X_2d[:, 1],
+        c=color_indices,
+        cmap="tab20",    # a colormap with up to 20 distinct colors
+        s=25,
+        edgecolor="k",
+        linewidth=0.2,
+        alpha=0.8
+    )
+    ax2.set_title("True Labels", fontsize=14)
+    ax2.set_xlabel("PCA 1")
+    # no need to re‐set ylabel; sharey=True
+
+    # Legend for true labels
+    handles2, _ = sc2.legend_elements(prop="colors")
+    ax2.legend(handles2, true_legend_labels, title="True Label", bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    plt.tight_layout(rect=[0, 0, 0.85, 1.0])  # leave room on right for legends
+    plt.show()
+
+    return fig, axes, kmeans_labels, X_2d
 
 def compute_centroids(Y, y_lab, n_clusters):
     centroids = np.zeros((n_clusters, Y.shape[1]), float)
@@ -1530,6 +1638,11 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     x_lab  = cluster_features_constrained(X, n_clusters)
     sup_mask, out_mask, inf_mask = stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters)
 
+    # true_labels = df['cuisine_type'].values
+    # fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+    #     X, true_labels, n_clusters, x_lab
+    # )
+
     # 2) cluster Y only on sup+out
     y_lab = np.empty(len(Y_proj), int)
     y_lab[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
@@ -1575,7 +1688,7 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     # # choose tau heuristically
     # from sklearn.metrics import pairwise_distances
     # cd   = pairwise_distances(centroids)
-    tau  = 0.2
+    tau  = 1
 
     # compute Y_soft for the inference set
     Y_soft_inf = []
@@ -1590,70 +1703,68 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     )
     Y_gnn_inf = Y_gnn[inf_mask]
     ######
-    # - BKM (Hungarian)
-    mapping_h = learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters)
-    centroids_h = compute_centroids(Y_true, y_lab, n_clusters)
+    # # - BKM (Hungarian)
+    # mapping_h = learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters)
+    # centroids_h = compute_centroids(Y_true, y_lab, n_clusters)
 
-    Yb_all    = predict_bridge(x_lab, mapping, centroids)
+    # Yb_all_h    = predict_bridge(x_lab, mapping_h, centroids_h)
 
-    Y_hard_inf_h = Yb_all[inf_mask]
-    Y_true_inf_h = Y_true[inf_mask]
+    # Y_hard_inf_h = Yb_all_h[inf_mask]
+    # Y_true_inf_h = Y_true[inf_mask]
 
-    # # choose tau heuristically
-    # from sklearn.metrics import pairwise_distances
-    # cd   = pairwise_distances(centroids)
-    tau_h  = 0.2
-
-    # compute Y_soft for the inference set
-    Y_soft_inf_h = []
-    for yc in Yb_all[inf_mask]:
-        r = responsibilities(yc, centroids, tau_h)
-        Y_soft_inf_h.append(r.dot(centroids))
-    Y_soft_inf_h = np.vstack(Y_soft_inf_h)
-
-    # - GNN-bridge
-    Y_gnn_h = run_gnn_bridged(
-        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_h, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
-    )
-    Y_gnn_inf_h = Y_gnn_h[inf_mask]
-
-    # - BKM (Threshold)
-    mapping_t = learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters)
-    centroids_t = compute_centroids(Y_true, y_lab, n_clusters)
-    Yb_all_t    = predict_bridge(x_lab, mapping_t, centroids_t)
-    Y_hard_inf_t = Yb_all_t[inf_mask]
-    Y_true_inf_t = Y_true[inf_mask]
-    # compute Y_soft for the inference set
-    Y_soft_inf_t = []
-    for yc in Yb_all_t[inf_mask]:
-        r = responsibilities(yc, centroids_t, tau)
-        Y_soft_inf_t.append(r.dot(centroids_t))
-    Y_soft_inf_t = np.vstack(Y_soft_inf_t)
-    # - GNN-bridge
-    Y_gnn_t = run_gnn_bridged(
-        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_t, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
-    )
-    Y_gnn_inf_t = Y_gnn_t[inf_mask]
-
-    # - BKM (Margin)
-    mapping_m = learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters)
-    centroids_m = compute_centroids(Y_true, y_lab, n_clusters)
-    Yb_all_m    = predict_bridge(x_lab, mapping_m, centroids_m)
-    Y_hard_inf_m = Yb_all_m[inf_mask]
-    Y_true_inf_m = Y_true[inf_mask]
-    # compute Y_soft for the inference set
-    Y_soft_inf_m = []
-    for yc in Yb_all_m[inf_mask]:
-        r = responsibilities(yc, centroids_m, tau)
-        Y_soft_inf_m.append(r.dot(centroids_m))
-    Y_soft_inf_m = np.vstack(Y_soft_inf_m)
-    # - GNN-bridge
-    Y_gnn_m = run_gnn_bridged(
-        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_m, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
-    )
-    Y_gnn_inf_m = Y_gnn_m[inf_mask]
+    # # # choose tau heuristically
+    # # from sklearn.metrics import pairwise_distances
+    # # cd   = pairwise_distances(centroids)
 
 
+    # # compute Y_soft for the inference set
+    # Y_soft_inf_h = []
+    # for yc in Yb_all_h[inf_mask]:
+    #     r = responsibilities(yc, centroids_h, tau)
+    #     Y_soft_inf_h.append(r.dot(centroids_h))
+    # Y_soft_inf_h = np.vstack(Y_soft_inf_h)
+
+    # # - GNN-bridge
+    # Y_gnn_h = run_gnn_bridged(
+    #     X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_h, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    # )
+    # Y_gnn_inf_h = Y_gnn_h[inf_mask]
+
+    # # - BKM (Threshold)
+    # mapping_t = learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters)
+    # centroids_t = compute_centroids(Y_true, y_lab, n_clusters)
+    # Yb_all_t    = predict_bridge(x_lab, mapping_t, centroids_t)
+    # Y_hard_inf_t = Yb_all_t[inf_mask]
+    # Y_true_inf_t = Y_true[inf_mask]
+    # # compute Y_soft for the inference set
+    # Y_soft_inf_t = []
+    # for yc in Yb_all_t[inf_mask]:
+    #     r = responsibilities(yc, centroids_t, tau)
+    #     Y_soft_inf_t.append(r.dot(centroids_t))
+    # Y_soft_inf_t = np.vstack(Y_soft_inf_t)
+    # # - GNN-bridge
+    # Y_gnn_t = run_gnn_bridged(
+    #     X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_t, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    # )
+    # Y_gnn_inf_t = Y_gnn_t[inf_mask]
+
+    # # - BKM (Margin)
+    # mapping_m = learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters)
+    # centroids_m = compute_centroids(Y_true, y_lab, n_clusters)
+    # Yb_all_m    = predict_bridge(x_lab, mapping_m, centroids_m)
+    # Y_hard_inf_m = Yb_all_m[inf_mask]
+    # Y_true_inf_m = Y_true[inf_mask]
+    # # compute Y_soft for the inference set
+    # Y_soft_inf_m = []
+    # for yc in Yb_all_m[inf_mask]:
+    #     r = responsibilities(yc, centroids_m, tau)
+    #     Y_soft_inf_m.append(r.dot(centroids_m))
+    # Y_soft_inf_m = np.vstack(Y_soft_inf_m)
+    # # - GNN-bridge
+    # Y_gnn_m = run_gnn_bridged(
+    #     X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_m, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    # )
+    # Y_gnn_inf_m = Y_gnn_m[inf_mask]
 
 
 
@@ -1663,8 +1774,10 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
 
 
 
-    # # — KNN
-    # Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(len(X) * sup_frac)))
+
+
+    # — KNN
+    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(len(X) * sup_frac)))
 
     # # — Mean Teacher
     # mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
@@ -1672,10 +1785,10 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     # # # 3) XGBoost
     # # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
 
-    # # 4) LapRLS
-    # lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+    # 4) LapRLS
+    lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
 
-    # # 5) Twin-NN regressor
+    # 5) Twin-NN regressor
     # tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
 
     # # 6) Transductive SVR
@@ -1691,35 +1804,35 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
     # agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
 
     # # now compute MAE on each:
-    # results = {
-    #   "BC":          mean_absolute_error(Y_true_inf,    Y_hard_inf),
-    #   "Softmax-BC":  mean_absolute_error(Y_true_inf,    Y_soft_inf),
-    #   "GNN-BC":      mean_absolute_error(Y_true_inf,    Y_gnn_inf),
-    #   "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
+    results = {
+      "BC":          mean_absolute_error(Y_true_inf,    Y_hard_inf),
+      "Softmax-BC":  mean_absolute_error(Y_true_inf,    Y_soft_inf),
+      "GNN-BC":      mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+      "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
     #   "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
     # #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
-    #   "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
+      "LapRLS":        mean_absolute_error(lap_y,         lap_preds),
     #   "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
     #   "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
     #   "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
     #   "RankUp":      mean_absolute_error(rank_y,        rank_preds),
     #   "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
-    # }
-
-    results = {
-        "BC":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
-        "Softmax-BC":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
-        "GNN-BC":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
-        "BC_h":    mean_absolute_error(Y_true_inf_h,  Y_hard_inf_h),
-        "Softmax-BC_h": mean_absolute_error(Y_true_inf_h,  Y_soft_inf_h),
-        "GNN-BC_h": mean_absolute_error(Y_true_inf_h,  Y_gnn_inf_h),
-        "BC_t":    mean_absolute_error(Y_true_inf_t,  Y_hard_inf_t),
-        "Softmax-BC_t": mean_absolute_error(Y_true_inf_t,  Y_soft_inf_t),
-        "GNN-BC_t": mean_absolute_error(Y_true_inf_t,  Y_gnn_inf_t),
-        "BC_m":    mean_absolute_error(Y_true_inf_m,  Y_hard_inf_m),
-        "Softmax-BC_m": mean_absolute_error(Y_true_inf_m,  Y_soft_inf_m),
-        "GNN-BC_m": mean_absolute_error(Y_true_inf_m,  Y_gnn_inf_m),
     }
+
+    # results = {
+    #     "BC":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
+    #     "Softmax-BC":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
+    #     "GNN-BC":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+    #     "BC_h":    mean_absolute_error(Y_true_inf_h,  Y_hard_inf_h),
+    #     "Softmax-BC_h": mean_absolute_error(Y_true_inf_h,  Y_soft_inf_h),
+    #     "GNN-BC_h": mean_absolute_error(Y_true_inf_h,  Y_gnn_inf_h),
+    #     "BC_t":    mean_absolute_error(Y_true_inf_t,  Y_hard_inf_t),
+    #     "Softmax-BC_t": mean_absolute_error(Y_true_inf_t,  Y_soft_inf_t),
+    #     "GNN-BC_t": mean_absolute_error(Y_true_inf_t,  Y_gnn_inf_t),
+    #     "BC_m":    mean_absolute_error(Y_true_inf_m,  Y_hard_inf_m),
+    #     "Softmax-BC_m": mean_absolute_error(Y_true_inf_m,  Y_soft_inf_m),
+    #     "GNN-BC_m": mean_absolute_error(Y_true_inf_m,  Y_gnn_inf_m),
+    # }
 
     # # GNN‐bridge
     # Y_gnn = run_gnn_bridged(
@@ -1736,7 +1849,7 @@ def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, 
 
     # results["FuzzyBridge"] = mean_absolute_error(Y_true[inf_mask], Y_soft[inf_mask])
 
-    return results, sup_mask
+    return results, sup_mask, nmi_x
 
 #############################
 # Multi‐trial Evaluation
@@ -1811,45 +1924,48 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
       - loss_data: shape (len(cluster_vals), len(sup_fracs), num_models, n_trials)
       - model_names: the list of model keys, in the order used in loss_data
     """
-    # model_names = [
-    #   "BC",
-    #   "Softmax-BC",
-    #   "GNN-BC",
-    #   "KNN",
+    model_names = [
+      "BC",
+      "Softmax-BC",
+      "GNN-BC",
+      "KNN",
     #   "MeanTeacher",
     # #   "XGBoost",
-    #   "LapRLS",
+      "LapRLS",
     #   "TSVR",
     #   "TNNR",
     #   "UCVME",
     #   "RankUp",
     #   "AGDN",
-    # ]
-    model_names = [
-        "BC",
-        "Softmax-BC",
-        "GNN-BC",
-        "BC_h",
-        "Softmax-BC_h",
-        "GNN-BC_h",
-        "BC_t",
-        "Softmax-BC_t",
-        "GNN-BC_t",
-        "BC_m",
-        "Softmax-BC_m",
-        "GNN-BC_m",
     ]
+    # model_names = [
+    #     "BC",
+    #     # "Softmax-BC",
+    #     # "GNN-BC",
+    #     # "BC_h",
+    #     # "Softmax-BC_h",
+    #     # "GNN-BC_h",
+    #     # "BC_t",
+    #     # "Softmax-BC_t",
+    #     # "GNN-BC_t",
+    #     # "BC_m",
+    #     # "Softmax-BC_m",
+    #     # "GNN-BC_m",
+    # ]
     num_h1 = len(cluster_vals)
     num_h2 = len(sup_fracs)
     num_m  = len(model_names)
     # loss_data = np.zeros((num_h1, num_h2, num_m, n_trials), float)
     loss_data_constrained = np.zeros((num_h1, num_h2, num_m, n_trials), float)
 
+    nmi_list   = []
+    mae_bc_list = []    
+
     for i, n_clusters in enumerate(cluster_vals):
         print(f"\n=== RUNNING for {n_clusters} clusters ===")
         # pick cuisines at random (or deterministic if you prefer)
         all_cuisines = df['cuisine_type'].unique()
-        cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
+        cuisines = ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
         df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
         print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
         # pre‐encode once per df_run
@@ -1868,6 +1984,26 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
 
         for j, sup_frac in enumerate(sup_fracs):
             print(f"\n-- Supervision = {sup_frac:.2%} --")
+            # constrained version
+            # Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+            # rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+            # Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
+
+            # # 1) stratify & split
+            # x_lab  = cluster_features_constrained(X_all, n_clusters)
+            # sup_mask, out_mask,_ = stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters)
+
+            # true_labels = df_run['cuisine_type'].values
+            # fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+            #     X_all, true_labels, n_clusters, x_lab
+            # )
+
+            # # 2) cluster Y only on sup+out
+            # y_lab = np.empty(len(Y_proj), int)
+            # y_lab[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+            # fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+            #     Y_proj[sup_mask | out_mask], true_labels[sup_mask | out_mask], n_clusters, y_lab[sup_mask | out_mask]
+            # )
             for t in range(n_trials):
                 print(f" Trial {t+1}/{n_trials}:")
                 # results, _ = run_experiment(
@@ -1875,10 +2011,13 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
                 #     X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
                 # )
                 # constrained version
-                results_constrained, _ = run_experiment_constrained(
+                results_constrained, _, nmi_x = run_experiment_constrained(
                     df_run, model, tfm, recipes, ing2idx, D,
                     X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
                 )
+                mae_bc = results_constrained["BC"]
+                nmi_list.append(nmi_x)
+                mae_bc_list.append(mae_bc)
 
                 for m, name in enumerate(model_names):
                     # mae = results[name]
@@ -1912,7 +2051,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         summary_df_constrained = pd.DataFrame(rows_constrained).set_index('sup_frac')
         # print(summary_df)
         print(summary_df_constrained)
-    output_dir = "testing_voting_results"
+    output_dir = "pierre_results/finalized_results"
     os.makedirs(output_dir, exist_ok=True)
 
     for j, sup_frac in enumerate(sup_fracs):
@@ -1943,7 +2082,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         
         # save it
         pct = int(sup_frac * 100)
-        fname = os.path.join(output_dir, f"5trials_summary_supervised_{pct}pct.png")
+        fname = os.path.join(output_dir, f"experiments_100trials_summary_supervised_{pct}pct.png")
         fig.savefig(fname, dpi=300, bbox_inches="tight")
         plt.close(fig)
         
@@ -1951,7 +2090,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         print(f"\nSupervision = {pct}%")
         print(df)
 
-    return loss_data_constrained, model_names
+    return loss_data_constrained, model_names, np.array(nmi_list), np.array(mae_bc_list)
 
 #############################
 # Plot
@@ -2146,7 +2285,7 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
                             hyperparam1_labels=["30", "60", "90", "120", "150"],
                             hyperparam2_labels=["1% supervision", "5% supervision", "10% supervision", "15% supervision"],
                             model_labels=["Bridged Clustering", "KNN", "Mean Teacher", "GCN", "AGDN", "Bridged AGDN"],
-                            log_scale=True):
+                            log_scale=False):
     """
     Create a figure with 5 subplots (one for each value of hyperparameter 1).
     In each subplot the loss distributions are shown as grouped boxplots for the
@@ -2224,7 +2363,7 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
         
         # Create the boxplots for this subplot.
         bp = ax.boxplot(data_all, positions=positions, widths=0.6,
-                        patch_artist=True, showfliers=True,  medianprops=dict(color="white", linewidth=2))
+                        patch_artist=True, showfliers=True,  medianprops=dict(color="black", linewidth=2))
         
         # Color each box based on its model. Since for each group the boxes
         # appear in order (model 0 through model 4), we use modulo arithmetic.
@@ -2247,7 +2386,7 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
     # Place legend to the right of the plots.
     plt.legend(handles=legend_handles, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=12)
     
-    plt.tight_layout(rect=[0, 0, 0.9, 1])  # leave space on the right for the legend
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on the right for the legend
     plt.show()
 
 
@@ -2400,7 +2539,7 @@ if __name__ == '__main__':
     out_frac     = OUT_FRAC
     n_trials     = N_TRIALS                # e.g. 3 or bump to 20 for nicer boxes
 
-    loss_data, model_labels = collect_mae_trials(
+    loss_data, model_labels, nmi_arr, mae_arr = collect_mae_trials(
         df, model, tfm, recipes, ing2idx, D,
         cluster_vals, sup_fracs, out_frac, n_trials
     )
@@ -2410,6 +2549,16 @@ if __name__ == '__main__':
     hyperparam2_labels = [f"{int(s*100)}% sup" for s in sup_fracs]
     print(hyperparam1_labels)
     print(hyperparam2_labels)
+
+    plt.figure(figsize=(6,4))
+    plt.scatter(nmi_arr, mae_arr, color="tab:blue", edgecolor="k", alpha=0.7)
+    plt.xlabel("NMI of X‐clustering", fontsize=12)
+    plt.ylabel("BC MAE",             fontsize=12)
+    # plt.yscale("log")
+    plt.title("BC MAE vs. NMI of X clustering", fontsize=14)
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.show()
 
     # finally, plot
     plot_boxplots_by_hyper1(
