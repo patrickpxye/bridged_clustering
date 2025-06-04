@@ -1,0 +1,539 @@
+    TSVR         MAE (constrained) = 0.0124
+    TNNR         MAE (constrained) = 0.0724
+    UCVME        MAE (constrained) = 0.0263
+    RankUp       MAE (constrained) = 0.0613
+    AGDN         MAE (constrained) = 0.0305
+ Trial 2/3:
+  → X-cluster purity (constrained): 0.660,  NMI: 0.418
+  → Y-cluster purity (constrained): 0.769,  NMI: 0.693
+    BC           MAE (constrained) = 0.0095
+    Softmax-BC   MAE (constrained) = 0.0095
+    GNN-BC       MAE (constrained) = 0.0096
+    KNN          MAE (constrained) = 0.0108
+    MeanTeacher  MAE (constrained) = 0.0190
+    LapRLS       MAE (constrained) = 0.0106
+    TSVR         MAE (constrained) = 0.0123
+    TNNR         MAE (constrained) = 0.0740
+    UCVME        MAE (constrained) = 0.0247
+    RankUp       MAE (constrained) = 0.0586
+    AGDN         MAE (constrained) = 0.0306
+ Trial 3/3:
+  → X-cluster purity (constrained): 0.660,  NMI: 0.418
+  → Y-cluster purity (constrained): 0.801,  NMI: 0.651
+    BC           MAE (constrained) = 0.0088
+    Softmax-BC   MAE (constrained) = 0.0088
+    GNN-BC       MAE (constrained) = 0.0094
+    KNN          MAE (constrained) = 0.0106
+    MeanTeacher  MAE (constrained) = 0.0204
+    LapRLS       MAE (constrained) = 0.0098
+    TSVR         MAE (constrained) = 0.0114
+    TNNR         MAE (constrained) = 0.0735
+    UCVME        MAE (constrained) = 0.0253
+    RankUp       MAE (constrained) = 0.0641
+    AGDN         MAE (constrained) = 0.0307
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0093
+    Softmax-BC   avg MAE (constrained) = 0.0093
+    GNN-BC       avg MAE (constrained) = 0.0095
+    KNN          avg MAE (constrained) = 0.0106
+    MeanTeacher  avg MAE (constrained) = 0.0197
+    LapRLS       avg MAE (constrained) = 0.0102
+    TSVR         avg MAE (constrained) = 0.0120
+    TNNR         avg MAE (constrained) = 0.0733
+    UCVME        avg MAE (constrained) = 0.0255
+    RankUp       avg MAE (constrained) = 0.0613
+    AGDN         avg MAE (constrained) = 0.0306
+
+=== SUMMARY TABLE for 5 clusters ===
+                            BC  Softmax-BC    GNN-BC       KNN  MeanTeacher    LapRLS      TSVR      TNNR     UCVME    RankUp      AGDN
+sup_frac                                                                                                                               
+2.05% (constrained)   0.009297    0.009297  0.009581  0.010273     0.022919  0.009650  0.010394  0.073465  0.026217  0.067203  0.043302
+7.00% (constrained)   0.009269    0.009269  0.009509  0.010069     0.018321  0.009631  0.011354  0.074278  0.023328  0.067163  0.031716
+10.00% (constrained)  0.009303    0.009303  0.009470  0.010614     0.019686  0.010168  0.012013  0.073259  0.025454  0.061343  0.030590
+
+=== RUNNING for 6 clusters ===
+→ Using cuisines for 6 clusters: ['risotto', 'onion_rings', 'beet_salad', 'paella', 'shrimp_and_grits', 'hummus']
+Encoding images:  90%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                         | 268/297 [00:23<00:02, 10.99it/s]^Z
+zsh: suspended  python pierre_template.py
+(briclu2) pierrelabroche@DNa1d2706 template_experiment$ python pierre_template.py > testing_voti/checking_adam_1095dim_10_trials.log 2>&1                                                                                                                                                                       
+(briclu2) pierrelabroche@DNa1d2706 template_experiment$ mkdir -p testing_voting_results                                             
+(briclu2) pierrelabroche@DNa1d2706 template_experiment$ python pierre_template.py > testing_voting_results/comparing_voting_5_trials.log 2>&1   
+(briclu2) pierrelabroche@DNa1d2706 template_experiment$ caffeinate -d python pierre_template.py > testing_voting_results/comparing_voting_5_trials.log 2>&1
+
+(briclu2) pierrelabroche@DNa1d2706 template_experiment$ caffeinate -d python pierre_template.py > testing_voting_results/comparing_voting_5_trials_thres07_marg04.log 2>&1
+
+(briclu2) pierrelabroche@DNa1d2706 template_experiment$ 
+ *  History restored 
+
+alias ll=ls -lG
+(base) pierrelabroche@DN0a1f2585 template_experiment$ conda activate briclu2
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ git status
+On branch main
+Your branch is ahead of 'origin/main' by 3 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   pierre_template.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        hungarian_test.log
+        testing_voting_results/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ git commit -m "Added results for different voting options"
+On branch main
+Your branch is ahead of 'origin/main' by 3 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   pierre_template.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        hungarian_test.log
+        testing_voting_results/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ git add .
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ git commit -m "Added results for different voting options"
+[main 747e8a9] Added results for different voting options
+ 10 files changed, 3912 insertions(+), 61 deletions(-)
+ create mode 100644 neurips/template_experiment/hungarian_test.log
+ create mode 100644 neurips/template_experiment/testing_voting_results/10trials_summary_supervised_10pct.png
+ create mode 100644 neurips/template_experiment/testing_voting_results/10trials_summary_supervised_2pct.png
+ create mode 100644 neurips/template_experiment/testing_voting_results/10trials_summary_supervised_7pct.png
+ create mode 100644 neurips/template_experiment/testing_voting_results/5trials_summary_supervised_10pct.png
+ create mode 100644 neurips/template_experiment/testing_voting_results/5trials_summary_supervised_2pct.png
+ create mode 100644 neurips/template_experiment/testing_voting_results/5trials_summary_supervised_7pct.png
+ create mode 100644 neurips/template_experiment/testing_voting_results/comparing_voting_5_trials.log
+ create mode 100644 neurips/template_experiment/testing_voting_results/comparing_voting_5_trials_thres07_marg04.log
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ 
+ *  History restored 
+
+alias ll=ls -lG
+(base) pierrelabroche@DN0a1f2585 template_experiment$ conda activate briclu2
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_voting_results/comparing_voting_5_trials_thres05_marg04.log 2>&1
+
+^Z
+zsh: suspended  caffeinate -d python pierre_template.py >  2>&1
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_voting_results/comparing_voting_5_trials_thres05_marg04.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py                                                                                         
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:08<00:00, 11.33it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/10:
+Traceback (most recent call last):
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 2515, in <module>
+    loss_data, model_labels = collect_mae_trials(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 1990, in collect_mae_trials
+    results_constrained, _ = run_experiment_constrained(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 1641, in run_experiment_constrained
+    fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 397, in plot_kmeans_constrained_vs_truth
+    labels = [f"c={i}" for i in range(n_clusters)]
+TypeError: only integer scalar arrays can be converted to a scalar index
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_corrected_voting_results/comparing_voting_5_trials_thres05_marg04.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py                                                                                                   
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:08<00:00, 11.82it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/5:
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/axes/_axes.py", line 4758, in _parse_scatter_color_args
+    colors = mcolors.to_rgba_array(c)
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 515, in to_rgba_array
+    rgba = np.array([to_rgba(cc) for cc in c])
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 515, in <listcomp>
+    rgba = np.array([to_rgba(cc) for cc in c])
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 317, in to_rgba
+    rgba = _to_rgba_no_colorcycle(c, alpha)
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 403, in _to_rgba_no_colorcycle
+    raise ValueError("RGBA sequence should have length 3 or 4")
+ValueError: RGBA sequence should have length 3 or 4
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 2515, in <module>
+    loss_data, model_labels = collect_mae_trials(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 1990, in collect_mae_trials
+    results_constrained, _ = run_experiment_constrained(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 1641, in run_experiment_constrained
+    fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 412, in plot_kmeans_constrained_vs_truth
+    sc2 = ax2.scatter(
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/_api/deprecation.py", line 453, in wrapper
+    return func(*args, **kwargs)
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/__init__.py", line 1521, in inner
+    return func(
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/axes/_axes.py", line 4951, in scatter
+    self._parse_scatter_color_args(
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/axes/_axes.py", line 4764, in _parse_scatter_color_args
+    raise invalid_shape_exception(c.size, xsize) from err
+ValueError: 'c' argument has 107310 elements, which is inconsistent with 'x' and 'y' with size 98.
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:08<00:00, 11.99it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/5:
+2025-06-03 01:50:35.999 python[32940:14022661] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.988,  NMI: 0.915
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+    BC           MAE (constrained) = 0.0080
+    Softmax-BC   MAE (constrained) = 0.0080
+    GNN-BC       MAE (constrained) = 0.0080
+    BC_h         MAE (constrained) = 0.0080
+    Softmax-BC_h MAE (constrained) = 0.0080
+    GNN-BC_h     MAE (constrained) = 0.0080
+    BC_t         MAE (constrained) = 0.0080
+    Softmax-BC_t MAE (constrained) = 0.0080
+    GNN-BC_t     MAE (constrained) = 0.0079
+    BC_m         MAE (constrained) = 0.0080
+    Softmax-BC_m MAE (constrained) = 0.0080
+    GNN-BC_m     MAE (constrained) = 0.0080
+ Trial 2/5:
+^Z
+zsh: suspended  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ 
+[2]  + terminated  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:08<00:00, 11.75it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/5:
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/axes/_axes.py", line 4758, in _parse_scatter_color_args
+    colors = mcolors.to_rgba_array(c)
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 515, in to_rgba_array
+    rgba = np.array([to_rgba(cc) for cc in c])
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 515, in <listcomp>
+    rgba = np.array([to_rgba(cc) for cc in c])
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 317, in to_rgba
+    rgba = _to_rgba_no_colorcycle(c, alpha)
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/colors.py", line 401, in _to_rgba_no_colorcycle
+    raise ValueError(f"Invalid RGBA argument: {orig_c!r}")
+ValueError: Invalid RGBA argument: 0.0
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 2533, in <module>
+    loss_data, model_labels = collect_mae_trials(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 2000, in collect_mae_trials
+    fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 412, in plot_kmeans_constrained_vs_truth
+    sc2 = ax2.scatter(
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/_api/deprecation.py", line 453, in wrapper
+    return func(*args, **kwargs)
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/__init__.py", line 1521, in inner
+    return func(
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/axes/_axes.py", line 4951, in scatter
+    self._parse_scatter_color_args(
+  File "/opt/miniconda3/envs/briclu2/lib/python3.10/site-packages/matplotlib/axes/_axes.py", line 4764, in _parse_scatter_color_args
+    raise invalid_shape_exception(c.size, xsize) from err
+ValueError: 'c' argument has 4826 elements, which is inconsistent with 'x' and 'y' with size 98.
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:08<00:00, 11.71it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/5:
+^Z
+zsh: suspended  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['pizza', 'sashimi']
+Encoding images: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 98/98 [00:08<00:00, 11.43it/s]
+
+-- Supervision = 2.05% --
+ Trial 1/1:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.975,  NMI: 0.831
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+    BC           MAE (constrained) = 0.0082
+    Softmax-BC   MAE (constrained) = 0.0082
+    GNN-BC       MAE (constrained) = 0.0084
+    BC_h         MAE (constrained) = 0.0082
+    Softmax-BC_h MAE (constrained) = 0.0082
+    GNN-BC_h     MAE (constrained) = 0.0084
+    BC_t         MAE (constrained) = 0.0082
+    Softmax-BC_t MAE (constrained) = 0.0082
+    GNN-BC_t     MAE (constrained) = 0.0084
+    BC_m         MAE (constrained) = 0.0082
+    Softmax-BC_m MAE (constrained) = 0.0082
+    GNN-BC_m     MAE (constrained) = 0.0084
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0082
+    Softmax-BC   avg MAE (constrained) = 0.0082
+    GNN-BC       avg MAE (constrained) = 0.0084
+    BC_h         avg MAE (constrained) = 0.0082
+    Softmax-BC_h avg MAE (constrained) = 0.0082
+    GNN-BC_h     avg MAE (constrained) = 0.0084
+    BC_t         avg MAE (constrained) = 0.0082
+    Softmax-BC_t avg MAE (constrained) = 0.0082
+    GNN-BC_t     avg MAE (constrained) = 0.0084
+    BC_m         avg MAE (constrained) = 0.0082
+    Softmax-BC_m avg MAE (constrained) = 0.0082
+    GNN-BC_m     avg MAE (constrained) = 0.0084
+
+-- Supervision = 7.00% --
+[2]  + terminated  python pierre_template.py
+ Trial 1/1:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.952,  NMI: 0.732
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0100
+    BC_h         MAE (constrained) = 0.0091
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0099
+    BC_t         MAE (constrained) = 0.0091
+    Softmax-BC_t MAE (constrained) = 0.0091
+    GNN-BC_t     MAE (constrained) = 0.0096
+    BC_m         MAE (constrained) = 0.0091
+    Softmax-BC_m MAE (constrained) = 0.0091
+    GNN-BC_m     MAE (constrained) = 0.0098
+ → AVERAGES for 7.00%:
+    BC           avg MAE (constrained) = 0.0091
+    Softmax-BC   avg MAE (constrained) = 0.0091
+    GNN-BC       avg MAE (constrained) = 0.0100
+    BC_h         avg MAE (constrained) = 0.0091
+    Softmax-BC_h avg MAE (constrained) = 0.0091
+    GNN-BC_h     avg MAE (constrained) = 0.0099
+    BC_t         avg MAE (constrained) = 0.0091
+    Softmax-BC_t avg MAE (constrained) = 0.0091
+    GNN-BC_t     avg MAE (constrained) = 0.0096
+    BC_m         avg MAE (constrained) = 0.0091
+    Softmax-BC_m avg MAE (constrained) = 0.0091
+    GNN-BC_m     avg MAE (constrained) = 0.0098
+
+-- Supervision = 10.00% --
+ Trial 1/1:
+  → X-cluster purity (constrained): 0.888,  NMI: 0.494
+  → Y-cluster purity (constrained): 0.954,  NMI: 0.739
+    BC           MAE (constrained) = 0.0091
+    Softmax-BC   MAE (constrained) = 0.0091
+    GNN-BC       MAE (constrained) = 0.0094
+    BC_h         MAE (constrained) = 0.0091
+    Softmax-BC_h MAE (constrained) = 0.0091
+    GNN-BC_h     MAE (constrained) = 0.0097
+    BC_t         MAE (constrained) = 0.0091
+    Softmax-BC_t MAE (constrained) = 0.0091
+    GNN-BC_t     MAE (constrained) = 0.0093
+    BC_m         MAE (constrained) = 0.0091
+    Softmax-BC_m MAE (constrained) = 0.0091
+    GNN-BC_m     MAE (constrained) = 0.0096
+ → AVERAGES for 10.00%:
+    BC           avg MAE (constrained) = 0.0091
+    Softmax-BC   avg MAE (constrained) = 0.0091
+    GNN-BC       avg MAE (constrained) = 0.0094
+    BC_h         avg MAE (constrained) = 0.0091
+    Softmax-BC_h avg MAE (constrained) = 0.0091
+    GNN-BC_h     avg MAE (constrained) = 0.0097
+    BC_t         avg MAE (constrained) = 0.0091
+    Softmax-BC_t avg MAE (constrained) = 0.0091
+    GNN-BC_t     avg MAE (constrained) = 0.0093
+    BC_m         avg MAE (constrained) = 0.0091
+    Softmax-BC_m avg MAE (constrained) = 0.0091
+    GNN-BC_m     avg MAE (constrained) = 0.0096
+
+=== SUMMARY TABLE for 2 clusters ===
+                            BC  Softmax-BC    GNN-BC      BC_h  Softmax-BC_h  GNN-BC_h      BC_t  Softmax-BC_t  GNN-BC_t      BC_m  Softmax-BC_m  GNN-BC_m
+sup_frac                                                                                                                                                  
+2.05% (constrained)   0.008174    0.008174  0.008363  0.008174      0.008174  0.008366  0.008174      0.008174  0.008365  0.008174      0.008174  0.008366
+7.00% (constrained)   0.009108    0.009109  0.009970  0.009108      0.009109  0.009945  0.009108      0.009109  0.009625  0.009108      0.009109  0.009831
+10.00% (constrained)  0.009056    0.009057  0.009433  0.009056      0.009057  0.009674  0.009056      0.009057  0.009294  0.009056      0.009057  0.009559
+
+=== RUNNING for 3 clusters ===
+→ Using cuisines for 3 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 150/150 [00:13<00:00, 11.18it/s]
+
+-- Supervision = 2.05% --
+2025-06-03 02:05:47.540 python[33340:14036142] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+ Trial 1/1:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.992,  NMI: 0.965
+    BC           MAE (constrained) = 0.0076
+    Softmax-BC   MAE (constrained) = 0.0076
+    GNN-BC       MAE (constrained) = 0.0076
+    BC_h         MAE (constrained) = 0.0069
+    Softmax-BC_h MAE (constrained) = 0.0069
+    GNN-BC_h     MAE (constrained) = 0.0076
+    BC_t         MAE (constrained) = 0.0076
+    Softmax-BC_t MAE (constrained) = 0.0076
+    GNN-BC_t     MAE (constrained) = 0.0076
+    BC_m         MAE (constrained) = 0.0076
+    Softmax-BC_m MAE (constrained) = 0.0076
+    GNN-BC_m     MAE (constrained) = 0.0076
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0076
+    Softmax-BC   avg MAE (constrained) = 0.0076
+    GNN-BC       avg MAE (constrained) = 0.0076
+    BC_h         avg MAE (constrained) = 0.0069
+    Softmax-BC_h avg MAE (constrained) = 0.0069
+    GNN-BC_h     avg MAE (constrained) = 0.0076
+    BC_t         avg MAE (constrained) = 0.0076
+    Softmax-BC_t avg MAE (constrained) = 0.0076
+    GNN-BC_t     avg MAE (constrained) = 0.0076
+    BC_m         avg MAE (constrained) = 0.0076
+    Softmax-BC_m avg MAE (constrained) = 0.0076
+    GNN-BC_m     avg MAE (constrained) = 0.0076
+
+-- Supervision = 7.00% --
+^Z
+zsh: suspended  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ 
+[3]  + terminated  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 3 clusters ===
+→ Using cuisines for 3 clusters: ['pizza', 'sashimi', 'ramen']
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 146/146 [00:12<00:00, 11.94it/s]
+
+-- Supervision = 2.05% --
+Traceback (most recent call last):
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 2536, in <module>
+    loss_data, model_labels = collect_mae_trials(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 2001, in collect_mae_trials
+    fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+  File "/Users/pierrelabroche/projects/bridged_clustering/neurips/template_experiment/pierre_template.py", line 356, in plot_kmeans_constrained_vs_truth
+    N, D = X.shape
+ValueError: not enough values to unpack (expected 2, got 1)
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 3 clusters ===
+→ Using cuisines for 3 clusters: ['pizza', 'sashimi', 'ramen']
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 146/146 [00:14<00:00, 10.14it/s]
+
+-- Supervision = 2.05% --
+2025-06-03 02:17:41.627 python[33738:14049061] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+ Trial 1/1:
+  → X-cluster purity (constrained): 0.801,  NMI: 0.474
+  → Y-cluster purity (constrained): 0.950,  NMI: 0.797
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+    BC           MAE (constrained) = 0.0093
+    Softmax-BC   MAE (constrained) = 0.0093
+    GNN-BC       MAE (constrained) = 0.0098
+    BC_h         MAE (constrained) = 0.0093
+    Softmax-BC_h MAE (constrained) = 0.0093
+    GNN-BC_h     MAE (constrained) = 0.0096
+    BC_t         MAE (constrained) = 0.0093
+    Softmax-BC_t MAE (constrained) = 0.0093
+    GNN-BC_t     MAE (constrained) = 0.0098
+    BC_m         MAE (constrained) = 0.0093
+    Softmax-BC_m MAE (constrained) = 0.0093
+    GNN-BC_m     MAE (constrained) = 0.0097
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0093
+    Softmax-BC   avg MAE (constrained) = 0.0093
+    GNN-BC       avg MAE (constrained) = 0.0098
+    BC_h         avg MAE (constrained) = 0.0093
+    Softmax-BC_h avg MAE (constrained) = 0.0093
+    GNN-BC_h     avg MAE (constrained) = 0.0096
+    BC_t         avg MAE (constrained) = 0.0093
+    Softmax-BC_t avg MAE (constrained) = 0.0093
+    GNN-BC_t     avg MAE (constrained) = 0.0098
+    BC_m         avg MAE (constrained) = 0.0093
+    Softmax-BC_m avg MAE (constrained) = 0.0093
+    GNN-BC_m     avg MAE (constrained) = 0.0097
+
+-- Supervision = 7.00% --
+^Z
+zsh: suspended  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ python pierre_template.py
+
+=== RUNNING for 3 clusters ===
+→ Using cuisines for 3 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+Encoding images: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 150/150 [00:12<00:00, 11.80it/s]
+
+-- Supervision = 2.05% --
+2025-06-03 02:24:57.416 python[33994:14057643] The class 'NSSavePanel' overrides the method identifier.  This method is implemented by class 'NSWindow'
+ Trial 1/1:
+  → X-cluster purity (constrained): 0.960,  NMI: 0.862
+  → Y-cluster purity (constrained): 0.984,  NMI: 0.930
+Intel MKL WARNING: Support of Intel(R) Streaming SIMD Extensions 4.2 (Intel(R) SSE4.2) enabled only processors has been deprecated. Intel oneAPI Math Kernel Library 2025.0 will require Intel(R) Advanced Vector Extensions (Intel(R) AVX) instructions.
+    BC           MAE (constrained) = 0.0067
+    Softmax-BC   MAE (constrained) = 0.0067
+    GNN-BC       MAE (constrained) = 0.0067
+    BC_h         MAE (constrained) = 0.0067
+    Softmax-BC_h MAE (constrained) = 0.0067
+    GNN-BC_h     MAE (constrained) = 0.0067
+    BC_t         MAE (constrained) = 0.0067
+    Softmax-BC_t MAE (constrained) = 0.0067
+    GNN-BC_t     MAE (constrained) = 0.0067
+    BC_m         MAE (constrained) = 0.0067
+    Softmax-BC_m MAE (constrained) = 0.0067
+    GNN-BC_m     MAE (constrained) = 0.0067
+ → AVERAGES for 2.05%:
+    BC           avg MAE (constrained) = 0.0067
+    Softmax-BC   avg MAE (constrained) = 0.0067
+    GNN-BC       avg MAE (constrained) = 0.0067
+    BC_h         avg MAE (constrained) = 0.0067
+    Softmax-BC_h avg MAE (constrained) = 0.0067
+    GNN-BC_h     avg MAE (constrained) = 0.0067
+    BC_t         avg MAE (constrained) = 0.0067
+    Softmax-BC_t avg MAE (constrained) = 0.0067
+    GNN-BC_t     avg MAE (constrained) = 0.0067
+    BC_m         avg MAE (constrained) = 0.0067
+    Softmax-BC_m avg MAE (constrained) = 0.0067
+    GNN-BC_m     avg MAE (constrained) = 0.0067
+
+-- Supervision = 7.00% --
+^Z
+zsh: suspended  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ 
+[3]  + terminated  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ 
+[2]  + terminated  python pierre_template.py
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_corrected_voting_results/comparing_voting_5_trials_thres05_marg04.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ mkdir testing_corrected_hun                                                                                                 
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_corrected_hun/comparing_voting_5_trials_thres05_marg04.log 2>&1
+
+^Z
+zsh: suspended  caffeinate -d python pierre_template.py >  2>&1
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ 
+[2]  + terminated  caffeinate -d python pierre_template.py >  2>&1
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_corrected_hun/comparing_voting_5_trials_thres05_marg04.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > testing_corrected_hun/comparing_voting_20_trials_thres05_marg05.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > pierre_results/finalized_results/experiments_20_trials.log 2>&1 
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > pierre_results/finalized_results/experiments_100_trials.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > pierre_results/finalized_results/experiments_100_trials.log 2>&1
+
+^Z
+zsh: suspended  caffeinate -d python pierre_template.py >  2>&1
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > pierre_results/finalized_results/experiments_100_trials.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py > pierre_results/finalized_results/experiments_100_trials.log 2>&1
+
+(briclu2) pierrelabroche@DN0a1f2585 template_experiment$ caffeinate -d python pierre_template.py                                                                           
+
+=== RUNNING for 2 clusters ===
+→ Using cuisines for 2 clusters: ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
