@@ -62,7 +62,7 @@ ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
 N_CLUSTERS      = [2, 3, 4, 5, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.1195, 0.205] # supervised sample fractions (0.0205 = 1/49) (1 sup, 3, sup, 5 sup, 10 sup)
+SUP_FRACS       = [0.0205, 0.07, 0.1195, 0.205] # supervised sample fractions (0.0205 = 1/49) (1 sup, 3, sup, 5 sup, 10 sup)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 100 # number of trials for each configuration
 Y_DIM_REDUCED   = 128   # target dim for random projection
@@ -1965,7 +1965,7 @@ def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
         print(f"\n=== RUNNING for {n_clusters} clusters ===")
         # pick cuisines at random (or deterministic if you prefer)
         all_cuisines = df['cuisine_type'].unique()
-        cuisines = ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+        cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False)
         df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
         print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
         # pre‐encode once per df_run
@@ -2389,6 +2389,101 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
     plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on the right for the legend
     plt.show()
 
+# def plot_clusters_with_shapes(
+#     data_2d: np.ndarray,
+#     cluster_ids: np.ndarray,
+#     true_labels: np.ndarray,
+#     n_clusters: int,
+#     title: str
+# ):
+#     """
+#     Scatter‐plot `data_2d` (N×2) coloring by `cluster_ids` (integers in [0..n_clusters-1]),
+#     and using different marker‐shapes for each unique value in `true_labels`.
+
+#     - data_2d:    shape (N,2), the 2D PCA projection of either X or Y_proj.
+#     - cluster_ids: length‐N array of ints ∈ [0..n_clusters-1].
+#     - true_labels: length‐N array of strings (e.g. cuisine names).
+#     - n_clusters: how many clusters you ran (here 3).
+#     - title:      figure title.
+#     """
+#     # pick one color per cluster
+#     cmap = plt.get_cmap("tab10")
+#     cluster_colors = [cmap(i) for i in range(n_clusters)]
+
+#     # assign a marker‐shape to each distinct cuisine in true_labels
+#     unique_cuisines = np.unique(true_labels)
+#     # Choose as many markers as needed (assuming no more than ~10 cuisines here).
+#     marker_list = ["o", "s", "X", "D", "v", "^", "<", ">", "p", "*"]
+#     if len(unique_cuisines) > len(marker_list):
+#         raise ValueError(f"Too many unique true_labels ({len(unique_cuisines)}) for marker_list.")
+#     cuisine_to_marker = {cuisine: marker_list[i] for i, cuisine in enumerate(unique_cuisines)}
+
+#     fig, ax = plt.subplots(figsize=(6, 6))
+
+#     # For each cuisine, plot only the points belonging to that cuisine,
+#     # coloring by cluster_id
+#     for cuisine in unique_cuisines:
+#         mask = (true_labels == cuisine)
+#         xs = data_2d[mask, 0]
+#         ys = data_2d[mask, 1]
+#         cs = cluster_ids[mask]
+#         m = cuisine_to_marker[cuisine]
+
+#         # scatter these points, colored by cs, but all with the same marker=m
+#         sc = ax.scatter(
+#             xs, ys,
+#             c=cs,
+#             cmap="tab10",
+#             vmin=0,
+#             vmax=n_clusters - 1,
+#             marker=m,
+#             edgecolor="k",
+#             linewidth=0.5,
+#             s=40,
+#             alpha=0.8
+#         )
+
+#     ax.set_title(title, fontsize=14)
+#     ax.set_xlabel("PCA 1")
+#     ax.set_ylabel("PCA 2")
+
+#     # Build a legend for cluster‐colors
+#     cluster_handles = []
+#     for c in range(n_clusters):
+#         patch = plt.Line2D(
+#             [], [], linestyle="none", marker="o",
+#             color=cluster_colors[c], markeredgecolor="k",
+#             markersize=8, label=f"cluster={c}"
+#         )
+#         cluster_handles.append(patch)
+#     leg1 = ax.legend(
+#         handles=cluster_handles,
+#         title="Cluster ID",
+#         bbox_to_anchor=(1.02, 1),
+#         loc="upper left"
+#     )
+
+#     # Build a legend for cuisine‐markers
+#     cuisine_handles = []
+#     for cuisine in unique_cuisines:
+#         marker = cuisine_to_marker[cuisine]
+#         patch = plt.Line2D(
+#             [], [], linestyle="none", marker=marker,
+#             color="lightgray", markeredgecolor="k",
+#             markersize=8, label=cuisine
+#         )
+#         cuisine_handles.append(patch)
+#     leg2 = ax.legend(
+#         handles=cuisine_handles,
+#         title="True cuisine",
+#         bbox_to_anchor=(1.02, 0.5),
+#         loc="center left"
+#     )
+
+#     # Make sure the first legend (cluster) stays on the axes:
+#     ax.add_artist(leg1)
+#     plt.tight_layout()
+#     plt.show()
 
 #############################
 # Fine-Tuning
@@ -2538,6 +2633,53 @@ if __name__ == '__main__':
     sup_fracs    = SUP_FRACS               # [0.0205,0.05,0.1]
     out_frac     = OUT_FRAC
     n_trials     = N_TRIALS                # e.g. 3 or bump to 20 for nicer boxes
+    # n_clusters = 3
+    # all_cuisines = df['cuisine_type'].unique()
+    # cuisines = ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+    # df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+    # print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+    # # pre‐encode once per df_run
+    # X = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+    # Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+    # rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+    # Y_proj = rp.fit_transform(Y_true)   
+    # true_labels = df_run['cuisine_type'].values
+
+    # # 1) Run KMeans (or KMeansConstrained) on X:
+    # x_labels= cluster_features_constrained(X, n_clusters)
+
+    # # 1.5) Stratify & split
+    # sup_mask, out_mask, inf_mask = stratified_split_masks(x_labels, sup_fracs[0], out_frac, n_clusters)
+
+    # # 2) Run KMeans (or KMeansConstrained) on Y_proj:
+    # # y_km = KMeans(n_clusters=n_clusters, random_state=42).fit(Y_proj)
+    # # y_labels = y_km.labels_    # shape (N,)
+    # y_labels = np.empty(len(Y_proj), int)
+    # y_labels[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+
+    # # 3) Reduce X and Y_proj to 2D via PCA
+    # pca_x = PCA(n_components=2, random_state=42).fit(X)
+    # X_2d = pca_x.transform(X)         # (N,2)
+
+    # pca_y = PCA(n_components=2, random_state=42).fit(Y_proj[sup_mask | out_mask])
+    # Y_2d = pca_y.transform(Y_proj[sup_mask | out_mask])    # (N,2)
+
+    # # 4) Now call the plotting function twice:
+    # plot_clusters_with_shapes(
+    #     data_2d=X_2d,
+    #     cluster_ids=x_labels,
+    #     true_labels=true_labels,
+    #     n_clusters=n_clusters,
+    #     title="X‐features clustered into 3, True cuisine as marker"
+    # )
+
+    # plot_clusters_with_shapes(
+    #     data_2d=Y_2d,
+    #     cluster_ids=y_labels,
+    #     true_labels=true_labels,
+    #     n_clusters=n_clusters,
+    #     title="Y‐features (projected) clustered into 3, True cuisine as marker"
+    # )
 
     loss_data, model_labels, nmi_arr, mae_arr = collect_mae_trials(
         df, model, tfm, recipes, ing2idx, D,
@@ -2560,7 +2702,7 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.show()
 
-    # finally, plot
+    # # finally, plot
     plot_boxplots_by_hyper1(
         loss_data,
         hyperparam1_labels=hyperparam1_labels,
