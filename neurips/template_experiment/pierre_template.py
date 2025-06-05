@@ -62,7 +62,7 @@ ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
 N_CLUSTERS      = [2, 3, 4, 5, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.07, 0.1195, 0.205] # supervised sample fractions (0.0205 = 1/49) (1 sup, 3, sup, 5 sup, 10 sup)
+SUP_FRACS       = [0.0205, 0.1195, 0.205] # supervised sample fractions (0.0205 = 1/49) (1 sup, 3, sup, 5 sup, 10 sup)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
 N_TRIALS        = 100 # number of trials for each configuration
 Y_DIM_REDUCED   = 128   # target dim for random projection
@@ -2373,8 +2373,8 @@ def plot_boxplots_by_hyper1(loss_data: np.ndarray,
         
         # Set the x-axis ticks at the centers of each hyperparam2 group.
         ax.set_xticks(group_centers)
-        ax.set_xticklabels(hyperparam2_labels, fontsize=10)
-        ax.set_ylabel("Log MAE", fontsize=12)
+        ax.set_xticklabels(hyperparam2_labels, fontsize=12)
+        ax.set_ylabel("Log MAE", fontsize=14)
         ax.set_title(f"Log MAE Distributions for {hyperparam1_labels[i]}", fontsize=14)
         if log_scale:
             ax.set_yscale("log")
