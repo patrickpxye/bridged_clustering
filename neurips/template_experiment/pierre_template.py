@@ -2633,30 +2633,125 @@ if __name__ == '__main__':
     sup_fracs    = SUP_FRACS               # [0.0205,0.05,0.1]
     out_frac     = OUT_FRAC
     n_trials     = N_TRIALS                # e.g. 3 or bump to 20 for nicer boxes
-    # n_clusters = 3
-    # all_cuisines = df['cuisine_type'].unique()
+    n_clusters = 3
+    all_cuisines = df['cuisine_type'].unique()
     # cuisines = ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
-    # df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
-    # print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
-    # # pre‐encode once per df_run
-    # X = encode_images(df_run, IMAGE_FOLDER, model, tfm)
-    # Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
-    # rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
-    # Y_proj = rp.fit_transform(Y_true)   
-    # true_labels = df_run['cuisine_type'].values
+    cuisines = ['pizza', 'ramen', 'sashimi']  # deterministic example
+    df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+    print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+    # pre‐encode once per df_run
+    X = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+    Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+    rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+    Y_proj = rp.fit_transform(Y_true)   
+    true_labels = df_run['cuisine_type'].values
 
-    # # 1) Run KMeans (or KMeansConstrained) on X:
-    # x_labels= cluster_features_constrained(X, n_clusters)
+    # 1) Run KMeans (or KMeansConstrained) on X:
+    x_labels= cluster_features_constrained(X, n_clusters)
 
-    # # 1.5) Stratify & split
-    # sup_mask, out_mask, inf_mask = stratified_split_masks(x_labels, sup_fracs[0], out_frac, n_clusters)
+    # 1.5) Stratify & split
+    sup_mask, out_mask, inf_mask = stratified_split_masks(x_labels, sup_fracs[0], out_frac, n_clusters)
 
-    # # 2) Run KMeans (or KMeansConstrained) on Y_proj:
-    # # y_km = KMeans(n_clusters=n_clusters, random_state=42).fit(Y_proj)
-    # # y_labels = y_km.labels_    # shape (N,)
-    # y_labels = np.empty(len(Y_proj), int)
-    # y_labels[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+    # 2) Run KMeans (or KMeansConstrained) on Y_proj:
+    # y_km = KMeans(n_clusters=n_clusters, random_state=42).fit(Y_proj)
+    # y_labels = y_km.labels_    # shape (N,)
+    y_labels = np.empty(len(Y_proj), int)
+    y_labels[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+    mask_y = sup_mask | out_mask
+    # (a) Gather the list of unique cuisines in df_run, in some fixed order:
+    cuisine_names = cuisines  # e.g. array(['caprese_salad', 'chicken_curry', 'red_velvet_cake'], dtype=object)
+    # abbr = {
+    # 'red_velvet_cake': 'RV',
+    # 'chicken_curry':   'CC',
+    # 'caprese_salad':   'CS'
+    # }
+    abbr = {
+        'pizza': 'PZ',
+        'ramen': 'RM',
+        'sashimi': 'SM'
+    }
+    short_labels = [abbr[c] for c in cuisine_names]
+    num_cuisines = len(cuisine_names)
 
+    # Build a map from cuisine‐name → row index 0..(num_cuisines-1)
+    cuisine_to_idx = {cuisine: idx for idx, cuisine in enumerate(cuisine_names)}
+
+    # (b) Prepare two count‐matrices, shape (num_cuisines, n_clusters):
+    #     x_count[c, k] = number of recipes of cuisine c assigned to X-cluster k
+    #     y_count[c, k] = number of recipes of cuisine c assigned to Y-cluster k (only sup+out)
+    x_count = np.zeros((num_cuisines, n_clusters), dtype=int)
+    y_count = np.zeros((num_cuisines, n_clusters), dtype=int)
+
+    # Fill x_count by iterating over all N samples:
+    for i in range(len(X)):
+        c_idx = cuisine_to_idx[ true_labels[i] ]
+        kx = int(x_labels[i])
+        x_count[c_idx, kx] += 1
+
+    # Fill y_count by iterating only over sup+out indices:
+    supout_indices = np.where(mask_y)[0]
+    for i in supout_indices:
+        c_idx = cuisine_to_idx[ true_labels[i] ]
+        ky = int(y_labels[i])
+        y_count[c_idx, ky] += 1
+
+    # (c) (Optional) Convert to fractions (so each cuisine’s bar sums to 1.0):
+    #     If you prefer absolute counts, you can skip this step and plot x_count / y_count directly.
+    x_frac = x_count.astype(float) / (x_count.sum(axis=1, keepdims=True) + 1e-12)
+    y_frac = y_count.astype(float) / (y_count.sum(axis=1, keepdims=True) + 1e-12)
+
+    # Step 3) Plot two side‐by‐side stacked‐bar charts:
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+
+    ind = np.arange(num_cuisines)    # x positions for each cuisine
+    width = 0.6
+
+    # Choose one distinct color per cluster:
+    # colors = plt.cm.tab10(np.linspace(0, 1, n_clusters))
+    colors = ["crimson", "goldenrod", "teal"]  # or use any other color palette you like
+    # 3a) Left plot = X‐clustering (all samples)
+    bottom = np.zeros(num_cuisines)
+    for k in range(n_clusters):
+        ax1.bar(
+            ind,
+            x_frac[:, k],                # stack the fraction for cluster k
+            width,
+            bottom=bottom,
+            color=colors[k],
+            label=f"Cluster {k}"
+        )
+        bottom += x_frac[:, k]
+
+    ax1.set_xticks(ind)
+    ax1.set_xticklabels(short_labels, fontsize=14, ha="right")
+    ax1.set_ylabel("Fraction of samples", fontsize=14)
+    ax1.set_title("Food‐Image (X) Clustering", fontsize=14)
+    ax1.grid(axis="y", linestyle="--", alpha=0.3)
+
+    # 3b) Right plot = Y‐clustering (only sup+out samples)
+    bottom = np.zeros(num_cuisines)
+    for k in range(n_clusters):
+        ax2.bar(
+            ind,
+            y_frac[:, k],
+            width,
+            bottom=bottom,
+            color=colors[k],
+            label=f"Cluster {k}"
+        )
+        bottom += y_frac[:, k]
+
+    ax2.set_xticks(ind)
+    ax2.set_xticklabels(short_labels, fontsize=14, ha="right")
+    ax2.set_title("Ingredient (Y) Clustering ", fontsize=14)
+    ax2.grid(axis="y", linestyle="--", alpha=0.3)
+
+    # Step 4) Shared legend (one legend for both subplots)
+    handles, labels = ax1.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=n_clusters, frameon=False, fontsize=14)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.92])  # leave top space for legend
+    plt.show()
     # # 3) Reduce X and Y_proj to 2D via PCA
     # pca_x = PCA(n_components=2, random_state=42).fit(X)
     # X_2d = pca_x.transform(X)         # (N,2)
@@ -2681,35 +2776,35 @@ if __name__ == '__main__':
     #     title="Y‐features (projected) clustered into 3, True cuisine as marker"
     # )
 
-    loss_data, model_labels, nmi_arr, mae_arr = collect_mae_trials(
-        df, model, tfm, recipes, ing2idx, D,
-        cluster_vals, sup_fracs, out_frac, n_trials
-    )
+    # loss_data, model_labels, nmi_arr, mae_arr = collect_mae_trials(
+    #     df, model, tfm, recipes, ing2idx, D,
+    #     cluster_vals, sup_fracs, out_frac, n_trials
+    # )
 
-    # labels for the axes
-    hyperparam1_labels = [f"{c} clusters"    for c in cluster_vals]
-    hyperparam2_labels = [f"{int(s*100)}% sup" for s in sup_fracs]
-    print(hyperparam1_labels)
-    print(hyperparam2_labels)
+    # # labels for the axes
+    # hyperparam1_labels = [f"{c} clusters"    for c in cluster_vals]
+    # hyperparam2_labels = [f"{int(s*100)}% sup" for s in sup_fracs]
+    # print(hyperparam1_labels)
+    # print(hyperparam2_labels)
 
-    plt.figure(figsize=(6,4))
-    plt.scatter(nmi_arr, mae_arr, color="tab:blue", edgecolor="k", alpha=0.7)
-    plt.xlabel("NMI of X‐clustering", fontsize=12)
-    plt.ylabel("BC MAE",             fontsize=12)
-    # plt.yscale("log")
-    plt.title("BC MAE vs. NMI of X clustering", fontsize=14)
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.tight_layout()
-    plt.show()
+    # plt.figure(figsize=(6,4))
+    # plt.scatter(nmi_arr, mae_arr, color="tab:blue", edgecolor="k", alpha=0.7)
+    # plt.xlabel("NMI of X‐clustering", fontsize=12)
+    # plt.ylabel("BC MAE",             fontsize=12)
+    # # plt.yscale("log")
+    # plt.title("BC MAE vs. NMI of X clustering", fontsize=14)
+    # plt.grid(True, linestyle="--", alpha=0.5)
+    # plt.tight_layout()
+    # plt.show()
 
-    # # finally, plot
-    plot_boxplots_by_hyper1(
-        loss_data,
-        hyperparam1_labels=hyperparam1_labels,
-        hyperparam2_labels=hyperparam2_labels,
-        model_labels=model_labels,
-        log_scale=False
-    )
+    # # # finally, plot
+    # plot_boxplots_by_hyper1(
+    #     loss_data,
+    #     hyperparam1_labels=hyperparam1_labels,
+    #     hyperparam2_labels=hyperparam2_labels,
+    #     model_labels=model_labels,
+    #     log_scale=False
+    # )
     # run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
     # param_grid = {
     # 'tau':        [0.4, 0.5, 0.75],
