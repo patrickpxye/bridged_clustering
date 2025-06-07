@@ -1,0 +1,230 @@
+
+========== Clusters: 2 ==========
+n_clusters=2, Supervised=1, Trial=1 — BKM: 143.43, KNN: 239.85, Mean Teacher: 368.23, XGBoost: 284.61, Laplacian RLS: 930.41, TSVR: 239.75, UCVME: 1786.69, RankUp: 254.85, GNN: 85.61, BKM_soft: 159.24
+n_clusters=2, Supervised=1, Trial=2 — BKM: 169.20, KNN: 251.35, Mean Teacher: 334.61, XGBoost: 218.19, Laplacian RLS: 691.45, TSVR: 251.33, UCVME: 1787.72, RankUp: 336.11, GNN: 99.75, BKM_soft: 175.86
+n_clusters=2, Supervised=1, Trial=3 — BKM: 141.08, KNN: 245.84, Mean Teacher: 336.23, XGBoost: 310.18, Laplacian RLS: 638.66, TSVR: 245.79, UCVME: 1787.49, RankUp: 321.77, GNN: 134.66, BKM_soft: 157.36
+n_clusters=2, Supervised=1, Trial=4 — BKM: 169.23, KNN: 233.11, Mean Teacher: 378.38, XGBoost: 287.29, Laplacian RLS: 612.88, TSVR: 233.04, UCVME: 1789.79, RankUp: 324.51, GNN: 136.07, BKM_soft: 175.85
+n_clusters=2, Supervised=1, Trial=5 — BKM: 141.64, KNN: 238.21, Mean Teacher: 335.82, XGBoost: 231.76, Laplacian RLS: 773.81, TSVR: 238.17, UCVME: 1786.59, RankUp: 319.36, GNN: 224.91, BKM_soft: 157.80
+n_clusters=2, Supervised=1, Trial=6 — BKM: 169.22, KNN: 243.90, Mean Teacher: 340.86, XGBoost: 227.96, Laplacian RLS: 882.90, TSVR: 243.83, UCVME: 1784.82, RankUp: 341.08, GNN: 178.12, BKM_soft: 175.88
+n_clusters=2, Supervised=1, Trial=7 — BKM: 143.43, KNN: 243.69, Mean Teacher: 355.43, XGBoost: 201.34, Laplacian RLS: 618.43, TSVR: 243.66, UCVME: 1788.36, RankUp: 353.03, GNN: 177.61, BKM_soft: 159.26
+n_clusters=2, Supervised=1, Trial=8 — BKM: 141.08, KNN: 244.56, Mean Teacher: 479.64, XGBoost: 239.05, Laplacian RLS: 682.75, TSVR: 244.47, UCVME: 1786.17, RankUp: 372.84, GNN: 196.69, BKM_soft: 157.35
+n_clusters=2, Supervised=1, Trial=9 — BKM: 141.09, KNN: 236.20, Mean Teacher: 412.71, XGBoost: 192.46, Laplacian RLS: 619.94, TSVR: 236.13, UCVME: 1786.61, RankUp: 320.87, GNN: 162.55, BKM_soft: 157.38
+n_clusters=2, Supervised=1, Trial=10 — BKM: 141.64, KNN: 236.37, Mean Teacher: 414.42, XGBoost: 205.46, Laplacian RLS: 615.26, TSVR: 236.32, UCVME: 1788.98, RankUp: 381.46, GNN: 162.65, BKM_soft: 157.78
+n_clusters=2, Supervised=3, Trial=1 — BKM: 144.37, KNN: 202.13, Mean Teacher: 359.25, XGBoost: 229.79, Laplacian RLS: 473.23, TSVR: 242.86, UCVME: 1789.94, RankUp: 321.63, GNN: 85.39, BKM_soft: 160.15
+n_clusters=2, Supervised=3, Trial=2 — BKM: 144.90, KNN: 93.06, Mean Teacher: 370.79, XGBoost: 139.99, Laplacian RLS: 469.71, TSVR: 248.26, UCVME: 1785.06, RankUp: 197.92, GNN: 107.24, BKM_soft: 160.55
+n_clusters=2, Supervised=3, Trial=3 — BKM: 144.60, KNN: 118.35, Mean Teacher: 349.07, XGBoost: 170.70, Laplacian RLS: 465.82, TSVR: 242.41, UCVME: 1785.74, RankUp: 226.20, GNN: 82.84, BKM_soft: 160.33
+n_clusters=2, Supervised=3, Trial=4 — BKM: 140.99, KNN: 157.64, Mean Teacher: 367.69, XGBoost: 212.25, Laplacian RLS: 477.51, TSVR: 243.23, UCVME: 1786.51, RankUp: 272.96, GNN: 97.28, BKM_soft: 157.43
+n_clusters=2, Supervised=3, Trial=5 — BKM: 142.02, KNN: 166.27, Mean Teacher: 339.79, XGBoost: 178.20, Laplacian RLS: 484.64, TSVR: 237.34, UCVME: 1786.67, RankUp: 293.42, GNN: 94.74, BKM_soft: 158.28
+n_clusters=2, Supervised=3, Trial=6 — BKM: 168.80, KNN: 176.67, Mean Teacher: 349.07, XGBoost: 282.64, Laplacian RLS: 530.35, TSVR: 251.46, UCVME: 1786.40, RankUp: 317.90, GNN: 90.30, BKM_soft: 175.91
+n_clusters=2, Supervised=3, Trial=7 — BKM: 143.81, KNN: 188.25, Mean Teacher: 323.01, XGBoost: 214.15, Laplacian RLS: 493.67, TSVR: 239.21, UCVME: 1782.79, RankUp: 213.39, GNN: 169.13, BKM_soft: 159.66
+n_clusters=2, Supervised=3, Trial=8 — BKM: 143.84, KNN: 183.78, Mean Teacher: 338.53, XGBoost: 193.47, Laplacian RLS: 431.33, TSVR: 242.97, UCVME: 1786.47, RankUp: 269.41, GNN: 72.70, BKM_soft: 159.71
+n_clusters=2, Supervised=3, Trial=9 — BKM: 141.26, KNN: 195.44, Mean Teacher: 351.42, XGBoost: 260.58, Laplacian RLS: 449.10, TSVR: 241.74, UCVME: 1785.98, RankUp: 317.12, GNN: 144.67, BKM_soft: 157.66
+n_clusters=2, Supervised=3, Trial=10 — BKM: 144.89, KNN: 212.11, Mean Teacher: 335.44, XGBoost: 150.03, Laplacian RLS: 601.33, TSVR: 249.41, UCVME: 1786.02, RankUp: 241.58, GNN: 109.35, BKM_soft: 160.52
+n_clusters=2, Supervised=5, Trial=1 — BKM: 143.72, KNN: 132.06, Mean Teacher: 352.26, XGBoost: 195.67, Laplacian RLS: 537.55, TSVR: 245.54, UCVME: 1789.14, RankUp: 271.76, GNN: 66.33, BKM_soft: 159.83
+n_clusters=2, Supervised=5, Trial=2 — BKM: 141.37, KNN: 105.62, Mean Teacher: 339.18, XGBoost: 184.13, Laplacian RLS: 402.05, TSVR: 242.15, UCVME: 1786.27, RankUp: 255.84, GNN: 73.82, BKM_soft: 157.97
+n_clusters=2, Supervised=5, Trial=3 — BKM: 141.63, KNN: 102.73, Mean Teacher: 347.28, XGBoost: 169.28, Laplacian RLS: 441.86, TSVR: 246.89, UCVME: 1782.69, RankUp: 232.21, GNN: 64.88, BKM_soft: 158.15
+n_clusters=2, Supervised=5, Trial=4 — BKM: 141.63, KNN: 125.70, Mean Teacher: 350.32, XGBoost: 167.67, Laplacian RLS: 631.87, TSVR: 241.18, UCVME: 1789.55, RankUp: 204.38, GNN: 86.22, BKM_soft: 158.12
+n_clusters=2, Supervised=5, Trial=5 — BKM: 141.87, KNN: 119.00, Mean Teacher: 376.50, XGBoost: 194.10, Laplacian RLS: 444.43, TSVR: 248.59, UCVME: 1788.15, RankUp: 261.94, GNN: 70.06, BKM_soft: 158.30
+n_clusters=2, Supervised=5, Trial=6 — BKM: 145.26, KNN: 131.85, Mean Teacher: 352.89, XGBoost: 211.43, Laplacian RLS: 397.69, TSVR: 243.84, UCVME: 1789.25, RankUp: 230.94, GNN: 72.89, BKM_soft: 161.03
+n_clusters=2, Supervised=5, Trial=7 — BKM: 144.51, KNN: 113.14, Mean Teacher: 342.21, XGBoost: 211.06, Laplacian RLS: 460.16, TSVR: 244.44, UCVME: 1785.77, RankUp: 233.78, GNN: 81.73, BKM_soft: 160.51
+n_clusters=2, Supervised=5, Trial=8 — BKM: 141.66, KNN: 117.50, Mean Teacher: 338.30, XGBoost: 210.57, Laplacian RLS: 530.93, TSVR: 241.36, UCVME: 1795.38, RankUp: 266.15, GNN: 100.10, BKM_soft: 158.18
+n_clusters=2, Supervised=5, Trial=9 — BKM: 141.14, KNN: 153.19, Mean Teacher: 336.52, XGBoost: 179.20, Laplacian RLS: 517.60, TSVR: 245.01, UCVME: 1791.45, RankUp: 212.46, GNN: 83.29, BKM_soft: 157.76
+n_clusters=2, Supervised=5, Trial=10 — BKM: 140.87, KNN: 179.88, Mean Teacher: 460.74, XGBoost: 207.44, Laplacian RLS: 468.21, TSVR: 241.35, UCVME: 1783.94, RankUp: 348.23, GNN: 70.52, BKM_soft: 157.56
+n_clusters=2, Supervised=10, Trial=1 — BKM: 144.07, KNN: 119.83, Mean Teacher: 364.67, XGBoost: 125.82, Laplacian RLS: 401.33, TSVR: 240.70, UCVME: 1787.55, RankUp: 236.94, GNN: 106.91, BKM_soft: 160.43
+n_clusters=2, Supervised=10, Trial=2 — BKM: 142.44, KNN: 102.62, Mean Teacher: 339.61, XGBoost: 129.98, Laplacian RLS: 437.42, TSVR: 241.27, UCVME: 1785.52, RankUp: 191.19, GNN: 84.59, BKM_soft: 159.27
+n_clusters=2, Supervised=10, Trial=3 — BKM: 144.89, KNN: 116.00, Mean Teacher: 355.89, XGBoost: 153.02, Laplacian RLS: 388.10, TSVR: 246.84, UCVME: 1788.50, RankUp: 248.36, GNN: 81.79, BKM_soft: 161.27
+n_clusters=2, Supervised=10, Trial=4 — BKM: 141.18, KNN: 114.64, Mean Teacher: 403.68, XGBoost: 145.81, Laplacian RLS: 386.54, TSVR: 245.36, UCVME: 1784.60, RankUp: 270.37, GNN: 61.22, BKM_soft: 158.31
+n_clusters=2, Supervised=10, Trial=5 — BKM: 142.41, KNN: 110.58, Mean Teacher: 327.38, XGBoost: 165.48, Laplacian RLS: 405.10, TSVR: 242.10, UCVME: 1787.19, RankUp: 201.88, GNN: 79.39, BKM_soft: 159.17
+n_clusters=2, Supervised=10, Trial=6 — BKM: 142.42, KNN: 115.80, Mean Teacher: 341.31, XGBoost: 146.04, Laplacian RLS: 497.17, TSVR: 245.17, UCVME: 1789.83, RankUp: 205.52, GNN: 67.72, BKM_soft: 159.12
+n_clusters=2, Supervised=10, Trial=7 — BKM: 145.57, KNN: 134.56, Mean Teacher: 366.55, XGBoost: 144.78, Laplacian RLS: 391.69, TSVR: 244.55, UCVME: 1790.53, RankUp: 239.01, GNN: 83.02, BKM_soft: 161.73
+n_clusters=2, Supervised=10, Trial=8 — BKM: 143.00, KNN: 85.55, Mean Teacher: 390.63, XGBoost: 194.76, Laplacian RLS: 399.43, TSVR: 242.17, UCVME: 1786.43, RankUp: 241.49, GNN: 61.43, BKM_soft: 159.64
+n_clusters=2, Supervised=10, Trial=9 — BKM: 145.36, KNN: 88.66, Mean Teacher: 338.27, XGBoost: 135.56, Laplacian RLS: 477.42, TSVR: 245.38, UCVME: 1787.84, RankUp: 193.74, GNN: 66.47, BKM_soft: 161.49
+n_clusters=2, Supervised=1 — BKM MAE: 150.10, KNN MAE: 241.31, Mean Teacher MAE: 375.63, XGBoost MAE: 239.83, Laplacian RLS MAE: 706.65, TSVR MAE: 241.25, UCVME MAE: 1787.32, RankUp MAE: 332.59, GNN MAE (Test): 173.96, BKM_soft MAE: 163.38
+n_clusters=2, Supervised=3 — BKM MAE: 145.95, KNN MAE: 169.37, Mean Teacher MAE: 348.41, XGBoost MAE: 203.18, Laplacian RLS MAE: 487.67, TSVR MAE: 243.89, UCVME MAE: 1786.16, RankUp MAE: 267.15, GNN MAE (Test): 108.91, BKM_soft MAE: 159.17
+n_clusters=2, Supervised=5 — BKM MAE: 142.37, KNN MAE: 128.07, Mean Teacher MAE: 359.62, XGBoost MAE: 193.05, Laplacian RLS MAE: 483.24, TSVR MAE: 244.04, UCVME MAE: 1788.16, RankUp MAE: 251.77, GNN MAE (Test): 84.64, BKM_soft MAE: 158.41
+n_clusters=2, Supervised=10 — BKM MAE: 143.57, KNN MAE: 109.36, Mean Teacher MAE: 360.86, XGBoost MAE: 150.78, Laplacian RLS MAE: 421.20, TSVR MAE: 243.74, UCVME MAE: 1787.57, RankUp MAE: 230.53, GNN MAE (Test): 60.38, BKM_soft MAE: 159.87
+
+========== Clusters: 3 ==========
+n_clusters=3, Supervised=1, Trial=1 — BKM: 90.30, KNN: 188.54, Mean Teacher: 411.06, XGBoost: 333.81, Laplacian RLS: 1851.84, TSVR: 89.58, UCVME: 1883.48, RankUp: 412.57, GNN: 88.94, BKM_soft: 98.13
+n_clusters=3, Supervised=1, Trial=2 — BKM: 88.92, KNN: 194.16, Mean Teacher: 378.50, XGBoost: 339.10, Laplacian RLS: 1848.19, TSVR: 92.78, UCVME: 1883.74, RankUp: 420.63, GNN: 50.59, BKM_soft: 98.08
+n_clusters=3, Supervised=1, Trial=3 — BKM: 89.13, KNN: 210.82, Mean Teacher: 358.34, XGBoost: 255.49, Laplacian RLS: 1862.34, TSVR: 113.49, UCVME: 1879.64, RankUp: 395.35, GNN: 358.88, BKM_soft: 98.09
+n_clusters=3, Supervised=1, Trial=4 — BKM: 76.46, KNN: 190.87, Mean Teacher: 314.57, XGBoost: 208.39, Laplacian RLS: 1850.10, TSVR: 91.34, UCVME: 1884.12, RankUp: 257.75, GNN: 106.65, BKM_soft: 89.08
+n_clusters=3, Supervised=1, Trial=5 — BKM: 76.45, KNN: 174.93, Mean Teacher: 312.94, XGBoost: 294.58, Laplacian RLS: 1846.54, TSVR: 96.90, UCVME: 1883.12, RankUp: 291.51, GNN: 129.61, BKM_soft: 89.09
+n_clusters=3, Supervised=1, Trial=6 — BKM: 78.73, KNN: 200.73, Mean Teacher: 405.45, XGBoost: 275.89, Laplacian RLS: 1850.08, TSVR: 107.17, UCVME: 1883.68, RankUp: 349.56, GNN: 47.17, BKM_soft: 91.10
+n_clusters=3, Supervised=1, Trial=7 — BKM: 79.25, KNN: 181.96, Mean Teacher: 371.13, XGBoost: 140.29, Laplacian RLS: 1832.85, TSVR: 89.59, UCVME: 1883.82, RankUp: 287.28, GNN: 89.77, BKM_soft: 91.23
+n_clusters=3, Supervised=1, Trial=8 — BKM: 78.51, KNN: 194.41, Mean Teacher: 349.14, XGBoost: 194.47, Laplacian RLS: 1849.32, TSVR: 92.77, UCVME: 1883.03, RankUp: 321.84, GNN: 84.13, BKM_soft: 90.47
+n_clusters=3, Supervised=1, Trial=9 — BKM: 89.57, KNN: 202.37, Mean Teacher: 326.59, XGBoost: 298.37, Laplacian RLS: 1848.96, TSVR: 90.99, UCVME: 1882.44, RankUp: 361.39, GNN: 147.44, BKM_soft: 142.81
+n_clusters=3, Supervised=1, Trial=10 — BKM: 90.14, KNN: 176.33, Mean Teacher: 329.20, XGBoost: 217.02, Laplacian RLS: 1856.43, TSVR: 95.15, UCVME: 1885.71, RankUp: 338.00, GNN: 69.64, BKM_soft: 97.87
+n_clusters=3, Supervised=3, Trial=1 — BKM: 80.54, KNN: 83.62, Mean Teacher: 344.24, XGBoost: 112.46, Laplacian RLS: 1786.25, TSVR: 98.46, UCVME: 1884.19, RankUp: 235.91, GNN: 54.59, BKM_soft: 92.27
+n_clusters=3, Supervised=3, Trial=2 — BKM: 85.16, KNN: 139.26, Mean Teacher: 324.33, XGBoost: 112.48, Laplacian RLS: 1773.55, TSVR: 91.43, UCVME: 1882.84, RankUp: 236.06, GNN: 87.55, BKM_soft: 95.83
+n_clusters=3, Supervised=3, Trial=3 — BKM: 79.45, KNN: 89.28, Mean Teacher: 314.91, XGBoost: 258.42, Laplacian RLS: 1766.62, TSVR: 89.27, UCVME: 1882.66, RankUp: 218.07, GNN: 66.90, BKM_soft: 91.38
+n_clusters=3, Supervised=3, Trial=4 — BKM: 88.45, KNN: 199.44, Mean Teacher: 340.82, XGBoost: 163.81, Laplacian RLS: 1779.73, TSVR: 103.32, UCVME: 1880.18, RankUp: 227.93, GNN: 151.62, BKM_soft: 97.74
+n_clusters=3, Supervised=3, Trial=5 — BKM: 78.00, KNN: 101.23, Mean Teacher: 336.73, XGBoost: 180.32, Laplacian RLS: 1774.71, TSVR: 89.44, UCVME: 1879.26, RankUp: 231.43, GNN: 46.02, BKM_soft: 90.35
+n_clusters=3, Supervised=3, Trial=6 — BKM: 81.82, KNN: 95.67, Mean Teacher: 356.47, XGBoost: 125.96, Laplacian RLS: 1780.79, TSVR: 95.60, UCVME: 1885.27, RankUp: 239.60, GNN: 46.41, BKM_soft: 93.13
+n_clusters=3, Supervised=3, Trial=7 — BKM: 76.02, KNN: 80.09, Mean Teacher: 355.49, XGBoost: 153.04, Laplacian RLS: 1760.00, TSVR: 89.24, UCVME: 1884.47, RankUp: 240.09, GNN: 71.30, BKM_soft: 136.14
+n_clusters=3, Supervised=3, Trial=8 — BKM: 77.21, KNN: 109.29, Mean Teacher: 413.97, XGBoost: 148.99, Laplacian RLS: 1787.02, TSVR: 108.02, UCVME: 1883.98, RankUp: 325.51, GNN: 42.58, BKM_soft: 89.67
+n_clusters=3, Supervised=3, Trial=9 — BKM: 82.48, KNN: 58.84, Mean Teacher: 339.34, XGBoost: 111.96, Laplacian RLS: 1774.48, TSVR: 89.17, UCVME: 1883.21, RankUp: 219.48, GNN: 45.59, BKM_soft: 93.69
+n_clusters=3, Supervised=3, Trial=10 — BKM: 79.37, KNN: 168.68, Mean Teacher: 423.56, XGBoost: 128.70, Laplacian RLS: 1776.90, TSVR: 89.18, UCVME: 1882.26, RankUp: 307.85, GNN: 51.13, BKM_soft: 91.43
+n_clusters=3, Supervised=5, Trial=1 — BKM: 78.93, KNN: 136.99, Mean Teacher: 355.15, XGBoost: 111.11, Laplacian RLS: 1715.68, TSVR: 102.26, UCVME: 1879.83, RankUp: 265.23, GNN: 54.93, BKM_soft: 91.90
+n_clusters=3, Supervised=5, Trial=2 — BKM: 79.13, KNN: 67.95, Mean Teacher: 336.54, XGBoost: 112.42, Laplacian RLS: 1707.24, TSVR: 89.16, UCVME: 1880.14, RankUp: 235.25, GNN: 57.54, BKM_soft: 138.51
+n_clusters=3, Supervised=5, Trial=3 — BKM: 78.68, KNN: 97.77, Mean Teacher: 328.38, XGBoost: 153.27, Laplacian RLS: 1724.98, TSVR: 99.38, UCVME: 1879.80, RankUp: 270.13, GNN: 81.01, BKM_soft: 91.07
+n_clusters=3, Supervised=5, Trial=4 — BKM: 81.06, KNN: 112.01, Mean Teacher: 357.60, XGBoost: 183.46, Laplacian RLS: 1705.87, TSVR: 92.33, UCVME: 1882.28, RankUp: 231.95, GNN: 43.19, BKM_soft: 92.88
+n_clusters=3, Supervised=5, Trial=5 — BKM: 84.77, KNN: 69.07, Mean Teacher: 342.58, XGBoost: 136.25, Laplacian RLS: 1701.60, TSVR: 92.73, UCVME: 1882.11, RankUp: 246.18, GNN: 50.54, BKM_soft: 95.79
+n_clusters=3, Supervised=5, Trial=6 — BKM: 79.01, KNN: 60.69, Mean Teacher: 324.49, XGBoost: 87.07, Laplacian RLS: 1705.50, TSVR: 94.06, UCVME: 1886.01, RankUp: 215.72, GNN: 44.71, BKM_soft: 91.31
+n_clusters=3, Supervised=5, Trial=7 — BKM: 78.84, KNN: 109.69, Mean Teacher: 318.98, XGBoost: 123.84, Laplacian RLS: 1713.38, TSVR: 92.32, UCVME: 1889.65, RankUp: 257.47, GNN: 41.36, BKM_soft: 91.16
+n_clusters=3, Supervised=5, Trial=8 — BKM: 78.63, KNN: 74.40, Mean Teacher: 441.19, XGBoost: 93.95, Laplacian RLS: 1714.36, TSVR: 96.48, UCVME: 1883.02, RankUp: 225.48, GNN: 65.42, BKM_soft: 91.42
+n_clusters=3, Supervised=5, Trial=9 — BKM: 79.95, KNN: 111.12, Mean Teacher: 430.05, XGBoost: 137.80, Laplacian RLS: 1713.65, TSVR: 91.16, UCVME: 1879.29, RankUp: 281.82, GNN: 49.69, BKM_soft: 91.92
+n_clusters=3, Supervised=5, Trial=10 — BKM: 78.32, KNN: 77.17, Mean Teacher: 328.52, XGBoost: 103.59, Laplacian RLS: 1718.35, TSVR: 98.38, UCVME: 1884.29, RankUp: 234.01, GNN: 54.54, BKM_soft: 90.64
+n_clusters=3, Supervised=10, Trial=1 — BKM: 80.34, KNN: 88.28, Mean Teacher: 341.55, XGBoost: 94.12, Laplacian RLS: 1563.89, TSVR: 88.91, UCVME: 1880.38, RankUp: 224.35, GNN: 55.66, BKM_soft: 92.56
+n_clusters=3, Supervised=10, Trial=2 — BKM: 81.03, KNN: 79.64, Mean Teacher: 389.59, XGBoost: 107.58, Laplacian RLS: 1571.71, TSVR: 93.79, UCVME: 1882.87, RankUp: 206.33, GNN: 45.55, BKM_soft: 93.16
+n_clusters=3, Supervised=10, Trial=3 — BKM: 83.48, KNN: 122.05, Mean Teacher: 369.51, XGBoost: 89.27, Laplacian RLS: 1569.41, TSVR: 88.69, UCVME: 1883.77, RankUp: 223.60, GNN: 58.14, BKM_soft: 94.99
+n_clusters=3, Supervised=10, Trial=4 — BKM: 82.78, KNN: 131.69, Mean Teacher: 342.00, XGBoost: 92.96, Laplacian RLS: 1573.52, TSVR: 94.17, UCVME: 1878.22, RankUp: 224.71, GNN: 38.01, BKM_soft: 94.33
+n_clusters=3, Supervised=10, Trial=5 — BKM: 85.03, KNN: 107.29, Mean Teacher: 362.81, XGBoost: 118.68, Laplacian RLS: 1576.89, TSVR: 90.20, UCVME: 1882.31, RankUp: 224.19, GNN: 70.64, BKM_soft: 96.23
+n_clusters=3, Supervised=10, Trial=6 — BKM: 80.05, KNN: 83.90, Mean Teacher: 320.31, XGBoost: 109.35, Laplacian RLS: 1564.72, TSVR: 93.42, UCVME: 1881.07, RankUp: 240.55, GNN: 49.53, BKM_soft: 92.21
+n_clusters=3, Supervised=10, Trial=7 — BKM: 79.58, KNN: 94.81, Mean Teacher: 468.42, XGBoost: 119.90, Laplacian RLS: 1604.53, TSVR: 92.46, UCVME: 1879.65, RankUp: 257.46, GNN: 56.71, BKM_soft: 91.91
+n_clusters=3, Supervised=10, Trial=8 — BKM: 81.71, KNN: 61.26, Mean Teacher: 407.56, XGBoost: 83.73, Laplacian RLS: 1559.56, TSVR: 91.95, UCVME: 1880.35, RankUp: 225.81, GNN: 39.34, BKM_soft: 93.71
+n_clusters=3, Supervised=10, Trial=9 — BKM: 84.15, KNN: 122.97, Mean Teacher: 333.82, XGBoost: 135.25, Laplacian RLS: 1565.46, TSVR: 89.22, UCVME: 1885.71, RankUp: 222.76, GNN: 96.86, BKM_soft: 95.52
+n_clusters=3, Supervised=10, Trial=10 — BKM: 79.13, KNN: 86.19, Mean Teacher: 393.90, XGBoost: 82.43, Laplacian RLS: 1581.98, TSVR: 89.22, UCVME: 1882.72, RankUp: 231.01, GNN: 52.37, BKM_soft: 91.54
+n_clusters=3, Supervised=1 — BKM MAE: 83.75, KNN MAE: 191.51, Mean Teacher MAE: 355.69, XGBoost MAE: 255.74, Laplacian RLS MAE: 1849.67, TSVR MAE: 95.98, UCVME MAE: 1883.28, RankUp MAE: 343.59, GNN MAE (Test): 100.40, BKM_soft MAE: 98.10
+n_clusters=3, Supervised=3 — BKM MAE: 80.85, KNN MAE: 112.54, Mean Teacher MAE: 354.99, XGBoost MAE: 149.61, Laplacian RLS MAE: 1776.01, TSVR MAE: 94.32, UCVME MAE: 1882.83, RankUp MAE: 248.19, GNN MAE (Test): 46.43, BKM_soft MAE: 93.27
+n_clusters=3, Supervised=5 — BKM MAE: 79.73, KNN MAE: 91.69, Mean Teacher MAE: 356.35, XGBoost MAE: 124.27, Laplacian RLS MAE: 1712.06, TSVR MAE: 94.83, UCVME MAE: 1882.64, RankUp MAE: 246.32, GNN MAE (Test): 56.55, BKM_soft MAE: 102.22
+n_clusters=3, Supervised=10 — BKM MAE: 81.73, KNN MAE: 97.81, Mean Teacher MAE: 372.95, XGBoost MAE: 103.33, Laplacian RLS MAE: 1573.17, TSVR MAE: 91.20, UCVME MAE: 1881.71, RankUp MAE: 228.08, GNN MAE (Test): 62.86, BKM_soft MAE: 94.80
+
+========== Clusters: 4 ==========
+n_clusters=4, Supervised=1, Trial=1 — BKM: 109.11, KNN: 182.49, Mean Teacher: 449.49, XGBoost: 209.31, Laplacian RLS: 1782.35, TSVR: 178.11, UCVME: 1801.82, RankUp: 403.28, GNN: 255.13, BKM_soft: 124.38
+n_clusters=4, Supervised=1, Trial=2 — BKM: 228.75, KNN: 178.47, Mean Teacher: 321.63, XGBoost: 185.73, Laplacian RLS: 1778.77, TSVR: 171.58, UCVME: 1801.88, RankUp: 262.60, GNN: 94.38, BKM_soft: 191.15
+n_clusters=4, Supervised=1, Trial=3 — BKM: 111.79, KNN: 182.11, Mean Teacher: 312.16, XGBoost: 170.44, Laplacian RLS: 1776.82, TSVR: 176.74, UCVME: 1802.45, RankUp: 287.31, GNN: 119.22, BKM_soft: 134.14
+n_clusters=4, Supervised=1, Trial=4 — BKM: 79.53, KNN: 180.44, Mean Teacher: 319.61, XGBoost: 150.76, Laplacian RLS: 1782.46, TSVR: 175.24, UCVME: 1802.45, RankUp: 292.94, GNN: 148.54, BKM_soft: 112.62
+n_clusters=4, Supervised=1, Trial=5 — BKM: 109.30, KNN: 181.30, Mean Teacher: 400.74, XGBoost: 199.97, Laplacian RLS: 1779.07, TSVR: 174.68, UCVME: 1799.34, RankUp: 327.63, GNN: 237.42, BKM_soft: 136.94
+n_clusters=4, Supervised=1, Trial=6 — BKM: 109.26, KNN: 182.09, Mean Teacher: 315.87, XGBoost: 160.70, Laplacian RLS: 1779.55, TSVR: 175.62, UCVME: 1804.38, RankUp: 287.16, GNN: 142.06, BKM_soft: 136.88
+n_clusters=4, Supervised=1, Trial=7 — BKM: 110.31, KNN: 182.71, Mean Teacher: 327.03, XGBoost: 186.86, Laplacian RLS: 1778.51, TSVR: 176.92, UCVME: 1804.61, RankUp: 277.66, GNN: 88.20, BKM_soft: 133.17
+n_clusters=4, Supervised=1, Trial=8 — BKM: 111.71, KNN: 181.22, Mean Teacher: 329.89, XGBoost: 174.63, Laplacian RLS: 1775.28, TSVR: 174.63, UCVME: 1798.16, RankUp: 218.69, GNN: 104.59, BKM_soft: 134.04
+n_clusters=4, Supervised=1, Trial=9 — BKM: 128.75, KNN: 178.79, Mean Teacher: 312.88, XGBoost: 184.82, Laplacian RLS: 1777.96, TSVR: 172.00, UCVME: 1800.88, RankUp: 284.30, GNN: 111.97, BKM_soft: 142.01
+n_clusters=4, Supervised=1, Trial=10 — BKM: 105.41, KNN: 183.25, Mean Teacher: 320.98, XGBoost: 165.16, Laplacian RLS: 1774.05, TSVR: 177.40, UCVME: 1803.41, RankUp: 300.53, GNN: 85.73, BKM_soft: 133.07
+n_clusters=4, Supervised=3, Trial=1 — BKM: 109.26, KNN: 139.12, Mean Teacher: 317.83, XGBoost: 132.72, Laplacian RLS: 1729.44, TSVR: 169.28, UCVME: 1798.36, RankUp: 227.80, GNN: 136.12, BKM_soft: 124.68
+n_clusters=4, Supervised=3, Trial=2 — BKM: 107.40, KNN: 98.31, Mean Teacher: 312.88, XGBoost: 136.48, Laplacian RLS: 1720.93, TSVR: 175.22, UCVME: 1802.03, RankUp: 232.70, GNN: 75.77, BKM_soft: 100.64
+n_clusters=4, Supervised=3, Trial=3 — BKM: 139.43, KNN: 129.74, Mean Teacher: 320.81, XGBoost: 136.80, Laplacian RLS: 1723.04, TSVR: 176.76, UCVME: 1800.89, RankUp: 242.74, GNN: 127.58, BKM_soft: 125.73
+n_clusters=4, Supervised=3, Trial=4 — BKM: 139.19, KNN: 98.26, Mean Teacher: 307.37, XGBoost: 143.05, Laplacian RLS: 1711.54, TSVR: 170.41, UCVME: 1801.68, RankUp: 214.67, GNN: 102.18, BKM_soft: 148.25
+n_clusters=4, Supervised=3, Trial=5 — BKM: 143.36, KNN: 146.48, Mean Teacher: 314.80, XGBoost: 178.75, Laplacian RLS: 1726.59, TSVR: 176.43, UCVME: 1799.66, RankUp: 299.02, GNN: 117.28, BKM_soft: 148.63
+n_clusters=4, Supervised=3, Trial=6 — BKM: 111.20, KNN: 99.39, Mean Teacher: 314.12, XGBoost: 134.95, Laplacian RLS: 1720.09, TSVR: 174.50, UCVME: 1801.30, RankUp: 206.67, GNN: 100.09, BKM_soft: 119.27
+n_clusters=4, Supervised=3, Trial=7 — BKM: 84.44, KNN: 93.10, Mean Teacher: 298.43, XGBoost: 140.26, Laplacian RLS: 1725.01, TSVR: 174.70, UCVME: 1800.50, RankUp: 199.98, GNN: 70.86, BKM_soft: 99.75
+n_clusters=4, Supervised=3, Trial=8 — BKM: 174.01, KNN: 107.57, Mean Teacher: 310.68, XGBoost: 143.93, Laplacian RLS: 1715.04, TSVR: 177.64, UCVME: 1804.30, RankUp: 209.42, GNN: 72.50, BKM_soft: 175.17
+n_clusters=4, Supervised=3, Trial=9 — BKM: 103.31, KNN: 130.78, Mean Teacher: 314.63, XGBoost: 155.29, Laplacian RLS: 1717.20, TSVR: 174.51, UCVME: 1797.90, RankUp: 241.43, GNN: 79.01, BKM_soft: 101.19
+n_clusters=4, Supervised=3, Trial=10 — BKM: 105.18, KNN: 124.34, Mean Teacher: 347.44, XGBoost: 141.47, Laplacian RLS: 1719.76, TSVR: 178.78, UCVME: 1803.14, RankUp: 207.96, GNN: 63.67, BKM_soft: 120.73
+n_clusters=4, Supervised=5, Trial=1 — BKM: 85.04, KNN: 98.68, Mean Teacher: 325.24, XGBoost: 129.34, Laplacian RLS: 1677.11, TSVR: 173.80, UCVME: 1798.78, RankUp: 202.15, GNN: 89.54, BKM_soft: 100.11
+n_clusters=4, Supervised=5, Trial=2 — BKM: 97.18, KNN: 112.82, Mean Teacher: 325.31, XGBoost: 112.67, Laplacian RLS: 1679.91, TSVR: 175.18, UCVME: 1800.71, RankUp: 205.96, GNN: 71.23, BKM_soft: 108.35
+n_clusters=4, Supervised=5, Trial=3 — BKM: 134.90, KNN: 111.87, Mean Teacher: 308.00, XGBoost: 122.96, Laplacian RLS: 1659.09, TSVR: 169.84, UCVME: 1798.97, RankUp: 198.83, GNN: 86.66, BKM_soft: 121.84
+n_clusters=4, Supervised=5, Trial=4 — BKM: 75.01, KNN: 150.92, Mean Teacher: 313.99, XGBoost: 127.36, Laplacian RLS: 1681.44, TSVR: 168.24, UCVME: 1802.79, RankUp: 250.14, GNN: 66.31, BKM_soft: 108.88
+n_clusters=4, Supervised=5, Trial=5 — BKM: 82.73, KNN: 112.93, Mean Teacher: 314.23, XGBoost: 105.64, Laplacian RLS: 1668.87, TSVR: 175.42, UCVME: 1801.33, RankUp: 224.50, GNN: 59.05, BKM_soft: 112.48
+n_clusters=4, Supervised=5, Trial=6 — BKM: 92.64, KNN: 102.29, Mean Teacher: 309.78, XGBoost: 116.49, Laplacian RLS: 1688.32, TSVR: 176.62, UCVME: 1801.06, RankUp: 230.25, GNN: 68.81, BKM_soft: 104.54
+n_clusters=4, Supervised=5, Trial=7 — BKM: 96.41, KNN: 105.42, Mean Teacher: 310.28, XGBoost: 115.67, Laplacian RLS: 1674.44, TSVR: 171.73, UCVME: 1796.58, RankUp: 232.38, GNN: 82.98, BKM_soft: 94.86
+n_clusters=4, Supervised=5, Trial=8 — BKM: 108.11, KNN: 88.08, Mean Teacher: 316.66, XGBoost: 105.21, Laplacian RLS: 1663.42, TSVR: 177.43, UCVME: 1801.03, RankUp: 214.32, GNN: 82.84, BKM_soft: 132.08
+n_clusters=4, Supervised=5, Trial=9 — BKM: 86.86, KNN: 117.62, Mean Teacher: 339.59, XGBoost: 114.37, Laplacian RLS: 1676.09, TSVR: 171.32, UCVME: 1801.29, RankUp: 228.78, GNN: 72.25, BKM_soft: 99.96
+n_clusters=4, Supervised=5, Trial=10 — BKM: 110.54, KNN: 94.56, Mean Teacher: 363.15, XGBoost: 120.20, Laplacian RLS: 1666.21, TSVR: 172.13, UCVME: 1799.68, RankUp: 202.56, GNN: 75.22, BKM_soft: 104.08
+n_clusters=4, Supervised=10, Trial=1 — BKM: 74.93, KNN: 94.97, Mean Teacher: 272.67, XGBoost: 100.72, Laplacian RLS: 1573.93, TSVR: 177.17, UCVME: 1801.34, RankUp: 220.41, GNN: 67.60, BKM_soft: 109.01
+n_clusters=4, Supervised=10, Trial=2 — BKM: 96.90, KNN: 93.62, Mean Teacher: 287.31, XGBoost: 106.09, Laplacian RLS: 1559.63, TSVR: 167.38, UCVME: 1798.41, RankUp: 227.30, GNN: 71.73, BKM_soft: 108.78
+n_clusters=4, Supervised=10, Trial=3 — BKM: 102.80, KNN: 87.19, Mean Teacher: 252.51, XGBoost: 99.68, Laplacian RLS: 1556.79, TSVR: 176.03, UCVME: 1803.53, RankUp: 201.73, GNN: 65.14, BKM_soft: 99.77
+n_clusters=4, Supervised=10, Trial=4 — BKM: 109.93, KNN: 87.09, Mean Teacher: 278.29, XGBoost: 99.31, Laplacian RLS: 1554.14, TSVR: 165.78, UCVME: 1800.61, RankUp: 195.15, GNN: 62.12, BKM_soft: 102.63
+n_clusters=4, Supervised=10, Trial=5 — BKM: 96.77, KNN: 108.83, Mean Teacher: 265.04, XGBoost: 125.93, Laplacian RLS: 1563.53, TSVR: 172.07, UCVME: 1797.86, RankUp: 220.40, GNN: 76.90, BKM_soft: 93.50
+n_clusters=4, Supervised=10, Trial=6 — BKM: 78.24, KNN: 104.48, Mean Teacher: 262.36, XGBoost: 121.57, Laplacian RLS: 1554.41, TSVR: 174.46, UCVME: 1798.73, RankUp: 203.11, GNN: 65.74, BKM_soft: 101.98
+n_clusters=4, Supervised=10, Trial=7 — BKM: 91.88, KNN: 100.19, Mean Teacher: 241.45, XGBoost: 110.03, Laplacian RLS: 1554.36, TSVR: 169.93, UCVME: 1801.19, RankUp: 185.62, GNN: 75.13, BKM_soft: 106.16
+n_clusters=4, Supervised=10, Trial=8 — BKM: 108.16, KNN: 133.78, Mean Teacher: 263.20, XGBoost: 106.92, Laplacian RLS: 1554.35, TSVR: 169.24, UCVME: 1801.80, RankUp: 203.45, GNN: 64.83, BKM_soft: 102.13
+n_clusters=4, Supervised=10, Trial=9 — BKM: 105.10, KNN: 89.61, Mean Teacher: 254.60, XGBoost: 106.50, Laplacian RLS: 1559.51, TSVR: 171.79, UCVME: 1806.66, RankUp: 193.66, GNN: 73.68, BKM_soft: 121.16
+n_clusters=4, Supervised=10, Trial=10 — BKM: 97.91, KNN: 100.72, Mean Teacher: 260.83, XGBoost: 108.63, Laplacian RLS: 1556.93, TSVR: 175.86, UCVME: 1797.40, RankUp: 194.24, GNN: 68.21, BKM_soft: 123.47
+n_clusters=4, Supervised=1 — BKM MAE: 120.39, KNN MAE: 181.29, Mean Teacher MAE: 341.03, XGBoost MAE: 178.84, Laplacian RLS MAE: 1778.48, TSVR MAE: 175.29, UCVME MAE: 1801.94, RankUp MAE: 294.21, GNN MAE (Test): 100.76, BKM_soft MAE: 135.35
+n_clusters=4, Supervised=3 — BKM MAE: 121.68, KNN MAE: 116.71, Mean Teacher MAE: 315.90, XGBoost MAE: 144.37, Laplacian RLS MAE: 1720.86, TSVR MAE: 174.82, UCVME MAE: 1800.98, RankUp MAE: 228.24, GNN MAE (Test): 71.72, BKM_soft MAE: 121.59
+n_clusters=4, Supervised=5 — BKM MAE: 96.94, KNN MAE: 109.52, Mean Teacher MAE: 322.62, XGBoost MAE: 116.99, Laplacian RLS MAE: 1673.49, TSVR MAE: 173.17, UCVME MAE: 1800.22, RankUp MAE: 218.99, GNN MAE (Test): 76.77, BKM_soft MAE: 108.83
+n_clusters=4, Supervised=10 — BKM MAE: 96.26, KNN MAE: 100.05, Mean Teacher MAE: 263.83, XGBoost MAE: 108.54, Laplacian RLS MAE: 1558.76, TSVR MAE: 171.97, UCVME MAE: 1800.75, RankUp MAE: 204.51, GNN MAE (Test): 68.91, BKM_soft MAE: 107.97
+
+
+========== Clusters: 5 ==========
+n_clusters=5, Supervised=1, Trial=1 — BKM: 102.46, KNN: 172.38, Mean Teacher: 321.07, XGBoost: 155.65, Laplacian RLS: 1767.50, TSVR: 167.50, UCVME: 1804.32, RankUp: 224.84, GNN: 143.78, BKM_soft: 106.50
+n_clusters=5, Supervised=1, Trial=2 — BKM: 84.26, KNN: 173.59, Mean Teacher: 324.79, XGBoost: 146.18, Laplacian RLS: 1773.03, TSVR: 161.11, UCVME: 1800.52, RankUp: 270.42, GNN: 100.98, BKM_soft: 104.55
+n_clusters=5, Supervised=1, Trial=3 — BKM: 79.54, KNN: 175.46, Mean Teacher: 320.64, XGBoost: 180.62, Laplacian RLS: 1774.18, TSVR: 163.22, UCVME: 1801.31, RankUp: 274.19, GNN: 132.29, BKM_soft: 104.22
+n_clusters=5, Supervised=1, Trial=4 — BKM: 140.44, KNN: 174.23, Mean Teacher: 324.80, XGBoost: 193.25, Laplacian RLS: 1771.01, TSVR: 165.40, UCVME: 1798.70, RankUp: 215.22, GNN: 115.49, BKM_soft: 141.12
+n_clusters=5, Supervised=1, Trial=5 — BKM: 185.41, KNN: 175.08, Mean Teacher: 316.28, XGBoost: 178.88, Laplacian RLS: 1765.88, TSVR: 172.56, UCVME: 1802.69, RankUp: 237.58, GNN: 115.21, BKM_soft: 177.35
+n_clusters=5, Supervised=1, Trial=6 — BKM: 147.77, KNN: 177.07, Mean Teacher: 338.51, XGBoost: 183.93, Laplacian RLS: 1773.38, TSVR: 166.90, UCVME: 1800.93, RankUp: 238.61, GNN: 174.13, BKM_soft: 154.44
+n_clusters=5, Supervised=1, Trial=7 — BKM: 126.92, KNN: 179.65, Mean Teacher: 350.41, XGBoost: 205.94, Laplacian RLS: 1776.06, TSVR: 169.76, UCVME: 1803.84, RankUp: 284.13, GNN: 131.96, BKM_soft: 137.98
+n_clusters=5, Supervised=1, Trial=8 — BKM: 237.72, KNN: 176.54, Mean Teacher: 316.46, XGBoost: 218.95, Laplacian RLS: 1774.28, TSVR: 169.15, UCVME: 1803.33, RankUp: 298.20, GNN: 171.80, BKM_soft: 212.03
+n_clusters=5, Supervised=1, Trial=9 — BKM: 147.92, KNN: 175.92, Mean Teacher: 312.03, XGBoost: 226.07, Laplacian RLS: 1771.93, TSVR: 169.17, UCVME: 1802.58, RankUp: 320.16, GNN: 124.32, BKM_soft: 141.37
+n_clusters=5, Supervised=1, Trial=10 — BKM: 121.85, KNN: 174.59, Mean Teacher: 335.09, XGBoost: 153.57, Laplacian RLS: 1770.13, TSVR: 165.97, UCVME: 1802.54, RankUp: 294.89, GNN: 80.88, BKM_soft: 137.93
+n_clusters=5, Supervised=3, Trial=1 — BKM: 75.61, KNN: 138.54, Mean Teacher: 342.84, XGBoost: 150.76, Laplacian RLS: 1721.18, TSVR: 161.01, UCVME: 1801.41, RankUp: 301.33, GNN: 66.03, BKM_soft: 101.14
+n_clusters=5, Supervised=3, Trial=2 — BKM: 75.23, KNN: 130.30, Mean Teacher: 310.26, XGBoost: 132.14, Laplacian RLS: 1726.78, TSVR: 172.41, UCVME: 1800.36, RankUp: 273.05, GNN: 123.90, BKM_soft: 99.16
+n_clusters=5, Supervised=3, Trial=3 — BKM: 121.39, KNN: 115.33, Mean Teacher: 308.32, XGBoost: 159.59, Laplacian RLS: 1709.62, TSVR: 165.06, UCVME: 1801.52, RankUp: 227.98, GNN: 86.48, BKM_soft: 132.33
+n_clusters=5, Supervised=3, Trial=4 — BKM: 96.70, KNN: 115.70, Mean Teacher: 324.45, XGBoost: 159.57, Laplacian RLS: 1715.62, TSVR: 165.66, UCVME: 1802.25, RankUp: 252.24, GNN: 107.18, BKM_soft: 110.37
+n_clusters=5, Supervised=3, Trial=5 — BKM: 76.43, KNN: 114.79, Mean Teacher: 306.02, XGBoost: 135.45, Laplacian RLS: 1706.87, TSVR: 161.12, UCVME: 1797.51, RankUp: 227.09, GNN: 77.16, BKM_soft: 100.40
+n_clusters=5, Supervised=3, Trial=6 — BKM: 89.24, KNN: 137.85, Mean Teacher: 318.88, XGBoost: 144.70, Laplacian RLS: 1705.98, TSVR: 165.11, UCVME: 1804.57, RankUp: 235.88, GNN: 67.71, BKM_soft: 109.72
+n_clusters=5, Supervised=3, Trial=7 — BKM: 133.37, KNN: 123.87, Mean Teacher: 308.58, XGBoost: 139.80, Laplacian RLS: 1705.80, TSVR: 172.90, UCVME: 1805.02, RankUp: 215.42, GNN: 86.38, BKM_soft: 131.51
+n_clusters=5, Supervised=3, Trial=8 — BKM: 84.16, KNN: 124.47, Mean Teacher: 315.38, XGBoost: 144.21, Laplacian RLS: 1697.70, TSVR: 168.12, UCVME: 1804.85, RankUp: 230.07, GNN: 82.09, BKM_soft: 105.44
+n_clusters=5, Supervised=3, Trial=9 — BKM: 76.77, KNN: 121.26, Mean Teacher: 322.07, XGBoost: 114.36, Laplacian RLS: 1713.32, TSVR: 165.67, UCVME: 1801.21, RankUp: 238.39, GNN: 84.72, BKM_soft: 101.49
+n_clusters=5, Supervised=3, Trial=10 — BKM: 82.91, KNN: 137.27, Mean Teacher: 306.70, XGBoost: 124.87, Laplacian RLS: 1710.34, TSVR: 167.85, UCVME: 1804.14, RankUp: 208.24, GNN: 88.08, BKM_soft: 107.03
+n_clusters=5, Supervised=5, Trial=1 — BKM: 78.48, KNN: 113.40, Mean Teacher: 309.06, XGBoost: 129.61, Laplacian RLS: 1658.05, TSVR: 168.23, UCVME: 1800.23, RankUp: 237.66, GNN: 77.38, BKM_soft: 99.77
+n_clusters=5, Supervised=5, Trial=2 — BKM: 79.55, KNN: 111.47, Mean Teacher: 311.47, XGBoost: 115.63, Laplacian RLS: 1640.00, TSVR: 166.28, UCVME: 1800.36, RankUp: 196.04, GNN: 93.15, BKM_soft: 103.86
+n_clusters=5, Supervised=5, Trial=3 — BKM: 79.40, KNN: 128.76, Mean Teacher: 331.80, XGBoost: 131.07, Laplacian RLS: 1642.98, TSVR: 169.33, UCVME: 1798.99, RankUp: 197.55, GNN: 99.31, BKM_soft: 102.02
+n_clusters=5, Supervised=5, Trial=4 — BKM: 126.17, KNN: 102.58, Mean Teacher: 329.80, XGBoost: 126.34, Laplacian RLS: 1641.86, TSVR: 171.80, UCVME: 1798.99, RankUp: 221.13, GNN: 72.84, BKM_soft: 136.61
+n_clusters=5, Supervised=5, Trial=5 — BKM: 160.75, KNN: 119.08, Mean Teacher: 309.43, XGBoost: 129.61, Laplacian RLS: 1651.28, TSVR: 170.37, UCVME: 1796.58, RankUp: 222.70, GNN: 111.92, BKM_soft: 142.31
+n_clusters=5, Supervised=5, Trial=6 — BKM: 133.46, KNN: 102.06, Mean Teacher: 308.82, XGBoost: 111.00, Laplacian RLS: 1649.14, TSVR: 167.25, UCVME: 1799.68, RankUp: 226.80, GNN: 77.97, BKM_soft: 141.24
+n_clusters=5, Supervised=5, Trial=7 — BKM: 79.69, KNN: 121.07, Mean Teacher: 309.06, XGBoost: 121.36, Laplacian RLS: 1633.32, TSVR: 168.61, UCVME: 1799.53, RankUp: 199.28, GNN: 99.58, BKM_soft: 102.49
+n_clusters=5, Supervised=5, Trial=8 — BKM: 102.21, KNN: 111.05, Mean Teacher: 315.44, XGBoost: 113.42, Laplacian RLS: 1645.64, TSVR: 166.23, UCVME: 1802.29, RankUp: 221.57, GNN: 78.20, BKM_soft: 104.42
+n_clusters=5, Supervised=5, Trial=9 — BKM: 86.38, KNN: 105.32, Mean Teacher: 343.53, XGBoost: 119.86, Laplacian RLS: 1650.56, TSVR: 167.39, UCVME: 1798.65, RankUp: 211.56, GNN: 78.74, BKM_soft: 106.87
+n_clusters=5, Supervised=5, Trial=10 — BKM: 77.72, KNN: 113.91, Mean Teacher: 333.22, XGBoost: 131.24, Laplacian RLS: 1645.85, TSVR: 167.23, UCVME: 1803.82, RankUp: 217.84, GNN: 74.48, BKM_soft: 99.79
+n_clusters=5, Supervised=10, Trial=1 — BKM: 83.13, KNN: 95.13, Mean Teacher: 280.98, XGBoost: 101.72, Laplacian RLS: 1525.96, TSVR: 166.24, UCVME: 1801.71, RankUp: 222.48, GNN: 67.54, BKM_soft: 107.61
+n_clusters=5, Supervised=10, Trial=2 — BKM: 84.07, KNN: 105.08, Mean Teacher: 255.38, XGBoost: 101.55, Laplacian RLS: 1525.75, TSVR: 168.76, UCVME: 1801.50, RankUp: 213.31, GNN: 80.98, BKM_soft: 106.00
+n_clusters=5, Supervised=10, Trial=3 — BKM: 86.81, KNN: 111.38, Mean Teacher: 282.58, XGBoost: 114.13, Laplacian RLS: 1533.02, TSVR: 168.04, UCVME: 1797.58, RankUp: 215.39, GNN: 82.86, BKM_soft: 107.69
+n_clusters=5, Supervised=10, Trial=4 — BKM: 131.61, KNN: 91.58, Mean Teacher: 257.78, XGBoost: 103.33, Laplacian RLS: 1523.13, TSVR: 168.81, UCVME: 1803.26, RankUp: 196.49, GNN: 68.22, BKM_soft: 139.77
+n_clusters=5, Supervised=10, Trial=5 — BKM: 74.20, KNN: 105.43, Mean Teacher: 276.87, XGBoost: 97.46, Laplacian RLS: 1518.56, TSVR: 168.46, UCVME: 1802.38, RankUp: 209.78, GNN: 62.30, BKM_soft: 100.36
+n_clusters=5, Supervised=10, Trial=6 — BKM: 78.39, KNN: 85.47, Mean Teacher: 268.74, XGBoost: 100.96, Laplacian RLS: 1522.78, TSVR: 163.76, UCVME: 1800.18, RankUp: 203.59, GNN: 81.23, BKM_soft: 102.15
+n_clusters=5, Supervised=10, Trial=7 — BKM: 80.67, KNN: 106.38, Mean Teacher: 250.09, XGBoost: 102.96, Laplacian RLS: 1507.97, TSVR: 168.30, UCVME: 1802.89, RankUp: 194.78, GNN: 95.40, BKM_soft: 101.78
+n_clusters=5, Supervised=10, Trial=8 — BKM: 76.45, KNN: 89.48, Mean Teacher: 251.51, XGBoost: 105.80, Laplacian RLS: 1509.91, TSVR: 167.58, UCVME: 1803.79, RankUp: 193.01, GNN: 82.79, BKM_soft: 101.42
+n_clusters=5, Supervised=10, Trial=9 — BKM: 131.96, KNN: 86.64, Mean Teacher: 255.71, XGBoost: 98.35, Laplacian RLS: 1524.68, TSVR: 167.49, UCVME: 1801.32, RankUp: 220.03, GNN: 71.45, BKM_soft: 131.97
+n_clusters=5, Supervised=10, Trial=10 — BKM: 83.74, KNN: 86.72, Mean Teacher: 274.87, XGBoost: 100.82, Laplacian RLS: 1522.32, TSVR: 167.72, UCVME: 1803.76, RankUp: 210.71, GNN: 75.71, BKM_soft: 104.36
+n_clusters=5, Supervised=1 — BKM MAE: 137.43, KNN MAE: 175.45, Mean Teacher MAE: 326.01, XGBoost MAE: 184.30, Laplacian RLS MAE: 1771.74, TSVR MAE: 167.07, UCVME MAE: 1802.08, RankUp MAE: 265.82, GNN MAE (Test): 125.67, BKM_soft MAE: 142.05
+n_clusters=5, Supervised=3 — BKM MAE: 91.18, KNN MAE: 125.94, Mean Teacher MAE: 316.35, XGBoost MAE: 140.55, Laplacian RLS MAE: 1711.32, TSVR MAE: 166.49, UCVME MAE: 1802.28, RankUp MAE: 240.97, GNN MAE (Test): 84.96, BKM_soft MAE: 109.73
+n_clusters=5, Supervised=5 — BKM MAE: 100.38, KNN MAE: 112.87, Mean Teacher MAE: 320.16, XGBoost MAE: 122.91, Laplacian RLS MAE: 1645.87, TSVR MAE: 168.27, UCVME MAE: 1799.91, RankUp MAE: 215.21, GNN MAE (Test): 77.14, BKM_soft MAE: 110.62
+n_clusters=5, Supervised=10 — BKM MAE: 91.10, KNN MAE: 96.33, Mean Teacher MAE: 265.45, XGBoost MAE: 102.71, Laplacian RLS MAE: 1521.41, TSVR MAE: 167.52, UCVME MAE: 1801.84, RankUp MAE: 207.96, GNN MAE (Test): 76.65, BKM_soft MAE: 108.12
+
+========== Clusters: 6 ==========
+n_clusters=6, Supervised=1, Trial=1 — BKM: 123.71, KNN: 155.21, Mean Teacher: 284.23, XGBoost: 141.85, Laplacian RLS: 1771.71, TSVR: 154.21, UCVME: 1795.43, RankUp: 238.52, GNN: 109.50, BKM_soft: 114.96
+n_clusters=6, Supervised=1, Trial=2 — BKM: 139.02, KNN: 156.54, Mean Teacher: 288.11, XGBoost: 166.86, Laplacian RLS: 1760.64, TSVR: 153.68, UCVME: 1795.12, RankUp: 226.80, GNN: 119.71, BKM_soft: 124.11
+n_clusters=6, Supervised=1, Trial=3 — BKM: 209.81, KNN: 155.94, Mean Teacher: 296.05, XGBoost: 158.44, Laplacian RLS: 1771.93, TSVR: 153.63, UCVME: 1793.60, RankUp: 243.76, GNN: 166.47, BKM_soft: 182.07
+n_clusters=6, Supervised=1, Trial=4 — BKM: 132.37, KNN: 156.16, Mean Teacher: 321.96, XGBoost: 166.37, Laplacian RLS: 1762.16, TSVR: 153.71, UCVME: 1796.64, RankUp: 266.46, GNN: 117.45, BKM_soft: 129.60
+n_clusters=6, Supervised=1, Trial=5 — BKM: 123.39, KNN: 153.95, Mean Teacher: 304.49, XGBoost: 165.56, Laplacian RLS: 1763.66, TSVR: 154.29, UCVME: 1796.89, RankUp: 273.26, GNN: 99.94, BKM_soft: 128.03
+n_clusters=6, Supervised=1, Trial=6 — BKM: 121.11, KNN: 156.15, Mean Teacher: 296.16, XGBoost: 178.10, Laplacian RLS: 1767.27, TSVR: 155.22, UCVME: 1792.90, RankUp: 234.55, GNN: 194.16, BKM_soft: 122.73
+n_clusters=6, Supervised=1, Trial=7 — BKM: 161.49, KNN: 156.83, Mean Teacher: 319.62, XGBoost: 164.24, Laplacian RLS: 1766.80, TSVR: 155.14, UCVME: 1794.81, RankUp: 264.95, GNN: 132.91, BKM_soft: 155.24
+n_clusters=6, Supervised=1, Trial=8 — BKM: 84.14, KNN: 156.14, Mean Teacher: 294.14, XGBoost: 140.18, Laplacian RLS: 1765.77, TSVR: 153.63, UCVME: 1794.99, RankUp: 268.11, GNN: 103.03, BKM_soft: 92.80
+n_clusters=6, Supervised=1, Trial=9 — BKM: 117.79, KNN: 155.29, Mean Teacher: 317.92, XGBoost: 160.42, Laplacian RLS: 1767.12, TSVR: 153.71, UCVME: 1795.37, RankUp: 215.65, GNN: 134.70, BKM_soft: 130.93
+n_clusters=6, Supervised=1, Trial=10 — BKM: 90.79, KNN: 155.41, Mean Teacher: 296.22, XGBoost: 144.47, Laplacian RLS: 1768.45, TSVR: 153.75, UCVME: 1798.30, RankUp: 228.83, GNN: 83.23, BKM_soft: 107.92
+n_clusters=6, Supervised=3, Trial=1 — BKM: 155.94, KNN: 110.97, Mean Teacher: 302.64, XGBoost: 113.43, Laplacian RLS: 1704.07, TSVR: 153.27, UCVME: 1793.53, RankUp: 192.35, GNN: 105.42, BKM_soft: 143.56
+n_clusters=6, Supervised=3, Trial=2 — BKM: 85.13, KNN: 145.98, Mean Teacher: 351.41, XGBoost: 140.98, Laplacian RLS: 1710.11, TSVR: 153.41, UCVME: 1798.18, RankUp: 233.31, GNN: 112.73, BKM_soft: 108.38
+n_clusters=6, Supervised=3, Trial=3 — BKM: 87.78, KNN: 116.64, Mean Teacher: 291.90, XGBoost: 113.61, Laplacian RLS: 1708.64, TSVR: 153.53, UCVME: 1795.30, RankUp: 215.45, GNN: 88.09, BKM_soft: 103.91
+n_clusters=6, Supervised=3, Trial=4 — BKM: 125.94, KNN: 131.63, Mean Teacher: 298.64, XGBoost: 132.26, Laplacian RLS: 1712.90, TSVR: 153.48, UCVME: 1795.14, RankUp: 226.67, GNN: 121.65, BKM_soft: 123.46
+n_clusters=6, Supervised=3, Trial=5 — BKM: 149.13, KNN: 120.23, Mean Teacher: 289.08, XGBoost: 120.33, Laplacian RLS: 1693.08, TSVR: 153.67, UCVME: 1796.82, RankUp: 217.23, GNN: 77.14, BKM_soft: 146.69
+n_clusters=6, Supervised=3, Trial=6 — BKM: 104.01, KNN: 116.95, Mean Teacher: 291.48, XGBoost: 147.21, Laplacian RLS: 1694.91, TSVR: 153.42, UCVME: 1795.42, RankUp: 212.45, GNN: 100.40, BKM_soft: 108.05
+n_clusters=6, Supervised=3, Trial=7 — BKM: 110.23, KNN: 118.48, Mean Teacher: 370.25, XGBoost: 107.26, Laplacian RLS: 1705.18, TSVR: 153.29, UCVME: 1797.26, RankUp: 218.08, GNN: 85.39, BKM_soft: 110.61
+n_clusters=6, Supervised=3, Trial=8 — BKM: 100.13, KNN: 115.12, Mean Teacher: 306.29, XGBoost: 132.74, Laplacian RLS: 1700.95, TSVR: 153.54, UCVME: 1798.21, RankUp: 230.09, GNN: 103.94, BKM_soft: 119.02
+n_clusters=6, Supervised=3, Trial=9 — BKM: 110.27, KNN: 112.76, Mean Teacher: 291.00, XGBoost: 127.21, Laplacian RLS: 1703.61, TSVR: 153.44, UCVME: 1795.28, RankUp: 223.32, GNN: 86.45, BKM_soft: 114.93
+n_clusters=6, Supervised=3, Trial=10 — BKM: 103.98, KNN: 96.84, Mean Teacher: 312.76, XGBoost: 127.91, Laplacian RLS: 1711.24, TSVR: 153.41, UCVME: 1793.11, RankUp: 220.84, GNN: 84.28, BKM_soft: 110.97
+n_clusters=6, Supervised=5, Trial=1 — BKM: 124.66, KNN: 115.68, Mean Teacher: 321.15, XGBoost: 126.74, Laplacian RLS: 1641.57, TSVR: 153.96, UCVME: 1791.37, RankUp: 225.12, GNN: 88.91, BKM_soft: 127.26
+n_clusters=6, Supervised=5, Trial=2 — BKM: 91.40, KNN: 109.03, Mean Teacher: 325.39, XGBoost: 117.51, Laplacian RLS: 1650.52, TSVR: 153.49, UCVME: 1790.99, RankUp: 212.18, GNN: 90.92, BKM_soft: 111.49
+n_clusters=6, Supervised=5, Trial=3 — BKM: 99.00, KNN: 107.35, Mean Teacher: 287.98, XGBoost: 110.56, Laplacian RLS: 1635.29, TSVR: 153.00, UCVME: 1795.31, RankUp: 209.47, GNN: 94.46, BKM_soft: 109.18
+n_clusters=6, Supervised=5, Trial=4 — BKM: 110.80, KNN: 101.72, Mean Teacher: 292.36, XGBoost: 113.76, Laplacian RLS: 1646.03, TSVR: 153.01, UCVME: 1800.19, RankUp: 218.12, GNN: 70.92, BKM_soft: 113.99
+n_clusters=6, Supervised=5, Trial=5 — BKM: 119.83, KNN: 114.41, Mean Teacher: 301.03, XGBoost: 116.34, Laplacian RLS: 1639.15, TSVR: 153.23, UCVME: 1795.27, RankUp: 214.62, GNN: 88.74, BKM_soft: 126.01
+n_clusters=6, Supervised=5, Trial=6 — BKM: 156.34, KNN: 97.11, Mean Teacher: 287.88, XGBoost: 103.07, Laplacian RLS: 1641.48, TSVR: 153.59, UCVME: 1792.42, RankUp: 190.00, GNN: 88.67, BKM_soft: 142.93
+n_clusters=6, Supervised=5, Trial=7 — BKM: 86.37, KNN: 103.87, Mean Teacher: 308.26, XGBoost: 109.02, Laplacian RLS: 1635.92, TSVR: 153.31, UCVME: 1798.96, RankUp: 213.18, GNN: 88.33, BKM_soft: 101.84
+n_clusters=6, Supervised=5, Trial=8 — BKM: 86.09, KNN: 104.01, Mean Teacher: 321.69, XGBoost: 102.24, Laplacian RLS: 1656.64, TSVR: 153.17, UCVME: 1796.78, RankUp: 221.14, GNN: 72.58, BKM_soft: 109.88
+n_clusters=6, Supervised=5, Trial=9 — BKM: 96.31, KNN: 98.47, Mean Teacher: 288.20, XGBoost: 108.85, Laplacian RLS: 1635.80, TSVR: 153.32, UCVME: 1794.46, RankUp: 203.72, GNN: 106.41, BKM_soft: 114.21
+n_clusters=6, Supervised=5, Trial=10 — BKM: 94.57, KNN: 111.99, Mean Teacher: 290.63, XGBoost: 120.48, Laplacian RLS: 1648.35, TSVR: 153.21, UCVME: 1795.10, RankUp: 224.38, GNN: 81.31, BKM_soft: 106.63
+n_clusters=6, Supervised=10, Trial=1 — BKM: 92.28, KNN: 99.57, Mean Teacher: 246.18, XGBoost: 110.65, Laplacian RLS: 1519.62, TSVR: 153.87, UCVME: 1795.68, RankUp: 207.30, GNN: 89.01, BKM_soft: 107.40
+n_clusters=6, Supervised=10, Trial=2 — BKM: 84.93, KNN: 98.36, Mean Teacher: 262.31, XGBoost: 104.72, Laplacian RLS: 1524.92, TSVR: 152.73, UCVME: 1793.03, RankUp: 209.08, GNN: 87.74, BKM_soft: 101.26
+n_clusters=6, Supervised=10, Trial=3 — BKM: 95.36, KNN: 99.91, Mean Teacher: 262.72, XGBoost: 111.34, Laplacian RLS: 1515.87, TSVR: 152.64, UCVME: 1794.22, RankUp: 217.55, GNN: 69.75, BKM_soft: 113.93
+n_clusters=6, Supervised=10, Trial=4 — BKM: 94.70, KNN: 98.95, Mean Teacher: 249.01, XGBoost: 105.28, Laplacian RLS: 1512.69, TSVR: 152.86, UCVME: 1794.83, RankUp: 209.57, GNN: 83.17, BKM_soft: 106.22
+n_clusters=6, Supervised=10, Trial=5 — BKM: 102.05, KNN: 107.82, Mean Teacher: 252.77, XGBoost: 106.38, Laplacian RLS: 1511.57, TSVR: 152.68, UCVME: 1790.21, RankUp: 196.33, GNN: 91.91, BKM_soft: 109.76
+n_clusters=6, Supervised=10, Trial=6 — BKM: 119.38, KNN: 111.46, Mean Teacher: 246.16, XGBoost: 107.76, Laplacian RLS: 1516.93, TSVR: 152.89, UCVME: 1801.11, RankUp: 203.82, GNN: 105.60, BKM_soft: 123.83
+n_clusters=6, Supervised=10, Trial=7 — BKM: 91.93, KNN: 106.24, Mean Teacher: 259.93, XGBoost: 96.88, Laplacian RLS: 1524.21, TSVR: 152.38, UCVME: 1798.60, RankUp: 213.23, GNN: 82.59, BKM_soft: 106.39
+n_clusters=6, Supervised=10, Trial=8 — BKM: 87.84, KNN: 98.04, Mean Teacher: 258.46, XGBoost: 105.45, Laplacian RLS: 1510.62, TSVR: 152.91, UCVME: 1798.17, RankUp: 205.66, GNN: 76.45, BKM_soft: 108.67
+n_clusters=6, Supervised=10, Trial=9 — BKM: 90.65, KNN: 101.75, Mean Teacher: 242.90, XGBoost: 101.95, Laplacian RLS: 1519.86, TSVR: 152.48, UCVME: 1795.41, RankUp: 212.52, GNN: 91.16, BKM_soft: 104.20
+n_clusters=6, Supervised=10, Trial=10 — BKM: 139.67, KNN: 104.22, Mean Teacher: 245.83, XGBoost: 105.79, Laplacian RLS: 1511.73, TSVR: 152.87, UCVME: 1794.81, RankUp: 202.36, GNN: 96.22, BKM_soft: 132.59
+n_clusters=6, Supervised=1 — BKM MAE: 130.36, KNN MAE: 155.76, Mean Teacher MAE: 301.89, XGBoost MAE: 158.65, Laplacian RLS MAE: 1766.55, TSVR MAE: 154.10, UCVME MAE: 1795.41, RankUp MAE: 246.09, GNN MAE (Test): 106.99, BKM_soft MAE: 132.75
+n_clusters=6, Supervised=3 — BKM MAE: 113.25, KNN MAE: 118.56, Mean Teacher MAE: 310.54, XGBoost MAE: 126.29, Laplacian RLS MAE: 1704.47, TSVR MAE: 153.45, UCVME MAE: 1795.83, RankUp MAE: 218.98, GNN MAE (Test): 91.56, BKM_soft MAE: 119.47
+n_clusters=6, Supervised=5 — BKM MAE: 106.54, KNN MAE: 106.37, Mean Teacher MAE: 302.46, XGBoost MAE: 112.86, Laplacian RLS MAE: 1643.08, TSVR MAE: 153.33, UCVME MAE: 1795.08, RankUp MAE: 213.19, GNN MAE (Test): 86.77, BKM_soft MAE: 116.62
+n_clusters=6, Supervised=10 — BKM MAE: 99.88, KNN MAE: 102.63, Mean Teacher MAE: 252.63, XGBoost MAE: 105.62, Laplacian RLS MAE: 1516.80, TSVR MAE: 152.83, UCVME MAE: 1795.61, RankUp MAE: 207.74, GNN MAE (Test): 87.94, BKM_soft MAE: 111.14

@@ -39,8 +39,8 @@ np.random.seed(42)
 random.seed(42)
 
 # Parameters
-N_CLUSTERS = [2]  #, 3, 4, 5, 6] 
-SUPERVISED_VALUES = [1] #, 3, 5, 10]
+N_CLUSTERS = [2, 3, 4, 5, 6] 
+SUPERVISED_VALUES = [1, 3, 5, 10]
 N_TRIALS = 10
 IMAGE_SIZE = 224
 
@@ -1203,7 +1203,47 @@ def agdn_regression(
 
     return inf_pred, inf_years
 
-def cluster_and_predict(df, image_features, valid_indices, supervised_per_style, n_clusters):
+def responsibilities(y, centroids, tau):
+    """
+    y: scalar
+    centroids: array of shape (K,)
+    tau: temperature
+    """
+    dists = np.abs(centroids - y)  # simple L1 distance for scalars
+    logits = -dists
+    logits -= np.max(logits)  # for numerical stability
+    exp_logits = np.exp(logits)
+    return exp_logits / np.sum(exp_logits)
+
+def compute_y_soft_inference(y_hard_preds, centroids, tau=0.5):
+    # Normalize centroids for distance calculation
+    mean_c = np.mean(centroids)
+    std_c = np.std(centroids)
+    centroids_norm = (centroids - mean_c) / std_c
+
+    y_soft_preds = []
+    for yc in y_hard_preds:
+        # Normalize yc too
+        yc_norm = (yc - mean_c) / std_c
+        r = responsibilities(yc_norm, centroids_norm, tau)
+        # Weighted average over ORIGINAL (unnormalized) centroids
+        y_soft_preds.append(np.dot(r, centroids))
+    return np.array(y_soft_preds)
+
+# def compute_y_soft_inference(y_hard_preds, centroids, tau=0.5):
+#     y_soft_preds = []
+#     for yc in y_hard_preds:
+#         r = responsibilities(yc, centroids, tau)  # shape: (K,)
+#         y_soft_preds.append(np.dot(r, centroids))  # scalar
+#     return np.array(y_soft_preds)
+
+def compute_mae_y_soft(true_years, y_hard_preds, centroids, tau=0.5):
+    y_soft_preds = compute_y_soft_inference(y_hard_preds, centroids, tau)
+    return mean_absolute_error(true_years, y_soft_preds)
+
+
+def cluster_and_predict(df, image_features, valid_indices, supervised_per_style, n_clusters,
+                        best_config=None, tune_gnn=True):
     df = df.iloc[valid_indices].reset_index(drop=True) # selects only the rows of valid indices 
     image_features = image_features[:len(df)] 
 
@@ -1286,13 +1326,17 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_per_style,
     true = df['year'].iloc[test_indices].values
     bridged_mae = mean_absolute_error(true, preds)
 
+    bridged_soft_mae = compute_mae_y_soft(true, preds, centroids, tau=1.0)
+    print(f"Soft Bridged Clustering Error: {bridged_soft_mae}")
+
+
     # KNN baseline
     X_train = image_features[supervised_indices]
     y_train = df['year'].iloc[supervised_indices].values
     X_test = image_features[test_indices]
     y_test = df['year'].iloc[test_indices].values
 
-    knn = KNeighborsRegressor(n_neighbors=1)
+    knn = KNeighborsRegressor(n_neighbors=max(1, n_clusters))
     knn.fit(X_train, y_train)
     knn_preds = knn.predict(X_test)
     knn_mae = mean_absolute_error(y_test, knn_preds)
@@ -1326,61 +1370,109 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_per_style,
     print(f"RankUp Error: {rank_error}")
 
     # --- GNN Bridging ---
-    # adj = kneighbors_graph(image_features, n_neighbors=10, mode='connectivity', include_self=False)
-    # edge_index, _ = dense_to_sparse(torch.tensor(adj.toarray(), dtype=torch.float32))
-
-    # # Label preparation for GNN (use y_clusters and sup_y_cluster only where available)
-    # full_y_cluster = np.full(len(df), -1)
-    # full_y_cluster[test_indices] = y_clusters
-    # full_y_cluster[supervised_indices] = sup_y_cluster
-    # sup_mask = np.zeros(len(df), dtype=bool)
-    # sup_mask[supervised_indices] = True
-
-    # # GNN bridging predictions
-    # gnn_preds = run_gnn_bridged(
-    #     X=image_features,
-    #     y_lab=full_y_cluster,
-    #     sup_mask=sup_mask,
-    #     n_clusters=n_clusters,
-    #     edge_index=edge_index,
-    #     edge_weights=None,
-    #     centroids=centroids.reshape(-1, 1),
-    #     tau=1.0,
-    #     hidden_dim=64,
-    #     lr=1e-3,
-    #     epochs=100
-    # )
-
-    # gnn_pred_vals = gnn_preds[test_indices].flatten()
-    # gnn_mae = mean_absolute_error(df['year'].iloc[test_indices].values, gnn_pred_vals)
-
-    # --- GNN Setup ---
     adj = kneighbors_graph(image_features, n_neighbors=10, mode='connectivity', include_self=False)
     edge_index, _ = dense_to_sparse(torch.tensor(adj.toarray(), dtype=torch.float32))
 
-    # Label prep
+    # Label preparation for GNN (use y_clusters and sup_y_cluster only where available)
     full_y_cluster = np.full(len(df), -1)
     full_y_cluster[test_indices] = y_clusters
     full_y_cluster[supervised_indices] = sup_y_cluster
     sup_mask = np.zeros(len(df), dtype=bool)
     sup_mask[supervised_indices] = True
 
-    # GNN Grid Search
-    true_years = df['year'].iloc[test_indices].values
-    best_config, gnn_mae, gnn_pred_vals, gnn_search_results = grid_search_gnn(
+    # GNN bridging predictions
+    gnn_preds = run_gnn_bridged(
         X=image_features,
         y_lab=full_y_cluster,
         sup_mask=sup_mask,
         n_clusters=n_clusters,
         edge_index=edge_index,
-        centroids=centroids,
-        test_indices=test_indices,
-        true_years=true_years,
-        hidden_dims=[64, 128],
-        taus=[0.5, 1.0, 2.0],
-        lrs=[1e-4, 5e-4, 1e-3],
+        edge_weights=None,
+        centroids=centroids.reshape(-1, 1),
+        tau=1.0,
+        hidden_dim=64,
+        lr=1e-3,
         epochs=100
     )
+
+    gnn_pred_vals = gnn_preds[test_indices].flatten()
+    gnn_mae = mean_absolute_error(df['year'].iloc[test_indices].values, gnn_pred_vals)
+
+    # --- GNN Setup ---
+    # adj = kneighbors_graph(image_features, n_neighbors=10, mode='connectivity', include_self=False)
+    # edge_index, _ = dense_to_sparse(torch.tensor(adj.toarray(), dtype=torch.float32))
+
+    # # Label prep
+    # full_y_cluster = np.full(len(df), -1)
+    # full_y_cluster[test_indices] = y_clusters
+    # full_y_cluster[supervised_indices] = sup_y_cluster
+    # sup_mask = np.zeros(len(df), dtype=bool)
+    # sup_mask[supervised_indices] = True
+
+    # # GNN Grid Search
+    # true_years = df['year'].iloc[test_indices].values
+    # best_config, gnn_mae, gnn_pred_vals, gnn_search_results = grid_search_gnn(
+    #     X=image_features,
+    #     y_lab=full_y_cluster,
+    #     sup_mask=sup_mask,
+    #     n_clusters=n_clusters,
+    #     edge_index=edge_index,
+    #     centroids=centroids,
+    #     test_indices=test_indices,
+    #     true_years=true_years,
+    #     hidden_dims=[64, 128],
+    #     taus=[0.5, 1.0, 2.0],
+    #     lrs=[1e-4, 5e-4, 1e-3],
+    #     epochs=100
+    # )
+
+        # --- GNN Setup ---
+    # adj = kneighbors_graph(image_features, n_neighbors=10, mode='connectivity', include_self=False)
+    # edge_index, _ = dense_to_sparse(torch.tensor(adj.toarray(), dtype=torch.float32))
+
+    # # Label prep
+    # full_y_cluster = np.full(len(df), -1)
+    # full_y_cluster[test_indices] = y_clusters
+    # full_y_cluster[supervised_indices] = sup_y_cluster
+    # sup_mask = np.zeros(len(df), dtype=bool)
+    # sup_mask[supervised_indices] = True
+
+    # true_years = df['year'].iloc[test_indices].values
+
+    # if tune_gnn:
+    #     # Tune hyperparameters on validation trials
+    #     best_config, gnn_mae, gnn_pred_vals, gnn_search_results = grid_search_gnn(
+    #         X=image_features,
+    #         y_lab=full_y_cluster,
+    #         sup_mask=sup_mask,
+    #         n_clusters=n_clusters,
+    #         edge_index=edge_index,
+    #         centroids=centroids,
+    #         test_indices=test_indices,
+    #         true_years=true_years,
+    #         hidden_dims=[64, 128],
+    #         taus=[0.5, 1.0, 2.0],
+    #         lrs=[1e-4, 5e-4, 1e-3],
+    #         epochs=100
+    #     )
+    # else:
+    #     # Use best_config provided
+    #     hidden_dim, tau, lr = best_config
+    #     gnn_preds = run_gnn_bridged(
+    #         X=image_features,
+    #         y_lab=full_y_cluster,
+    #         sup_mask=sup_mask,
+    #         n_clusters=n_clusters,
+    #         edge_index=edge_index,
+    #         edge_weights=None,
+    #         centroids=centroids.reshape(-1, 1),
+    #         tau=tau,
+    #         hidden_dim=hidden_dim,
+    #         lr=lr,
+    #         epochs=100
+    #     )
+    #     gnn_pred_vals = gnn_preds[test_indices].flatten()
+    #     gnn_mae = mean_absolute_error(true_years, gnn_pred_vals)
 
     return {
         'BKM': bridged_mae,
@@ -1392,13 +1484,15 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_per_style,
         # 'TNNR': tnnr_error,
         'UCVME': ucv_error,
         'RankUp': rank_error,
-        'GNN': gnn_mae
-    }
+        'GNN': gnn_mae, 
+        'BKM_soft': bridged_soft_mae
+    }, best_config if tune_gnn else None
 
-def run_all_trials(df, image_folder, n_clusters):
+def run_all_trials(df, image_folder, n_clusters, log_file_handle=None):
+    best_gnn_config = None
     method_names = [
         'BKM', 'KNN', 'Mean Teacher', 'XGBoost',
-        'Laplacian RLS', 'TSVR', 'UCVME', 'RankUp', 'GNN'
+        'Laplacian RLS', 'TSVR', 'UCVME', 'RankUp', 'GNN', 'BKM_soft'
     ]
 
     # Initialize results dictionary
@@ -1411,26 +1505,53 @@ def run_all_trials(df, image_folder, n_clusters):
     df['image_coordinates'] = list(image_features)
 
     for s in SUPERVISED_VALUES:
-        print(f"\nSupervised fraction: {s}")
+        print(f"\nSupervised value: {s}")
+        best_gnn_config = None  # for cross-trial tuning
         for trial in range(N_TRIALS):
             print(f"Trial {trial + 1}...")
-            trial_results = cluster_and_predict(df.copy(), image_features, valid_indices, supervised_per_style=s, n_clusters=n_clusters)
 
-            # Store each method's result
+            is_tuning_phase = trial < 7
+            trial_results, gnn_config = cluster_and_predict(
+                df.copy(), image_features, valid_indices,
+                supervised_per_style=s,
+                n_clusters=n_clusters,
+                best_config=best_gnn_config if not is_tuning_phase else None,
+                tune_gnn=is_tuning_phase
+            )
+
+            if is_tuning_phase and gnn_config is not None:
+                best_gnn_config = gnn_config
+
             for method in method_names:
                 results[s][method].append(trial_results[method])
 
-            # Print current trial results
-            print(f"--- Trial {trial + 1} Results ---")
-            for method in method_names:
-                print(f"{method} MAE: {trial_results[method]:.2f}")
+            line = (
+                f"n_clusters={n_clusters}, Supervised={s}, Trial={trial+1} — "
+                f"BKM: {trial_results['BKM']:.2f}, "
+                f"KNN: {trial_results['KNN']:.2f}, "
+                f"Mean Teacher: {trial_results['Mean Teacher']:.2f}, "
+                f"XGBoost: {trial_results['XGBoost']:.2f}, "
+                f"Laplacian RLS: {trial_results['Laplacian RLS']:.2f}, "
+                f"TSVR: {trial_results['TSVR']:.2f}, "
+                f"UCVME: {trial_results['UCVME']:.2f}, "
+                f"RankUp: {trial_results['RankUp']:.2f}, "
+                f"GNN: {trial_results['GNN']:.2f}, "
+                f"BKM_soft: {trial_results['BKM_soft']:.2f}\n"
+            )
+            print(line.strip())
+            if log_file_handle is not None:
+                log_file_handle.write(line)
+                log_file_handle.flush()
 
     # Final averaged results
     print("\n=== Average Results ===")
     for s in SUPERVISED_VALUES:
         print(f"\nSupervised value: {s}")
         for method in method_names:
-            avg = np.mean(results[s][method])
+            if method == 'GNN': 
+                avg = np.mean(results[s]['GNN'])
+            else: 
+                avg = np.mean(results[s][method])
             print(f"{method}: {avg:.2f}")
 
     return results
@@ -1471,12 +1592,33 @@ if __name__ == '__main__':
             df = df.dropna(subset=['year'])
             df['year'] = df['year'].astype(int)
 
-            results = run_all_trials(df, image_folder, n_clusters=n_clusters)
+            results = run_all_trials(df, image_folder, n_clusters=n_clusters, log_file_handle=f)
 
             for s in SUPERVISED_VALUES:
-                bkm = np.mean(results[s]['BKM'])
-                knn = np.mean(results[s]['KNN'])
-                gnn = np.mean(results[s]['GNN'])
-                line = f"Supervised {s:.2%} — BKM MAE: {bkm:.2f}, KNN MAE: {knn:.2f}, GNN MAE: {gnn:.2f}\n"
+                bkm  = np.mean(results[s]['BKM'])
+                knn  = np.mean(results[s]['KNN'])
+                mt   = np.mean(results[s]['Mean Teacher'])
+                xgb  = np.mean(results[s]['XGBoost'])
+                lap  = np.mean(results[s]['Laplacian RLS'])
+                tsvr = np.mean(results[s]['TSVR'])
+                ucv  = np.mean(results[s]['UCVME'])
+                rank = np.mean(results[s]['RankUp'])
+                gnn  = np.mean(results[s]['GNN'][7:])  # test-phase GNN MAE only
+
+                line = (
+                    f"n_clusters={n_clusters}, Supervised={s} — "
+                    f"BKM MAE: {bkm:.2f}, "
+                    f"KNN MAE: {knn:.2f}, "
+                    f"Mean Teacher MAE: {mt:.2f}, "
+                    f"XGBoost MAE: {xgb:.2f}, "
+                    f"Laplacian RLS MAE: {lap:.2f}, "
+                    f"TSVR MAE: {tsvr:.2f}, "
+                    f"UCVME MAE: {ucv:.2f}, "
+                    f"RankUp MAE: {rank:.2f}, "
+                    f"GNN MAE (Test): {gnn:.2f}\n"
+                )
                 print(line.strip())
                 f.write(line)
+                f.flush() 
+
+
