@@ -39,9 +39,9 @@ np.random.seed(42)
 random.seed(42)
 
 # Parameters
-N_CLUSTERS = 2
-SUPERVISED_VALUES = [0.0015]
-N_TRIALS = 3
+N_CLUSTERS = [2]  #, 3, 4, 5, 6] 
+SUPERVISED_VALUES = [1] #, 3, 5, 10]
+N_TRIALS = 10
 IMAGE_SIZE = 224
 
 # Image preprocessing
@@ -72,6 +72,98 @@ def encode_images(df, image_folder):
         except:
             continue
     return np.array(features), valid_indices
+
+from sklearn.neighbors import kneighbors_graph
+from torch_geometric.utils import dense_to_sparse
+
+class GNNClusterBridge(nn.Module):
+    def __init__(self, in_dim, hidden_dim, n_clusters, tau=1.0):
+        super().__init__()
+        self.conv1 = GCNConv(in_dim, hidden_dim)
+        self.conv2 = GCNConv(hidden_dim, hidden_dim)
+        self.conv3 = GCNConv(hidden_dim, hidden_dim)
+        self.classifier = nn.Linear(hidden_dim, n_clusters)
+        self.tau = tau
+
+    def forward(self, x, edge_index):
+        h = F.relu(self.conv1(x, edge_index))
+        h = F.relu(self.conv2(h, edge_index))
+        h = F.relu(self.conv3(h, edge_index))
+        logits = self.classifier(h)
+        return F.softmax(logits / self.tau, dim=-1)
+
+def run_gnn_bridged(
+    X, y_lab, sup_mask, n_clusters,
+    edge_index, edge_weights,
+    centroids, tau=1.0,
+    hidden_dim=64, lr=1e-3, epochs=100
+):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    x = torch.tensor(X, dtype=torch.float32, device=device)
+    y = torch.tensor(y_lab, dtype=torch.long, device=device)
+    mask = torch.tensor(sup_mask, dtype=torch.bool, device=device)
+
+    model = GNNClusterBridge(x.shape[1], hidden_dim, n_clusters, tau).to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+
+    for epoch in range(epochs):
+        model.train()
+        out = model(x, edge_index)
+        loss = F.cross_entropy(out[mask], y[mask])
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+    model.eval()
+    with torch.no_grad():
+        out = model(x, edge_index)  # shape (N, K)
+        preds = out @ torch.tensor(centroids, dtype=torch.float32, device=device)  # (N, 1)
+    return preds.cpu().numpy()
+
+from itertools import product
+from sklearn.metrics import mean_absolute_error
+
+def grid_search_gnn(
+    X, y_lab, sup_mask,
+    n_clusters, edge_index, centroids,
+    test_indices, true_years, 
+    hidden_dims=[64], taus=[1.0], lrs=[1e-3], epochs=100
+):
+    results = []
+    best_mae = float('inf')
+    best_config = None
+    best_preds = None
+
+    for hidden_dim, tau, lr in product(hidden_dims, taus, lrs):
+        print(f"Running GNN with hidden_dim={hidden_dim}, tau={tau}, lr={lr}")
+        preds = run_gnn_bridged(
+            X=X,
+            y_lab=y_lab,
+            sup_mask=sup_mask,
+            n_clusters=n_clusters,
+            edge_index=edge_index,
+            edge_weights=None,
+            centroids=centroids.reshape(-1, 1),
+            tau=tau,
+            hidden_dim=hidden_dim,
+            lr=lr,
+            epochs=epochs
+        )
+        pred_vals = preds[test_indices].flatten()
+        mae = mean_absolute_error(true_years, pred_vals)
+
+        print(f"  → MAE: {mae:.4f}")
+        results.append(((hidden_dim, tau, lr), mae))
+
+        if mae < best_mae:
+            best_mae = mae
+            best_config = (hidden_dim, tau, lr)
+            best_preds = pred_vals
+
+    print("\n Best config:")
+    print(f"  hidden_dim={best_config[0]}, tau={best_config[1]}, lr={best_config[2]}, MAE={best_mae:.4f}")
+    return best_config, best_mae, best_preds, results
+
 
 # Model C: Mean Teacher Model
 ##################################
@@ -1111,7 +1203,7 @@ def agdn_regression(
 
     return inf_pred, inf_years
 
-def cluster_and_predict(df, image_features, valid_indices, supervised_fraction):
+def cluster_and_predict(df, image_features, valid_indices, supervised_per_style, n_clusters):
     df = df.iloc[valid_indices].reset_index(drop=True) # selects only the rows of valid indices 
     image_features = image_features[:len(df)] 
 
@@ -1123,17 +1215,29 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_fraction):
     # test_indices = indices[n_supervised:]
 
     # Uniform per-style supervised sampling
+    # supervised_indices = []
+
+    # for style in df['style'].unique():
+    #     style_indices = df.index[df['style'] == style].tolist()
+    #     n_supervised_style = max(1, int(supervised_fraction * len(style_indices)))
+    #     sampled = np.random.choice(style_indices, n_supervised_style, replace=False)
+    #     supervised_indices.extend(sampled)
+
+    # supervised_indices = np.array(supervised_indices)
     supervised_indices = []
 
     for style in df['style'].unique():
         style_indices = df.index[df['style'] == style].tolist()
-        n_supervised_style = max(1, int(supervised_fraction * len(style_indices)))
-        sampled = np.random.choice(style_indices, n_supervised_style, replace=False)
+        if len(style_indices) >= supervised_per_style:
+            sampled = np.random.choice(style_indices, supervised_per_style, replace=False)
+        else:
+            sampled = style_indices  # if not enough, take all available
         supervised_indices.extend(sampled)
 
     supervised_indices = np.array(supervised_indices)
 
-    unsupervised_indices = np.setdiff1d(np.arange(len(df)), supervised_indices).sample()
+    # unsupervised_indices = np.setdiff1d(np.arange(len(df)), supervised_indices).sample()
+    unsupervised_indices = np.setdiff1d(np.arange(len(df)), supervised_indices)
     test_indices = unsupervised_indices  # testing on the rest
 
     print(f"Sanity Check: Supervised samples per style:")
@@ -1147,8 +1251,9 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_fraction):
     X_unsup = image_features[test_indices]
     y_unsup = df.iloc[test_indices]['year'].values.reshape(-1, 1)
 
-    x_kmeans = KMeans(n_clusters=N_CLUSTERS, random_state=42).fit(X_unsup) # only FITTING with the unsupervised data
-    y_kmeans = KMeans(n_clusters=N_CLUSTERS, random_state=42).fit(y_unsup)
+    x_kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(X_unsup) # only FITTING with the unsupervised data
+    y_kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(y_unsup)
+    print("From cluster_and_predict: ", n_clusters)
 
     x_clusters = x_kmeans.predict(X_unsup)
     y_clusters = y_kmeans.predict(y_unsup) #df['year'].values.reshape(-1, 1))
@@ -1163,17 +1268,17 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_fraction):
     sup_y_cluster = y_kmeans.predict(y_sup)
 
     # Learn bridge using supervised set w/majority voting (bc hard voting)
-    mapping = np.zeros(N_CLUSTERS, dtype=int)
-    for i in range(N_CLUSTERS):
-        votes = np.zeros(N_CLUSTERS)
+    mapping = np.zeros(n_clusters, dtype=int)
+    for i in range(n_clusters):
+        votes = np.zeros(n_clusters)
         for x_sup, y_sup in zip(sup_x_cluster, sup_y_cluster):
             if x_sup == i: 
                 votes[y_sup] += 1
         mapping[i] = np.argmax(votes) # index i is the ith x cluster; the value of mapping is the y cluster it maps to 
 
     # Centroids
-    centroids = np.zeros(N_CLUSTERS)
-    for i in range(N_CLUSTERS):
+    centroids = np.zeros(n_clusters)
+    for i in range(n_clusters):
         vals = [df['year'].iloc[j] for j in range(len(y_clusters)) if y_clusters[j] == i]
         centroids[i] = np.mean(vals) if vals else 0
 
@@ -1220,6 +1325,63 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_fraction):
     print(f"UCVME Error: {ucv_error}")
     print(f"RankUp Error: {rank_error}")
 
+    # --- GNN Bridging ---
+    # adj = kneighbors_graph(image_features, n_neighbors=10, mode='connectivity', include_self=False)
+    # edge_index, _ = dense_to_sparse(torch.tensor(adj.toarray(), dtype=torch.float32))
+
+    # # Label preparation for GNN (use y_clusters and sup_y_cluster only where available)
+    # full_y_cluster = np.full(len(df), -1)
+    # full_y_cluster[test_indices] = y_clusters
+    # full_y_cluster[supervised_indices] = sup_y_cluster
+    # sup_mask = np.zeros(len(df), dtype=bool)
+    # sup_mask[supervised_indices] = True
+
+    # # GNN bridging predictions
+    # gnn_preds = run_gnn_bridged(
+    #     X=image_features,
+    #     y_lab=full_y_cluster,
+    #     sup_mask=sup_mask,
+    #     n_clusters=n_clusters,
+    #     edge_index=edge_index,
+    #     edge_weights=None,
+    #     centroids=centroids.reshape(-1, 1),
+    #     tau=1.0,
+    #     hidden_dim=64,
+    #     lr=1e-3,
+    #     epochs=100
+    # )
+
+    # gnn_pred_vals = gnn_preds[test_indices].flatten()
+    # gnn_mae = mean_absolute_error(df['year'].iloc[test_indices].values, gnn_pred_vals)
+
+    # --- GNN Setup ---
+    adj = kneighbors_graph(image_features, n_neighbors=10, mode='connectivity', include_self=False)
+    edge_index, _ = dense_to_sparse(torch.tensor(adj.toarray(), dtype=torch.float32))
+
+    # Label prep
+    full_y_cluster = np.full(len(df), -1)
+    full_y_cluster[test_indices] = y_clusters
+    full_y_cluster[supervised_indices] = sup_y_cluster
+    sup_mask = np.zeros(len(df), dtype=bool)
+    sup_mask[supervised_indices] = True
+
+    # GNN Grid Search
+    true_years = df['year'].iloc[test_indices].values
+    best_config, gnn_mae, gnn_pred_vals, gnn_search_results = grid_search_gnn(
+        X=image_features,
+        y_lab=full_y_cluster,
+        sup_mask=sup_mask,
+        n_clusters=n_clusters,
+        edge_index=edge_index,
+        centroids=centroids,
+        test_indices=test_indices,
+        true_years=true_years,
+        hidden_dims=[64, 128],
+        taus=[0.5, 1.0, 2.0],
+        lrs=[1e-4, 5e-4, 1e-3],
+        epochs=100
+    )
+
     return {
         'BKM': bridged_mae,
         'KNN': knn_mae,
@@ -1229,13 +1391,14 @@ def cluster_and_predict(df, image_features, valid_indices, supervised_fraction):
         'TSVR': tsvr_error,
         # 'TNNR': tnnr_error,
         'UCVME': ucv_error,
-        'RankUp': rank_error
+        'RankUp': rank_error,
+        'GNN': gnn_mae
     }
 
-def run_all_trials(df, image_folder):
+def run_all_trials(df, image_folder, n_clusters):
     method_names = [
         'BKM', 'KNN', 'Mean Teacher', 'XGBoost',
-        'Laplacian RLS', 'TSVR', 'UCVME', 'RankUp' # TNNR 
+        'Laplacian RLS', 'TSVR', 'UCVME', 'RankUp', 'GNN'
     ]
 
     # Initialize results dictionary
@@ -1251,7 +1414,7 @@ def run_all_trials(df, image_folder):
         print(f"\nSupervised fraction: {s}")
         for trial in range(N_TRIALS):
             print(f"Trial {trial + 1}...")
-            trial_results = cluster_and_predict(df.copy(), image_features, valid_indices, supervised_fraction=s)
+            trial_results = cluster_and_predict(df.copy(), image_features, valid_indices, supervised_per_style=s, n_clusters=n_clusters)
 
             # Store each method's result
             for method in method_names:
@@ -1265,23 +1428,55 @@ def run_all_trials(df, image_folder):
     # Final averaged results
     print("\n=== Average Results ===")
     for s in SUPERVISED_VALUES:
-        print(f"\nSupervised fraction: {s:.2%}")
+        print(f"\nSupervised value: {s}")
         for method in method_names:
             avg = np.mean(results[s][method])
             print(f"{method}: {avg:.2f}")
 
     return results
 
+# if __name__ == '__main__':
+#     for n_clusters in N_CLUSTERS: 
+#         print(n_clusters)
+#         metadata_csv = "/Users/ellietanimura/bridged_clustering/neurips/template_experiment/filtered_styles" + str(n_clusters) + ".csv"
+#         image_folder = "/Users/ellietanimura/bridged_clustering/neurips/template_experiment/wikiart"
+
+#         style_list = ['Early_Renaissance', 'Naive_Art_Primitivism', 'Abstract_Expressionism', 'Baroque', 'Ukiyo_e', 'Rococo']
+#         print(style_list[:n_clusters])
+#         df = pd.read_csv(metadata_csv)
+#         df = df[df['style'].isin(style_list[:n_clusters])]
+#         df = df.dropna(subset=['year'])
+#         df['year'] = df['year'].astype(int)
+
+#         results = run_all_trials(df, image_folder, n_clusters=n_clusters)
+
+#         for s in SUPERVISED_VALUES:
+#             print(f"Supervised {s:.2%} — BKM MAE: {np.mean(results[s]['BKM']):.2f}, KNN MAE: {np.mean(results[s]['KNN']):.2f}")
+
 if __name__ == '__main__':
-    metadata_csv = "/Users/ellietanimura/bridged_clustering/neurips/template_experiment/filtered_styles.csv"
-    image_folder = "/Users/ellietanimura/bridged_clustering/neurips/template_experiment/wikiart"
+    output_path = "gnn_cluster_sweep_results.txt"
 
-    df = pd.read_csv(metadata_csv)
-    df = df[df['style'].isin(['Early_Renaissance', 'Naive_Art_Primitivism'])]
-    df = df.dropna(subset=['year'])
-    df['year'] = df['year'].astype(int)
+    with open(output_path, 'w') as f:
+        for n_clusters in N_CLUSTERS: 
+            f.write(f"\n========== Clusters: {n_clusters} ==========\n")
+            print(n_clusters)
 
-    results = run_all_trials(df, image_folder)
+            metadata_csv = f"/Users/ellietanimura/bridged_clustering/neurips/template_experiment/filtered_styles{n_clusters}.csv"
+            image_folder = "/Users/ellietanimura/bridged_clustering/neurips/template_experiment/wikiart"
 
-    for s in SUPERVISED_VALUES:
-        print(f"Supervised {s:.2%} — BKM MAE: {np.mean(results[s]['BKM']):.2f}, KNN MAE: {np.mean(results[s]['KNN']):.2f}")
+            style_list = ['Early_Renaissance', 'Naive_Art_Primitivism', 'Abstract_Expressionism', 'Baroque', 'Ukiyo_e', 'Rococo']
+            print(style_list[:n_clusters])
+            df = pd.read_csv(metadata_csv)
+            df = df[df['style'].isin(style_list[:n_clusters])]
+            df = df.dropna(subset=['year'])
+            df['year'] = df['year'].astype(int)
+
+            results = run_all_trials(df, image_folder, n_clusters=n_clusters)
+
+            for s in SUPERVISED_VALUES:
+                bkm = np.mean(results[s]['BKM'])
+                knn = np.mean(results[s]['KNN'])
+                gnn = np.mean(results[s]['GNN'])
+                line = f"Supervised {s:.2%} — BKM MAE: {bkm:.2f}, KNN MAE: {knn:.2f}, GNN MAE: {gnn:.2f}\n"
+                print(line.strip())
+                f.write(line)
