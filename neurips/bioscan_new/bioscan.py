@@ -1,3 +1,5 @@
+### Script 0: For Bioscan Dataset
+
 import pandas as pd
 import numpy as np
 import random
@@ -602,46 +604,254 @@ def mean_teacher_regression(supervised_samples, inference_samples):
     return predictions, actuals
 
 
-############################################################
-#  NEW BASELINES (state‑of‑the‑art proxies, self‑contained) #
-############################################################
-from sklearn.multioutput import MultiOutputRegressor
-from sklearn.svm import SVR
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.preprocessing import StandardScaler
-from xgboost import XGBRegressor
-import warnings
-
-
-############################################################
-# Model D: Gradient‑Boosted Trees  (XGBoost)
-############################################################
-from sklearn.multioutput import MultiOutputRegressor
-from xgboost import XGBRegressor
+##############################################
+# Model D: FixMatch #
+##############################################
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
 
-# Paper: XGBoost – A Scalable Tree-Boosting System :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3}
-def xgboost_regression(sup_df, inf_df,
-                       **xgb_params):               # e.g. n_estimators=200, max_depth=6
-    if not xgb_params:                              # sensible defaults
-        xgb_params = dict(n_estimators=200,
-                          learning_rate=0.05,
-                          max_depth=6,
-                          subsample=0.8,
-                          colsample_bytree=0.8,
-                          objective='reg:squarederror',
-                          verbosity=0,
-                          n_jobs=-1)
-    Xtr = np.vstack(sup_df['morph_coordinates'])
-    ytr = np.vstack(sup_df['gene_coordinates'])
-    Xte = np.vstack(inf_df['morph_coordinates'])
-    yte = np.vstack(inf_df['gene_coordinates'])
+# ----------------------------------
+#  1) MLP backbone + EMA teacher
+# ----------------------------------
+class MLPRegressor(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_dim)
+        )
 
-    # multi‑output wrapper trains one model per dimension
-    model = MultiOutputRegressor(XGBRegressor(**xgb_params))
-    model.fit(Xtr, ytr)
-    preds = model.predict(Xte)
-    return preds, yte
+    def forward(self, x):
+        return self.net(x)
+
+class FixMatchRegressor:
+    def __init__(
+        self,
+        input_dim,
+        output_dim,
+        lr=1e-3,
+        alpha_ema=0.99,
+        lambda_u_max=1.0,
+        rampup_length=10,
+        conf_threshold=0.1,   # threshold on std of pseudo-labels
+        device=None
+    ):
+        device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
+
+        # Student and EMA teacher
+        self.student = MLPRegressor(input_dim, output_dim).to(device)
+        self.teacher = MLPRegressor(input_dim, output_dim).to(device)
+        self._update_teacher(ema_decay=0.0)  # initialize teacher = student
+
+        self.optimizer = torch.optim.Adam(self.student.parameters(), lr=lr)
+        self.ema_decay = alpha_ema
+
+        # Unsupervised weight schedule
+        self.lambda_u_max = lambda_u_max
+        self.rampup_length = rampup_length
+
+        # Confidence threshold (we’ll measure std of multiple weak preds)
+        self.conf_threshold = conf_threshold
+
+        # MSE criterion
+        self.mse_loss = nn.MSELoss(reduction="none")
+
+    @torch.no_grad()
+    def _update_teacher(self, ema_decay=None):
+        """EMA update: teacher_params = ema_decay * teacher + (1-ema_decay) * student"""
+        decay = self.ema_decay if ema_decay is None else ema_decay
+        for t_param, s_param in zip(self.teacher.parameters(), self.student.parameters()):
+            t_param.data.mul_(decay).add_(s_param.data, alpha=(1.0 - decay))
+
+    def _get_lambda_u(self, current_epoch):
+        """Linear ramp-up from 0 -> lambda_u_max over rampup_length epochs"""
+        if current_epoch >= self.rampup_length:
+            return self.lambda_u_max
+        else:
+            return self.lambda_u_max * (current_epoch / self.rampup_length)
+
+    def _augment(self, x, strong=False):
+        """
+        Return an augmented version of x.
+        - strong: heavier noise + random dimension dropout.
+        """
+        # 1) Additive Gaussian noise (relative to feature scale)
+        noise_scale = 0.05 if not strong else 0.2
+        x_noisy = x + torch.randn_like(x) * noise_scale
+
+        # 2) Multiplicative jitter (small random scale per-dimension)
+        if strong:
+            scale = 1.0 + 0.1 * torch.randn_like(x)
+            x_noisy = x_noisy * scale
+
+        # 3) Random dimension dropout (only for strong)
+        if strong:
+            # randomly zero out 10% of dimensions
+            mask = (torch.rand_like(x) > 0.1).float()
+            x_noisy = x_noisy * mask
+
+        return x_noisy
+
+    def train(
+        self,
+        sup_loader: DataLoader,
+        unl_loader: DataLoader,
+        epochs: int = 200
+    ):
+        """
+        Train student+teacher for `epochs` epochs.
+        sup_loader yields (x_sup, y_sup)
+        unl_loader yields (x_unl, dummy)  [we ignore dummy]
+        """
+        self.student.train()
+        self.teacher.train()
+
+        min_batches = min(len(sup_loader), len(unl_loader))
+
+        for epoch in range(epochs):
+            lambda_u = self._get_lambda_u(epoch)
+            epoch_losses = {"sup": 0.0, "unsup": 0.0}
+
+            sup_iter = iter(sup_loader)
+            unl_iter = iter(unl_loader)
+
+            for _ in range(min_batches):
+                # --- 1) Fetch one sup batch and one unl batch
+                x_sup, y_sup = next(sup_iter)
+                x_unl, _ = next(unl_iter)
+
+                x_sup = x_sup.float().to(self.device)
+                y_sup = y_sup.float().to(self.device)
+                x_unl = x_unl.float().to(self.device)
+
+                # --- 2) Supervised forward
+                preds_sup = self.student(x_sup)                    # (B, out_dim)
+                loss_sup = F.mse_loss(preds_sup, y_sup, reduction="mean")
+
+                # --- 3) Unlabeled: generate multiple weak views for confidence
+                # We’ll do two weak augmentations per sample.
+                x_unl_w1 = self._augment(x_unl, strong=False)
+                x_unl_w2 = self._augment(x_unl, strong=False)
+
+                with torch.no_grad():
+                    # Teacher produces pseudo-labels
+                    p_w1 = self.teacher(x_unl_w1)  # (B, out_dim)
+                    p_w2 = self.teacher(x_unl_w2)  # (B, out_dim)
+
+                    # Estimate “confidence” by the two weak preds’ difference
+                    pseudo_label = 0.5 * (p_w1 + p_w2)  # average as final pseudo
+                    std_weak = (p_w1 - p_w2).pow(2).mean(dim=1).sqrt()  # (B,) L2‐std
+
+                # Mask = 1 if std_weak < threshold, else 0
+                mask = (std_weak < self.conf_threshold).float().unsqueeze(1)  # (B,1)
+
+                # --- 4) Strong aug on unlabeled
+                x_unl_s = self._augment(x_unl, strong=True)
+                preds_s = self.student(x_unl_s)  # (B, out_dim)
+
+                # --- 5) Unsupervised consistency loss (only for “confident” samples)
+                # We compute MSE per-sample, then multiply by mask
+                loss_unsup_per_sample = self.mse_loss(preds_s, pseudo_label)  # (B, out_dim)
+                # average over output_dim, then multiply by mask
+                loss_unsup = (loss_unsup_per_sample.mean(dim=1) * mask.squeeze(1)).mean()
+
+                # --- 6) Total loss
+                loss = loss_sup + lambda_u * loss_unsup
+
+                # --- 7) Backprop & update student
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+                # --- 8) EMA update for teacher
+                self._update_teacher()
+
+                epoch_losses["sup"] += loss_sup.item()
+                epoch_losses["unsup"] += loss_unsup.item()
+
+            # (Optional) print or log epoch stats:
+            #  avg_sup = epoch_losses["sup"] / min_batches
+            #  avg_unsup = epoch_losses["unsup"] / min_batches
+            #  print(f"Epoch {epoch:03d} | L_sup={avg_sup:.4f} | L_unsup={avg_unsup:.4f} | λ_u={lambda_u:.4f}")
+
+    @torch.no_grad()
+    def predict(self, X: torch.Tensor):
+        """Use the EMA teacher to predict on new data."""
+        self.teacher.eval()
+        X = X.float().to(self.device)
+        return self.teacher(X).cpu().numpy()
+
+# --------------------------------------------
+#  2) FixMatch training wrapper
+# --------------------------------------------
+def fixmatch_regression(
+    supervised_df,
+    inference_df,
+    epochs=200,
+    batch_size=64,
+    lr=1e-3,
+    alpha_ema=0.99,
+    lambda_u_max=1.0,
+    rampup_length=10,
+    conf_threshold=0.1
+):
+    """
+    A stronger FixMatch‐style regressor:
+      - Separate EMA teacher to generate pseudo‐labels
+      - Confidence masking via two weak‐augment predictions
+      - Richer augmentations (additive noise + multiplicative jitter + dropout)
+      - Linear ramp‐up of unsupervised weight λ_u
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # 1) Prepare numpy arrays
+    X_sup = np.vstack(supervised_df["morph_coordinates"])
+    y_sup = np.vstack(supervised_df["gene_coordinates"])
+    X_unl = np.vstack(inference_df["morph_coordinates"])
+    y_unl_true = np.vstack(inference_df["gene_coordinates"])
+
+    input_dim = X_sup.shape[1]
+    output_dim = y_sup.shape[1]
+
+    # 2) Build datasets & loaders
+    sup_dataset = TensorDataset(
+        torch.tensor(X_sup, dtype=torch.float32),
+        torch.tensor(y_sup, dtype=torch.float32)
+    )
+    unl_dataset = TensorDataset(
+        torch.tensor(X_unl, dtype=torch.float32),
+        torch.zeros((len(X_unl), output_dim), dtype=torch.float32)  # dummy
+    )
+    sup_loader = DataLoader(sup_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    unl_loader = DataLoader(unl_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+
+    # 3) Initialize FixMatchRegressor
+    fixmatch = FixMatchRegressor(
+        input_dim=input_dim,
+        output_dim=output_dim,
+        lr=lr,
+        alpha_ema=alpha_ema,
+        lambda_u_max=lambda_u_max,
+        rampup_length=rampup_length,
+        conf_threshold=conf_threshold,
+        device=device
+    )
+
+    # 4) Train
+    fixmatch.train(sup_loader, unl_loader, epochs=epochs)
+
+    # 5) Final inference on unlabeled
+    X_unl_tensor = torch.tensor(X_unl, dtype=torch.float32)
+    preds_unl = fixmatch.predict(X_unl_tensor)
+
+    return preds_unl, y_unl_true
 
 ############################################################
 # Model E: Laplacian‑Regularised Least‑Squares (LapRLS)
@@ -1075,21 +1285,18 @@ from torch.utils.data import DataLoader, TensorDataset
 
 class RankUpNet(nn.Module):
     """
-    Fully-faithful RankUp network:
-      - shared backbone f(x; θ)
-      - regression head h(f) → y
-      - Auxiliary Ranking Classifier (ARC) g(f) → {0,1}
+    Fully‐faithful RankUp network:
+      - backbone: f(x; θ) → feat ∈ ℝ^h
+      - regression head: h(feat) → y ∈ ℝ^d
+      - ARC head: g(feat) → logits ∈ ℝ^2
     """
     def __init__(self, in_dim, hidden_dim, out_dim):
         super().__init__()
-        # backbone
         self.backbone = nn.Sequential(
             nn.Linear(in_dim, hidden_dim), nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim), nn.ReLU()
         )
-        # regression head
         self.reg_head = nn.Linear(hidden_dim, out_dim)
-        # ARC head
         self.arc_head = nn.Linear(hidden_dim, 2)
 
     def forward(self, x):
@@ -1102,209 +1309,419 @@ def rankup_regression(
     sup_df,
     inf_df,
     hidden_dim=256,
-    lr=1e-3,
+    lr=1e-3,                 # try reducing if batch_size is large 
     epochs=200,
-    batch_size=64,
+    batch_size=128,
     alpha_arc=1.0,
     alpha_arc_ulb=1.0,
-    alpha_rda=0.1,
-    T=0.5,
-    tau=0.95,
+    alpha_rda=0.05,          # RDA weight
+    T=0.7,                   # temperature for softmax
+    tau=0.90,                # confidence threshold
     ema_m=0.999,
     device=None
 ):
-    """
-    Faithful implementation of RankUp (Huang et al. 2024) with:
-      - ARC supervised + unsupervised FixMatch-style loss
-      - Regression Distribution Alignment (RDA) on unlabeled
-      - EMA teacher model for inference
-
-    Args:
-      sup_df: DataFrame with 'morph_coordinates', 'gene_coordinates'
-      inf_df: DataFrame with 'morph_coordinates', 'gene_coordinates'
-    Returns:
-      preds_unl (ndarray): predictions for inf_df
-      true_unl  (ndarray): ground-truth gene coords for inf_df
-    """
     device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
-    # prepare tensors
-    Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32)
-    ys = torch.tensor(np.vstack(sup_df['gene_coordinates']),    dtype=torch.float32)
-    Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']),   dtype=torch.float32)
-    yu = np.vstack(inf_df['gene_coordinates'])
+
+    Xs = torch.tensor(np.vstack(sup_df['morph_coordinates']), dtype=torch.float32).to(device)
+    ys = torch.tensor(np.vstack(sup_df['gene_coordinates']),    dtype=torch.float32).to(device)
+    Xu = torch.tensor(np.vstack(inf_df['morph_coordinates']),   dtype=torch.float32).to(device)
+    yu = np.vstack(inf_df['gene_coordinates'])  # we'll evaluate MSE on this eventually
 
     in_dim  = Xs.size(1)
     out_dim = ys.size(1)
 
-    # DataLoaders
-    sup_loader = DataLoader(TensorDataset(Xs, ys), batch_size=batch_size, shuffle=True, drop_last=True)
-    unl_loader = DataLoader(TensorDataset(Xu), batch_size=batch_size, shuffle=True, drop_last=True)
+    # Precompute supervised mean and std for RDA
+    sup_mu = ys.mean(0)            # shape (d,)
+    sup_sigma = ys.std(0)          # shape (d,)
 
-    # model + EMA
+    sup_loader = DataLoader(TensorDataset(Xs, ys), batch_size=batch_size, shuffle=True,  drop_last=True)
+    unl_loader = DataLoader(TensorDataset(Xu),       batch_size=batch_size, shuffle=True,  drop_last=True)
+
     model = RankUpNet(in_dim, hidden_dim, out_dim).to(device)
     ema_model = RankUpNet(in_dim, hidden_dim, out_dim).to(device)
     ema_model.load_state_dict(model.state_dict())
-    for p in ema_model.parameters(): p.requires_grad_(False)
+    for p in ema_model.parameters():
+        p.requires_grad_(False)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    # training loop
     for epoch in range(epochs):
         sup_iter = iter(sup_loader)
         unl_iter = iter(unl_loader)
+
+        if epoch < 10:
+            curr_alpha_arc_ulb = 0.0
+        else:
+            ramp = min((epoch - 10) / 40.0, 1.0)
+            curr_alpha_arc_ulb = ramp * alpha_arc_ulb
+
         for _ in range(min(len(sup_loader), len(unl_loader))):
             xb, yb = next(sup_iter)
             (xu_w,) = next(unl_iter)
-            # augment: weak (identity) and strong (gaussian noise)
-            xu_s = xu_w + torch.randn_like(xu_w) * 0.1
 
-            xb, yb, xu_w, xu_s = xb.to(device), yb.to(device), xu_w.to(device), xu_s.to(device)
+            # Summarize yb (d‐dim) into a scalar for ranking:
+            # Option A: mean over dimensions
+            yb_scalar = yb.mean(dim=1, keepdim=True)  # shape (B, 1)
+            # Option B: L2‐norm → uncomment the next line instead:
+            # yb_scalar = yb.norm(dim=1, keepdim=True)  # shape (B, 1)
 
-            # forward sup
+            xb = xb.to(device); yb = yb.to(device)
+            xu_w = xu_w.to(device)
+
+            # --- Strong augmentation on xu_w
+            noise = torch.randn_like(xu_w) * 0.2
+            scale = 1.0 + 0.05 * torch.randn_like(xu_w)
+            xu_s = xu_w * scale + noise
+
+            xb, yb_scalar, xu_w, xu_s = xb.to(device), yb_scalar.to(device), xu_w.to(device), xu_s.to(device)
+
+            # ==== Supervised portion ====
             feat_b, pred_b, logit_arc_b = model(xb)
-            # compute pairwise ARC targets: torch.sign(y_i - y_j)
-            with torch.no_grad():
-                y_diff = yb.unsqueeze(0) - yb.unsqueeze(1)
-                arc_targets_sup = ((y_diff > 0).long().view(-1)).to(device)
-
-            # sup losses
+            # (1) Regression loss on actual d‐dim targets
             loss_reg = F.mse_loss(pred_b, yb)
-            # sup ARC logits matrix
-            logits_mat_b = (logit_arc_b.unsqueeze(0) - logit_arc_b.unsqueeze(1)).view(-1, 2)
+
+            # (2) Supervised ARC: build all B×B pairs
+            y_diff = yb_scalar.unsqueeze(0) - yb_scalar.unsqueeze(1)   # shape (B, B, 1)
+            arc_targets_sup = (y_diff.squeeze(-1) > 0).long().view(-1)  # (B*B,)
+            logits_mat_b = (logit_arc_b.unsqueeze(0) - logit_arc_b.unsqueeze(1)).view(-1, 2)  # (B*B, 2)
             loss_arc_sup = F.cross_entropy(logits_mat_b, arc_targets_sup)
 
-            # forward unlabeled weak
-            _, _, logit_arc_u_w = model(xu_w)
-            probs = F.softmax(logit_arc_u_w / T, dim=1)
-            maxp, pseudo = probs.max(dim=1)
-            mask = (maxp >= tau).float()
+            # ==== Unlabeled (Weak) portion with EMA teacher ====
+            with torch.no_grad():
+                _, _, logit_arc_u_w = ema_model(xu_w)  # shape (B, 2)
+            logits_mat_u_w = (logit_arc_u_w.unsqueeze(0) - logit_arc_u_w.unsqueeze(1)).view(-1, 2)  # (B*B, 2)
+            probs_mat_u_w = F.softmax(logits_mat_u_w / T, dim=1)  # (B*B, 2)
+            maxp_mat, pseudo_mat = probs_mat_u_w.max(dim=1)       # (B*B,)
+            mask_mat = (maxp_mat >= tau).float()                  # (B*B,)
 
-            # forward unlabeled strong
-            _, _, logit_arc_u_s = model(xu_s)
-            loss_arc_unsup = (F.cross_entropy(logit_arc_u_s, pseudo, reduction='none') * mask).mean()
+            # ==== Unlabeled (Strong) portion with student ====
+            _, _, logit_arc_u_s = model(xu_s)  # shape (B, 2)
+            logits_mat_u_s = (logit_arc_u_s.unsqueeze(0) - logit_arc_u_s.unsqueeze(1)).view(-1, 2)
+            loss_arc_unsup = (F.cross_entropy(logits_mat_u_s, pseudo_mat, reduction='none') * mask_mat).mean()
 
-            # RDA on regression outputs (mean & std alignment)
-            _, pred_u_w, _ = model(xu_w)
-            mu_sup = pred_b.detach().mean(0)
-            sigma_sup = pred_b.detach().std(0)
-            mu_unl = pred_u_w.mean(0)
-            sigma_unl = pred_u_w.std(0)
-            loss_rda = ((mu_unl - mu_sup)**2).sum() + ((sigma_unl - sigma_sup)**2).sum()
+            # ==== RDA: match student’s unlabeled moments to sup_mu/sup_sigma ====
+            _, pred_u_w_student, _ = model(xu_w)  # (B, d)
+            mu_unl = pred_u_w_student.mean(0)     # (d,)
+            sigma_unl = pred_u_w_student.std(0)   # (d,)
+            loss_rda = ((mu_unl - sup_mu)**2).sum() + ((sigma_unl - sup_sigma)**2).sum()
 
-            # total loss: Eq.6 of RankUp paper
-            loss = (loss_reg + alpha_arc * loss_arc_sup
-                    + alpha_arc_ulb * loss_arc_unsup
+            # ==== Combine losses ====
+            loss = (loss_reg
+                    + alpha_arc * loss_arc_sup
+                    + curr_alpha_arc_ulb * loss_arc_unsup
                     + alpha_rda * loss_rda)
 
-            optimizer.zero_grad(); loss.backward(); optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
             # EMA update
             with torch.no_grad():
                 for ema_p, p in zip(ema_model.parameters(), model.parameters()):
-                    ema_p.data.mul_(ema_m).add_(p.data, alpha=1-ema_m)
+                    ema_p.data.mul_(ema_m).add_(p.data, alpha=(1.0 - ema_m))
 
-    # inference with EMA model
+        # Optional: print epoch‐level losses here
+
+    # ==== Final inference on unlabeled via EMA teacher ====
     ema_model.eval()
     with torch.no_grad():
-        _, preds_unl, _ = ema_model(Xu.to(device))
+        _, preds_unl, _ = ema_model(Xu)  # shape (n_unlabeled, d)
     return preds_unl.cpu().numpy(), yu
 
 
-##################################################
-# Model J: AGDN
-##################################################
+###################################
+#  New Baseline: Basic GCN        #
+###################################
 
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import MessagePassing
+from torch_geometric.nn import GCNConv
 from torch_geometric.utils import add_self_loops, degree
 
-class ADCConv(MessagePassing):
-    def __init__(self, in_channels, out_channels, K=5):
-        super().__init__(aggr='add')
-        self.K = K
-        self.log_t = nn.Parameter(torch.log(torch.tensor(1.0)))
-        self.lin = nn.Linear(in_channels, out_channels)
-
-    def forward(self, x, edge_index):
-        edge_index, norm = self._normalize(edge_index, x.size(0))
-        h = x
-        t = torch.exp(self.log_t)
-        out = torch.exp(-t) * h
-        scale = torch.exp(-t)
-        for k in range(1, self.K + 1):
-            h = self.propagate(edge_index, x=h, norm=norm)
-            scale = scale * t / k
-            out = out + scale.view(-1, *([1] * (h.dim() - 1))) * h
-        return self.lin(out)
-
-    def message(self, x_j, norm):
-        return norm.view(-1, 1) * x_j
-
-    def _normalize(self, edge_index, num_nodes):
-        edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
-        row, col = edge_index
-        deg = degree(col, num_nodes=num_nodes)
-        deg_inv_sqrt = deg.pow(-0.5)
-        norm = deg_inv_sqrt[row] * deg_inv_sqrt[col]
-        return edge_index, norm
-
-class AGDN(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_layers=2, K=5, dropout=0.1):
+class GCN(nn.Module):
+    """
+    Simple 2-layer GCN for regression:
+      - conv1: GCNConv(in_channels → hidden_channels)
+      - conv2: GCNConv(hidden_channels → out_channels)
+    """
+    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, dropout: float = 0.1):
         super().__init__()
-        self.convs = nn.ModuleList()
-        self.last_flags = []
-        self.dropouts = []
-        self.convs.append(ADCConv(in_channels, hidden_channels, K)); self.last_flags.append(False); self.dropouts.append(dropout)
-        for _ in range(num_layers - 2):
-            self.convs.append(ADCConv(hidden_channels, hidden_channels, K)); self.last_flags.append(False); self.dropouts.append(dropout)
-        self.convs.append(ADCConv(hidden_channels, out_channels, K)); self.last_flags.append(True);  self.dropouts.append(0.0)
+        self.conv1 = GCNConv(in_channels, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, out_channels)
+        self.dropout = dropout
 
-    def forward(self, x, edge_index):
-        for conv, last, drop in zip(self.convs, self.last_flags, self.dropouts):
-            x = conv(x, edge_index)
-            if not last:
-                x = F.elu(x)
-                x = F.dropout(x, p=drop, training=self.training)
+    def forward(self, x: torch.Tensor, edge_index: torch.LongTensor):
+        """
+        x: [N, in_channels]       node features
+        edge_index: [2, E]        adjacency
+        Returns: [N, out_channels] node regression outputs
+        """
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.conv2(x, edge_index)
         return x
 
-
-def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, dropout=0.1, epochs=200, lr=1e-3, device=None):
+def gcn_regression(
+    supervised_df,
+    inference_df,
+    hidden=64,
+    dropout=0.1,
+    epochs=200,
+    lr=1e-3,
+    device=None
+):
+    """
+    Train a basic GCN on supervised nodes and predict on inference nodes.
+    supervised_df: DataFrame with 'morph_coordinates', 'gene_coordinates'
+    inference_df:  DataFrame with 'morph_coordinates', 'gene_coordinates'
+    """
     device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
-    sup_m = np.stack(supervised_df['morph_coordinates'].values)
-    sup_g = np.stack(supervised_df['gene_coordinates'].values)
-    inf_m = np.stack(inference_df['morph_coordinates'].values)
-    inf_g = np.stack(inference_df['gene_coordinates'].values)
+
+    # Stack supervised and inference features
+    sup_m = np.vstack(supervised_df['morph_coordinates'].values)
+    sup_g = np.vstack(supervised_df['gene_coordinates'].values)
+    inf_m = np.vstack(inference_df['morph_coordinates'].values)
+    inf_g = np.vstack(inference_df['gene_coordinates'].values)
+
+    # Create node feature tensor and label tensor
     X = torch.tensor(np.vstack([sup_m, inf_m]), dtype=torch.float32, device=device)
     Y_sup = torch.tensor(sup_g, dtype=torch.float32, device=device)
     N_sup = sup_m.shape[0]
+    N_inf = inf_m.shape[0]
+
+    # Build edge_index: same scheme as ADC/AGDN (fully connect sup↔sup and sup↔inf)
     srcs, dsts = [], []
+    # Sup→Sup edges
     for i in range(N_sup):
         for j in range(N_sup):
             if i != j:
                 srcs.append(i); dsts.append(j)
-    for i in range(inf_m.shape[0]):
+    # Inf↔Sup edges
+    for i in range(N_inf):
         u = N_sup + i
         for j in range(N_sup):
             srcs.extend([u, j]); dsts.extend([j, u])
     edge_index = torch.tensor([srcs, dsts], dtype=torch.long, device=device)
-    model = AGDN(in_channels=sup_m.shape[1], hidden_channels=hidden, out_channels=sup_g.shape[1], num_layers=num_layers, K=K, dropout=dropout).to(device)
+
+    # Instantiate GCN
+    in_dim = sup_m.shape[1]
+    out_dim = sup_g.shape[1]
+    model = GCN(in_channels=in_dim, hidden_channels=hidden, out_channels=out_dim, dropout=dropout).to(device)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
+
     model.train()
     for epoch in range(1, epochs + 1):
         optimizer.zero_grad()
-        out = model(X, edge_index)
+        out = model(X, edge_index)        # [N_sup+N_inf, out_dim]
         loss = loss_fn(out[:N_sup], Y_sup)
         loss.backward()
         optimizer.step()
+
     model.eval()
     with torch.no_grad():
-        pred = model(X, edge_index)[N_sup:].cpu().numpy()
+        pred = model(X, edge_index)[N_sup:].cpu().numpy()  # predictions on inference nodes
     return pred, inf_g
+
+
+###################################
+# New Models for Unmatched Regression #
+####################################
+
+
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
+
+def monotone_projection_regression(image_df, gene_df, inference_df):
+    """
+    A “single‐projection + quantile‐matching” baseline for unmatched regression.
+    
+    Steps:
+      1) Let X = [x_i] from image_df['morph_coordinates']  (shape: (N_img, d))
+         Let Y = [y_j] from gene_df['gene_coordinates']     (shape: (N_gene, d))
+      2) Compute first‐PC direction of X; call the projection values px_i = u_X^T x_i.
+         Compute first‐PC direction of Y; call py_j = u_Y^T y_j.
+      3) Sort X’s by px, sort Y’s by py.  Create a “pseudo‐paired” list:
+            pseudo_X_k  ←  k‐th smallest X (w.r.t. px)
+            pseudo_Y_k  ←  k‐th smallest Y (w.r.t. py)
+      4) Train a multivariate regressor  R: R( x ) ≈ y  on the pseudo‐pairs { (pseudo_X_k, pseudo_Y_k) }.
+      5) Return  R( inference_X )  for each inference_X in inference_df['morph_coordinates'].  
+    """
+    # 1) Extract data
+    X_img = np.vstack(image_df['morph_coordinates'].values)   # shape: (N_img, d)
+    Y_gene = np.vstack(gene_df['gene_coordinates'].values)    # shape: (N_gene, d)
+    X_inf = np.vstack(inference_df['morph_coordinates'].values)  # (N_inf, d)
+
+    # 2) Fit PCA on each, take first component (1D)
+    pca_X = PCA(n_components=1).fit(X_img)
+    pca_Y = PCA(n_components=1).fit(Y_gene)
+    proj_X = pca_X.transform(X_img).squeeze()   # (N_img,)
+    proj_Y = pca_Y.transform(Y_gene).squeeze()  # (N_gene,)
+
+    # 3) Sort indices by projection
+    idx_X_sorted = np.argsort(proj_X)  # indices of X in increasing order
+    idx_Y_sorted = np.argsort(proj_Y)
+
+    # Keep only min(N_img, N_gene) pairs
+    N_pair = min(len(idx_X_sorted), len(idx_Y_sorted))
+    idx_X_paired = idx_X_sorted[:N_pair]
+    idx_Y_paired = idx_Y_sorted[:N_pair]
+
+    X_pseudo = X_img[idx_X_paired]  # shape: (N_pair, d)
+    Y_pseudo = Y_gene[idx_Y_paired] # shape: (N_pair, d)
+
+    # 4) Fit a multivariate linear regressor on those pseudo‐pairs
+    linreg = LinearRegression().fit(X_pseudo, Y_pseudo)
+
+    # 5) Make predictions on the true inference set
+    Y_pred_inf = linreg.predict(X_inf)  # (N_inf, d)
+    Y_true_inf = Y_gene[: len(X_inf) ] if len(Y_gene) >= len(X_inf) else None
+    # Note: We do have ground‐truth gene‐vectors for inference_df, so:
+    Y_true_inf = np.vstack(inference_df['gene_coordinates'].values)
+
+    return Y_pred_inf, Y_true_inf
+
+
+
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.preprocessing import StandardScaler
+
+def kernel_mean_matching_regression(image_df, gene_df, inference_df, lam=1e-2, sigma=None):
+    """
+    A “kernel‐mean matching” baseline via RBF‐KRR on pseudo‐paired unordered samples.
+    
+    1) Let X = [x_i] from image_df['morph_coordinates'],  Y = [y_i] from gene_df['gene_coordinates'].
+    2) Standardize X and Y (zero‐mean, unit‐var per dimension).
+    3) If sigma is None, set σ = median pairwise distance on X.
+    4) Fit KernelRidge (RBF) on {(X_i, Y_i)}_{i=1}^N as if “ordered” (even though they are not).
+       Because α is large (lam small), this will try to match means instead of exact pairs.
+    5) Predict on inference_df['morph_coordinates'].  
+    """
+    # 1) Stack data
+    X_img = np.vstack(image_df['morph_coordinates'].values)   # (N_img, d)
+    Y_gene = np.vstack(gene_df['gene_coordinates'].values)    # (N_gene, d)
+    X_inf = np.vstack(inference_df['morph_coordinates'].values)  # (N_inf, d)
+
+    # Truncate to min(N_img, N_gene, N_inf) if shapes differ
+    N_pair = min(len(X_img), len(Y_gene))
+    X_img = X_img[:N_pair]
+    Y_gene = Y_gene[:N_pair]
+
+    # 2) Standardize each space separately
+    scaler_X = StandardScaler().fit(X_img)
+    scaler_Y = StandardScaler().fit(Y_gene)
+    Xs = scaler_X.transform(X_img)   # shape: (N_pair, d)
+    Ys = scaler_Y.transform(Y_gene)  # shape: (N_pair, d)
+
+    # 3) Choose sigma by median‐pairwise on Xs if not given
+    if sigma is None:
+        # compute pairwise Euclidean distances on a random subset (for speed)
+        sample_idx = np.random.choice(N_pair, min(N_pair, 200), replace=False)
+        sub = Xs[sample_idx]
+        d2 = np.sum((sub[:, None, :] - sub[None, :, :])**2, axis=2).ravel()
+        med = np.median(d2[d2 > 0])
+        sigma = np.sqrt(med)
+    gamma = 1.0 / (2 * sigma**2)
+
+    # 4) Fit a KernelRidge regressor: input = Xs, target = Ys (multi‐output)
+    #    We wrap two calls: one KRR per dimension of Y
+    preds = []
+    for dim in range(Ys.shape[1]):
+        kr = KernelRidge(kernel='rbf', alpha=lam, gamma=gamma)
+        kr.fit(Xs, Ys[:, dim])
+        preds.append(kr.predict(scaler_X.transform(np.vstack(inference_df['morph_coordinates']))))
+    # preds is a list of (N_inf,) arrays; stack into (N_inf, d)
+    Y_pred_inf = np.vstack(preds).T
+
+    # 5) Un‐standardize
+    Y_pred_inf = scaler_Y.inverse_transform(Y_pred_inf)
+    Y_true_inf = np.vstack(inference_df['gene_coordinates'].values)
+
+    return Y_pred_inf, Y_true_inf
+
+
+
+import numpy as np
+
+def deconvolution_linear_regression(image_df, gene_df, inference_df, eps=1e-6):
+    """
+    A “covariance‐matching / Wiener‐deconvolution” surrogate (Azadkia & Balabdaoui, 2024),
+    modified so that it works even when d_X != d_Y.
+
+    Steps:
+      1) Let X = [x_i] from image_df['morph_coordinates']    (shape: N_pair × d_X)
+         Let Y = [y_j] from gene_df['gene_coordinates']     (shape: N_pair × d_Y)
+         (If len(X_img) != len(Y_gene), truncate both to N_pair = min(N_img, N_gene).)
+      2) Compute Σ_XX = (1/N_pair) · X^T X  ∈ ℝ^{d_X×d_X},  Σ_YY = (1/N_pair) · Y^T Y  ∈ ℝ^{d_Y×d_Y}.
+         Add eps·I_{d_X} to Σ_XX, and eps·I_{d_Y} to Σ_YY for numerical stability.
+      3) Eigendecompose:
+         Σ_XX = U_X Λ_X U_X^T,   Σ_YY = U_Y Λ_Y U_Y^T.
+      4) Let r = min(d_X, d_Y).  Keep the top‐r eigenpairs:
+         U_{X,r} = U_X[:, :r]   (shape: d_X×r),   Λ_{X,r} = diag(λ_X[:r])   (shape: r×r),
+         U_{Y,r} = U_Y[:, :r]   (shape: d_Y×r),   Λ_{Y,r} = diag(λ_Y[:r])   (shape: r×r).
+      5) Form
+         Λ_{X,r}^{-1/2} = diag(1/√(λ_X[:r]))  (r×r),
+         Λ_{Y,r}^{1/2}  = diag(√(λ_Y[:r]))     (r×r).
+      6) Set
+         A_est = U_{Y,r} · Λ_{Y,r}^{1/2} · Λ_{X,r}^{-1/2} · U_{X,r}^T   ∈ ℝ^{d_Y×d_X}.
+      7) For each x ∈ inference_df (a d_X‐vector), predict ŷ = A_est · x ∈ ℝ^{d_Y}.
+         Return (all predictions, all true gene‐vectors).
+    """
+    # 1) Stack / truncate to N_pair
+    X_img = np.vstack(image_df['morph_coordinates'].values)   # shape: (N_img, d_X)
+    Y_gene = np.vstack(gene_df['gene_coordinates'].values)    # shape: (N_gene, d_Y)
+    N_pair = min(len(X_img), len(Y_gene))
+
+    X = X_img[:N_pair]   # (N_pair × d_X)
+    Y = Y_gene[:N_pair]  # (N_pair × d_Y)
+
+    d_X = X.shape[1]
+    d_Y = Y.shape[1]
+
+    # 2) Compute covariance‐like matrices (with eps·I)
+    Sigma_XX = (X.T @ X) / N_pair + eps * np.eye(d_X)   # (d_X × d_X)
+    Sigma_YY = (Y.T @ Y) / N_pair + eps * np.eye(d_Y)   # (d_Y × d_Y)
+
+    # 3) Eigendecompose each
+    λ_x, U_x = np.linalg.eigh(Sigma_XX)   # λ_x: (d_X,), U_x: (d_X × d_X)
+    λ_y, U_y = np.linalg.eigh(Sigma_YY)   # λ_y: (d_Y,), U_y: (d_Y × d_Y)
+
+    # 4) Keep top‐r eigenpairs, where r = min(d_X, d_Y)
+    r = min(d_X, d_Y)
+    # Sort eigenvalues in descending order, then select top r
+    idx_x_desc = np.argsort(λ_x)[::-1]
+    idx_y_desc = np.argsort(λ_y)[::-1]
+
+    idx_x_r = idx_x_desc[:r]   # indices of top‐r λ_x
+    idx_y_r = idx_y_desc[:r]   # indices of top‐r λ_y
+
+    # U_{X,r} : (d_X × r),   Λ_{X,r} : (r,)
+    U_x_r = U_x[:, idx_x_r]   # (d_X × r)
+    Λ_x_r = λ_x[idx_x_r]      # (r,)
+
+    # U_{Y,r} : (d_Y × r),   Λ_{Y,r} : (r,)
+    U_y_r = U_y[:, idx_y_r]   # (d_Y × r)
+    Λ_y_r = λ_y[idx_y_r]      # (r,)
+
+    # 5) Form diagonal sqrt/inv‐sqrt matrices (each r×r)
+    inv_sqrt_Λx_r = np.diag(1.0 / np.sqrt(Λ_x_r))   # (r×r)
+    sqrt_Λy_r     = np.diag(np.sqrt(Λ_y_r))         # (r×r)
+
+    # 6) Build A_est = U_{Y,r} · sqrt(Λ_{Y,r}) · inv_sqrt(Λ_{X,r}) · U_{X,r}^T
+    #    Shapes: U_{Y,r} (d_Y×r), sqrt_Λy_r (r×r), inv_sqrt_Λx_r (r×r), U_{X,r}^T (r×d_X)
+    A_est = U_y_r @ sqrt_Λy_r @ inv_sqrt_Λx_r @ U_x_r.T   # shape: (d_Y × d_X)
+
+    # 7) Predict on the inference set
+    X_inf = np.vstack(inference_df['morph_coordinates'].values)  # shape: (N_inf, d_X)
+    Y_pred_inf = (A_est @ X_inf.T).T                               # shape: (N_inf, d_Y)
+    Y_true_inf = np.vstack(inference_df['gene_coordinates'].values)  # shape: (N_inf, d_Y)
+
+    return Y_pred_inf, Y_true_inf
+
 
 
 
@@ -1387,8 +1804,8 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
     knn_predictions, knn_actuals = knn_regression(supervised_samples, inference_samples, n_neighbors=max(1, int(n_samples * supervised)))
     print("starting mean teacher")
     mt_predictions, mt_actuals = mean_teacher_regression(supervised_samples, inference_samples)
-    # print("starting xgboost")
-    # xgb_preds, xgb_actuals = xgboost_regression(supervised_samples, inference_samples)
+    print("starting fixmatch")
+    fixmatch_predictions, fixmatch_actuals = fixmatch_regression(supervised_samples, inference_samples)
     print("starting laprls")
     lap_preds, lap_actuals = laprls_regression(supervised_samples, inference_samples)
     print("starting tsvr")
@@ -1397,60 +1814,92 @@ def run_experiment(csv_path, image_folder, n_families, n_samples=50, supervised=
     tnnr_preds, tnnr_actuals = tnnr_regression(supervised_samples, inference_samples)
     print("starting ucvme")
     ucv_preds, ucv_actuals = ucvme_regression(supervised_samples, inference_samples)
-    # print("starting rankup")
-    # rank_preds, rank_actuals = rankup_regression(supervised_samples, inference_samples)
-    print("starting agdn")
-    agdn_preds, agdn_actuals = agdn_regression(supervised_samples, inference_samples)
+    print("starting rankup")
+    rank_preds, rank_actuals = rankup_regression(supervised_samples, inference_samples)
+    print("starting gcn")
+    gcn_preds, gcn_actuals = gcn_regression(supervised_samples, inference_samples)
+    print("starting monotone‐projection baseline")
+    mono_preds, mono_actuals = monotone_projection_regression(image_df=inference_plus_supervised,
+                                                            gene_df=gene_plus_supervised, 
+                                                            inference_df=inference_samples)
+    print("starting kernel mean matching baseline")
+    kmm_preds, kmm_actuals = kernel_mean_matching_regression(
+        image_df= inference_plus_supervised,  # inference samples with image clusters
+        gene_df=gene_plus_supervised,    # same N but “as if” paired
+        inference_df=inference_samples,
+        lam=1e-2
+    )
+    print("starting deconvolution linear regression baseline")
+    deco_preds, deco_actuals = deconvolution_linear_regression(
+        image_df= inference_plus_supervised,  # inference samples with image clusters
+        gene_df=gene_plus_supervised, 
+        inference_df=inference_samples
+    )
+
+    
+
 
     # Compute errors
     bkm_error, bkm_r2 = evaluate_loss(bkm_predictions, bkm_actuals)
     knn_error, knn_r2 = evaluate_loss(knn_predictions, knn_actuals)
     mean_teacher_error, mean_teacher_r2 = evaluate_loss(mt_predictions, mt_actuals)
-    # xgb_error, xgb_r2 = evaluate_loss(xgb_preds, xgb_actuals)
+    fixmatch_error, fixmatch_r2 = evaluate_loss(fixmatch_predictions, fixmatch_actuals)
     lap_error, lap_r2 = evaluate_loss(lap_preds, lap_actuals)
     tsvr_error, tsvr_r2 = evaluate_loss(tsvr_preds, tsvr_actuals)
     tnnr_error, tnnr_r2 = evaluate_loss(tnnr_preds, tnnr_actuals)
     ucv_error, ucv_r2 = evaluate_loss(ucv_preds, ucv_actuals)
-    # rank_error, rank_r2 = evaluate_loss(rank_preds, rank_actuals)
-    agdn_error, agdn_r2 = evaluate_loss(agdn_preds, agdn_actuals)
+    rank_error, rank_r2 = evaluate_loss(rank_preds, rank_actuals)
+    gcn_error, gcn_r2 = evaluate_loss(gcn_preds, gcn_actuals)
+    mono_error, mono_r2 = evaluate_loss(mono_preds, mono_actuals)
+    kmm_error, kmm_r2 = evaluate_loss(kmm_preds, kmm_actuals)
+    deco_error, deco_r2 = evaluate_loss(deco_preds, deco_actuals)
 
     # Print results
     print(f"Bridged Clustering Error: {bkm_error}")
     print(f"KNN Error: {knn_error}")
     print(f"Mean Teacher Error: {mean_teacher_error}")
-    # print(f"XGBoost Error: {xgb_error}")
+    print(f"FixMatch Error: {fixmatch_error}")
     print(f"Laplacian RLS Error: {lap_error}")
     print(f"TSVR Error: {tsvr_error}")
     print(f"TNNR Error: {tnnr_error}")
     print(f"UCVME Error: {ucv_error}")
-    # print(f"RankUp Error: {rank_error}")
-    print(f"AGDN Error: {agdn_error}")
+    print(f"RankUp Error: {rank_error}")
+    print(f"GCN Error: {gcn_error}")
+    print(f"Monotone Projection Error: {mono_error}")
+    print(f"Kernel Mean Matching Error: {kmm_error}")
+    print(f"Deconvolution Linear Regression Error: {deco_error}")
     # Store results in a dictionary
 
     errors = {
         'BKM': bkm_error,
         'KNN': knn_error,
         'Mean Teacher': mean_teacher_error,
-        # 'XGBoost': xgb_error,
+        'FixMatch': fixmatch_error,
         'Laplacian RLS': lap_error,
         'TSVR': tsvr_error,
         'TNNR': tnnr_error,
         'UCVME': ucv_error,
-        # 'RankUp': rank_error,
-        'AGDN': agdn_error
+        'RankUp': rank_error,
+        'GCN': gcn_error,
+        'Monotone Projection': mono_error,
+        'Kernel Mean Matching': kmm_error,
+        'Deconvolution Linear Regression': deco_error
     }
 
     rs = {
         'BKM': bkm_r2,
         'KNN': knn_r2,
         'Mean Teacher': mean_teacher_r2,
-        # 'XGBoost': xgb_r2,
+        'FixMatch': fixmatch_r2,
         'Laplacian RLS': lap_r2,
         'TSVR': tsvr_r2,
         'TNNR': tnnr_r2,
         'UCVME': ucv_r2,
-        # 'RankUp': rank_r2,
-        'AGDN': agdn_r2
+        'RankUp': rank_r2,
+        'GCN': gcn_r2,
+        'Monotone Projection': mono_r2,
+        'Kernel Mean Matching': kmm_r2,
+        'Deconvolution Linear Regression': deco_r2
     }
     
 
@@ -1462,13 +1911,13 @@ if __name__ == '__main__':
     csv_path = 'test_data.csv'
     image_folder = 'test_images'
 
-    experiment_key = "038"
+    experiment_key = "039"
 
-    n_families_values = [3]
+    n_families_values = [3, 5, 7]
     n_samples_values = [100]
-    supervised_values = [0.04]
+    supervised_values = [0.01, 0.02, 0.04, 0.08]
     out_only_values = [0.2]
-    models = ['BKM', 'KNN', 'Mean Teacher', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'AGDN']
+    models = ['BKM', 'KNN', 'Mean Teacher', 'FixMatch', 'Laplacian RLS', 'TSVR', 'TNNR', 'UCVME', 'RankUp','GCN', 'Monotone Projection', 'Kernel Mean Matching', 'Deconvolution Linear Regression']
 
     n_trials = 20
     

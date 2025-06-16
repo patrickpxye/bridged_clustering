@@ -1145,3 +1145,100 @@ if __name__ == '__main__':
     # Save the results matrix to a file
     np.save('results/total_results_matrix_005.npy', results_matrix)
     print("Experiment completed.")
+
+
+
+def perform_clustering(image_samples, gene_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, n_families):
+    """
+    Perform KMeans clustering on image and gene samples.
+    Returns the trained KMeans objects and raw features.
+    """
+    image_features = encode_images(image_samples['processid'].values, images, image_model, image_transform)
+    image_kmeans = KMeans(n_clusters=n_families, random_state=42).fit(image_features)
+    image_clusters = image_kmeans.predict(image_features)
+    
+    gene_features = encode_genes(gene_samples['dna_barcode'].values, barcode_tokenizer, barcode_model)
+    gene_kmeans = KMeans(n_clusters=n_families, random_state=42).fit(gene_features)
+    gene_clusters = gene_kmeans.predict(gene_features)
+    
+    return image_kmeans, gene_kmeans, image_features, gene_features, image_clusters, gene_clusters
+
+def decisionVector(sample, morph_column='morph_cluster', gene_column='gene_cluster', dim=5):
+
+    # Check if the specified columns exist in the DataFrame
+    if morph_column not in sample.columns:
+        raise KeyError(f"Column '{morph_column}' not found in the DataFrame.")
+    if gene_column not in sample.columns:
+        raise KeyError(f"Column '{gene_column}' not found in the DataFrame.")
+
+    # Create association matrix
+    association_matrix = np.zeros((dim, dim), dtype=int)
+    for i in range(dim):
+        for j in range(dim):
+            association_matrix[i, j] = np.sum((sample[morph_column] == i) & (sample[gene_column] == j))
+    
+    # Initialize decision array (this could be improved based on specific logic for decision making)
+    decision = np.zeros(dim, dtype=int)
+    
+    # Logic to compute the decision vector based on association_matrix (you can modify this logic)
+    # For now, just assigning maximum values
+    for i in range(dim):
+        decision[i] = np.argmax(association_matrix[i, :])  # You can customize this
+
+    return decision
+
+def build_decision_matrix(supervised_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, image_kmeans, gene_kmeans, n_families):
+    """
+    Build the decision matrix (association vector) using the supervised samples.
+    """
+    supervised_samples = supervised_samples.copy()
+    sup_image_features = encode_images(supervised_samples['processid'].values, images, image_model, image_transform)
+    supervised_samples['image_cluster'] = image_kmeans.predict(sup_image_features)
+    
+    sup_gene_features = encode_genes(supervised_samples['dna_barcode'].values, barcode_tokenizer, barcode_model)
+    supervised_samples['gene_cluster'] = gene_kmeans.predict(sup_gene_features)
+    
+    decision_matrix = decisionVector(supervised_samples, morph_column='image_cluster', gene_column='gene_cluster', dim=n_families)
+    return decision_matrix
+
+def compute_gene_centroids(gene_samples, gene_features, gene_kmeans, n_families):
+    """
+    Compute centroids for gene clusters based on gene_samples.
+    """
+    gene_samples = gene_samples.copy()
+    gene_samples['gene_cluster'] = gene_kmeans.labels_
+    gene_samples['gene_coordinates'] = gene_features.tolist()
+    
+    centroids = []
+    for cluster in range(n_families):
+        cluster_data = gene_samples[gene_samples['gene_cluster'] == cluster]
+        if len(cluster_data) > 0:
+            centroid = np.mean(np.stack(cluster_data['gene_coordinates'].values), axis=0)
+        else:
+            centroid = np.zeros(gene_features.shape[1])
+        centroids.append(centroid)
+    return np.array(centroids)
+
+def perform_inference(inference_samples, images, image_model, image_transform, barcode_tokenizer, barcode_model, image_kmeans, decision_matrix, centroids):
+    """
+    Assign clusters to inference samples and predict gene coordinates.
+    """
+    inference_samples = inference_samples.copy()
+    inf_image_features = encode_images(inference_samples['processid'].values, images, image_model, image_transform)
+    inference_samples['image_cluster'] = image_kmeans.predict(inf_image_features)
+    
+    inference_samples['predicted_gene_cluster'] = inference_samples['image_cluster'].apply(lambda x: decision_matrix[x])
+    inference_samples['predicted_gene_coordinates'] = inference_samples['predicted_gene_cluster'].apply(lambda x: centroids[x])
+    
+    inf_gene_features = encode_genes(inference_samples['dna_barcode'].values, barcode_tokenizer, barcode_model)
+    inference_samples['gene_coordinates'] = inf_gene_features.tolist()
+    return inference_samples
+
+def bkm_regression(df):
+    """
+    Compute the error between predicted and actual gene coordinates.
+    """
+    predicted_gene_coords = np.array(df['predicted_gene_coordinates'].tolist())
+    actual_gene_coords = np.array(df['gene_coordinates'].tolist())
+
+    return predicted_gene_coords, actual_gene_coords
