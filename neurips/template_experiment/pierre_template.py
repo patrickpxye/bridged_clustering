@@ -3,14 +3,18 @@ import random
 import warnings
 
 import numpy as np
+import itertools
 import pandas as pd
 from PIL import Image
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score, mean_squared_error, mean_absolute_error
 from sklearn.metrics import r2_score
 from scipy.stats import gaussian_kde
+from scipy.optimize import linear_sum_assignment
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.random_projection import GaussianRandomProjection
+from sklearn.metrics import pairwise_distances
+from sklearn.decomposition import PCA
 import torch
 import torchvision
 from torchvision import models, transforms
@@ -18,20 +22,28 @@ from transformers import AutoTokenizer, AutoModel
 from torchvision.models.resnet import ResNet50_Weights
 from PIL import Image
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GATConv
 from torch_geometric.data import Data
 from sklearn.metrics.pairwise import cosine_similarity
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric
 from torch_geometric.nn import MessagePassing
-from torch_geometric.data import Data
+
 from torch.optim import Adam
 import torch_geometric.utils
 from tqdm import tqdm
 from collections import Counter
+
+
+
+
+from sklearn.neighbors import NearestNeighbors
+from k_means_constrained import KMeansConstrained
 
 warnings.filterwarnings("ignore")
 torch.manual_seed(42)
@@ -49,10 +61,10 @@ ALL_IMAGES_FILE = os.path.join(BASE_DIR, "all_images.txt")
 ALL_LABELS_FILE = os.path.join(BASE_DIR, "all_labels.txt")
 
 IMAGE_SIZE      = 224
-N_CLUSTERS      = [3, 4, 5] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
-SUP_FRACS       = [0.0205, 0.05, 0.1] # supervised sample fractions (0.0205 = 1/49)
+N_CLUSTERS      = [2, 3, 4, 5, 6] # number of clusters for X (for deterministic clustering pick same amount of cuisines)
+SUP_FRACS       = [0.0205, 0.07, 0.1195, 0.205] # supervised sample fractions (0.0205 = 1/49) (1 sup, 3, sup, 5 sup, 10 sup)
 OUT_FRAC        = 0.55    # fraction of "output-only" samples for Y-clustering
-N_TRIALS        = 3
+N_TRIALS        = 100 # number of trials for each configuration
 Y_DIM_REDUCED   = 128   # target dim for random projection
 
 #############################
@@ -184,10 +196,35 @@ def purity_score(true_labels, cluster_labels):
     return score / total
 
 def cluster_features(X, n_clusters):
+    # N = X.shape[0]
+    # base_size = N // n_clusters
+    # size_min = base_size
+    # size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    # return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(X)
     return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(X)
 
 def cluster_ingredients(Y_proj, n_clusters):
+    # N = Y_proj.shape[0]
+    # base_size = N // n_clusters
+    # size_min = base_size
+    # size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    # return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(Y_proj)
     return KMeans(n_clusters=n_clusters, random_state=42).fit_predict(Y_proj)
+def cluster_features_constrained(X, n_clusters):
+    N = len(X)
+    base_size = N // n_clusters
+    size_min = base_size
+    size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(X)
+
+
+def cluster_ingredients_constrained(Y_proj, n_clusters):
+    N = len(Y_proj)
+    base_size = N // n_clusters
+    size_min = base_size
+    size_max = size_min + (1 if N % n_clusters else 0)  # ensure all samples are used
+    return KMeansConstrained(n_clusters=n_clusters, size_min=size_min, size_max=size_max, random_state=42).fit_predict(Y_proj)
+
 
 def learn_bridge(x_lab, y_lab, sup_mask, n_clusters):
     mapping = np.zeros(n_clusters, int)
@@ -195,6 +232,205 @@ def learn_bridge(x_lab, y_lab, sup_mask, n_clusters):
         mask = (x_lab == c) & sup_mask
         if mask.any(): mapping[c] = np.bincount(y_lab[mask], minlength=n_clusters).argmax()
     return mapping
+import numpy as np
+from scipy.optimize import linear_sum_assignment
+
+def learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters):
+    """
+    Build a K×K association matrix only over supervised samples, then
+    solve a max‑weight one‑to‑one matching via Hungarian algorithm.
+    Any X‐cluster that has zero supervised points will map to 0.
+    """
+    K = n_clusters
+    # 1) build association counts
+    assoc = np.zeros((K, K), dtype=int)
+    sup_idxs = np.where(sup_mask)[0]
+    for idx in sup_idxs:
+        i = int(x_lab[idx])
+        j = int(y_lab[idx])
+        assoc[i, j] += 1
+
+    # 2) handle clusters with no supervised rows by leaving them unmatched:
+    #    We'll mark them with -1 at the end
+    zero_rows = np.where(assoc.sum(axis=1) == 0)[0]
+
+    # 3) solve max‑weight matching on -assoc (Hungarian solves *min*).
+    #    We only match the rows that actually have at least one supervised point.
+    #    To keep it simple, we call linear_sum_assignment on the full K×K,
+    #    but we’ll ignore rows with no support.
+    row_idx, col_idx = linear_sum_assignment(-assoc)
+
+    mapping = np.full(K, 0, dtype=int)
+    # fill in matches only for rows whose assoc sum > 0
+    for r, c in zip(row_idx, col_idx):
+        if assoc[r, c] > 0:
+            mapping[r] = c
+        # if assoc[r,c]==0 (no co‐occurrence), we keep mapping[r] = 0
+
+    # (Optional) If you prefer a one‑to‑many or many‑to‑one instead of strict one-to-one,
+    # you could relax this. But as written, this is a strict one-to-one matching.
+    return mapping
+
+def learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters, threshold=0.5, eps=1e-9):
+    """
+    Build a K×K float matrix of supervision counts, convert to probabilities
+    per-row, then only accept a mapping if p >= threshold. Otherwise 0.
+    """
+    K = n_clusters
+    assoc = np.zeros((K, K), dtype=float)
+    sup_idxs = np.where(sup_mask)[0]
+    for idx in sup_idxs:
+        i = int(x_lab[idx])
+        j = int(y_lab[idx])
+        assoc[i, j] += 1.0
+
+    # normalize each row into a distribution
+    row_sums = assoc.sum(axis=1, keepdims=True) + eps  # (K,1)
+    probs = assoc / row_sums
+
+    # pick best j for each i only if its probability ≥ threshold
+    mapping = np.full(K, 0, dtype=int)
+    best_j = np.argmax(probs, axis=1)  # (K,)
+    best_prob = probs[np.arange(K), best_j]
+    mapping[best_prob >= threshold] = best_j[best_prob >= threshold]
+    # rows where best_prob < threshold remain 0
+    return mapping
+
+def learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters, margin=0.5, eps=1e-9):
+    """
+    For each X‐cluster i, look at assoc[i], find the two highest counts.
+    If (top1 - top2)/(top1 + ε) ≥ margin, accept i → top1; else 0.
+    """
+    K = n_clusters
+    assoc = np.zeros((K, K), dtype=int)
+    sup_idxs = np.where(sup_mask)[0]
+    for idx in sup_idxs:
+        i = int(x_lab[idx])
+        j = int(y_lab[idx])
+        assoc[i, j] += 1
+
+    mapping = np.full(K, 0, dtype=int)
+    for i in range(K):
+        row = assoc[i]
+        if row.sum() == 0:
+            continue  # no supervised points for this X‐cluster
+
+        # find top two j’s and their counts
+        top2 = np.argsort(row)[::-1][:2]
+        top1, top2_idx = top2[0], top2[1]
+        c1, c2 = row[top1], row[top2_idx]
+        gap = (c1 - c2) / (c1 + eps)
+        if gap >= margin:
+            mapping[i] = top1
+        # else leave mapping[i] = 0
+    return mapping
+def plot_kmeans_constrained_vs_truth(
+    X: np.ndarray,
+    true_labels: np.ndarray,
+    n_clusters: int,
+    kmeans_labels: np.ndarray,
+    size_min: int=None,
+    size_max: int=None,
+    random_state: int=42
+):
+    """
+    1) Runs KMeansConstrained on X to get cluster assignments
+    2) Projects X → 2D via PCA
+    3) Plots two side-by-side scatter plots:
+       - Left: colored by KMeansConstrained cluster index
+       - Right: colored by true_labels
+
+    Arguments:
+      X:             (N, D) feature matrix
+      true_labels:   length-N array of “ground‐truth” labels (ints or strings)
+      n_clusters:    how many clusters for KMeansConstrained
+      size_min:      min cluster‐size for KMeansConstrained (if None, defaults to ⌊N/n_clusters⌋)
+      size_max:      max cluster‐size for KMeansConstrained (if None, defaults to ⌈N/n_clusters⌉)
+      random_state:  random seed for reproducibility
+
+    Returns:
+      fig, axes:     the matplotlib Figure and Axes objects
+      kmeans_labels: length‐N array of cluster assignments from KMeansConstrained
+      X_2d:          (N, 2) PCA embedding of X
+    """
+    N, D = X.shape
+
+    # # If user didn’t pass explicit size_min/size_max, make them roughly balanced:
+    # if size_min is None or size_max is None:
+    #     base_size = N // n_clusters
+    #     size_min = base_size
+    #     size_max = base_size + (1 if (N % n_clusters) else 0)
+
+    # # 1) Fit KMeansConstrained on X
+    # kmeans = KMeansConstrained(
+    #     n_clusters=n_clusters,
+    #     size_min=size_min,
+    #     size_max=size_max,
+    #     random_state=random_state
+    # )
+    # kmeans_labels = kmeans.fit_predict(X)  # shape: (N,)
+
+    # 2) Compute a 2D projection of X (for plotting)
+    pca = PCA(n_components=2, random_state=random_state)
+    X_2d = pca.fit_transform(X)  # shape: (N, 2)
+
+    # 3) Build the figure with two side‐by‐side subplots
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
+    ax1, ax2 = axes
+
+    # Scatter‐plot #1: colored by KMeansConstrained assignment
+    sc1 = ax1.scatter(
+        X_2d[:, 0],
+        X_2d[:, 1],
+        c=kmeans_labels,
+        cmap="tab10",    # adjust if you have >10 clusters
+        s=25,
+        edgecolor="k",
+        linewidth=0.2,
+        alpha=0.8
+    )
+    ax1.set_title(f"KMeansConstrained (K={n_clusters})", fontsize=14)
+    ax1.set_xlabel("PCA 1")
+    ax1.set_ylabel("PCA 2")
+    # Optional: add a legend for cluster‐colors
+    handles, _ = sc1.legend_elements(prop="colors")
+    labels = [f"c={i}" for i in range(n_clusters)]
+    ax1.legend(handles, labels, title="Cluster‐ID", bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    # Scatter‐plot #2: colored by true label
+    # If true_labels are strings, convert them to integer codes first:
+    if true_labels.dtype.kind in {'U', 'S', 'O'}:
+        # map each unique string → integer
+        uniques, inverse = np.unique(true_labels, return_inverse=True)
+        color_indices = inverse
+        true_legend_labels = [str(u) for u in uniques]
+    else:
+        # assume true_labels are already integer‐coded in [0 .. num_classes-1]
+        color_indices = true_labels
+        true_legend_labels = [str(i) for i in np.unique(true_labels)]
+
+    sc2 = ax2.scatter(
+        X_2d[:, 0],
+        X_2d[:, 1],
+        c=color_indices,
+        cmap="tab20",    # a colormap with up to 20 distinct colors
+        s=25,
+        edgecolor="k",
+        linewidth=0.2,
+        alpha=0.8
+    )
+    ax2.set_title("True Labels", fontsize=14)
+    ax2.set_xlabel("PCA 1")
+    # no need to re‐set ylabel; sharey=True
+
+    # Legend for true labels
+    handles2, _ = sc2.legend_elements(prop="colors")
+    ax2.legend(handles2, true_legend_labels, title="True Label", bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    plt.tight_layout(rect=[0, 0, 0.85, 1.0])  # leave room on right for legends
+    plt.show()
+
+    return fig, axes, kmeans_labels, X_2d
 
 def compute_centroids(Y, y_lab, n_clusters):
     centroids = np.zeros((n_clusters, Y.shape[1]), float)
@@ -206,13 +442,118 @@ def compute_centroids(Y, y_lab, n_clusters):
 def predict_bridge(x_lab, mapping, centroids):
     return centroids[mapping[x_lab]]
 
+def responsibilities(y, centroids, tau):
+    # y:   (D,)   one sample’s bridged‐continuous prediction
+    # centroids: (K, D)
+    dists  = np.linalg.norm(centroids - y[None], axis=1)      # (K,)
+    logits = - dists / tau
+    exp    = np.exp(logits - logits.max())
+    return exp / exp.sum()       
+
 #############################
 # Baseline: KNN
 #############################
-def knn_baseline(X_train, Y_train, X_test, k=3):
+def knn_baseline(X_train, Y_train, X_test, k=1):
     knn = KNeighborsRegressor(n_neighbors=k)
     knn.fit(X_train, Y_train)
     return knn.predict(X_test)
+
+#############################
+# Baseline: GNN
+#############################
+
+class GNNClusterBridge(nn.Module):
+    def __init__(self, in_dim, hidden_dim, n_clusters, tau=1.0):
+        super().__init__()
+        self.conv1 = GCNConv(in_dim, hidden_dim)
+        self.conv2 = GCNConv(hidden_dim, hidden_dim)
+        self.conv3 = GCNConv(hidden_dim, hidden_dim)
+        self.classifier = nn.Linear(hidden_dim, n_clusters)
+        self.tau = tau
+
+    def forward(self, x, edge_index, edge_weight=None):
+        h = F.relu(self.conv1(x, edge_index, edge_weight=edge_weight))
+        h = F.relu(self.conv2(h, edge_index, edge_weight=edge_weight))
+        h = F.relu(self.conv3(h, edge_index, edge_weight=edge_weight))
+        logits = self.classifier(h)             # [N, K]
+        return F.softmax(logits / self.tau, dim=-1)  # soft assignments p
+
+def run_gnn_bridged( X, y_lab, sup_mask,
+    n_clusters,
+    edge_index,
+    edge_weights,
+    centroids,
+    tau,
+    hidden_dim,
+    lr,
+    epochs):
+    """
+    X: np.ndarray [N×D_x]
+    y_lab: array-like [N]
+    sup_mask: boolean mask [N]
+    n_clusters: int, number of clusters in X
+    edge_index: LongTensor [2×E] for PyG
+    centroids: np.ndarray [K×D_y], where K is the number of clusters in Y
+    tau: float, temperature for softmax
+    hidden_dim: int, hidden dimension for GNN
+    lr: float, learning rate for optimizer
+    epochs: int, number of training epochs
+    returns Y_pred: np.ndarray [N×D_y]
+    """
+
+    # 2) Build PyG Data and train GNN
+    data = Data(
+        x=torch.from_numpy(X).float(),
+        edge_index=edge_index,
+        edge_attr=edge_weights if edge_weights is not None else None
+    )
+    model = GNNClusterBridge(in_dim=X.shape[1], hidden_dim=hidden_dim, n_clusters=n_clusters, tau=tau)
+    opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
+    # loss_history = []
+    for epoch in range(epochs):
+        model.train()
+        p = model(data.x, data.edge_index)        # [N,K]
+        loss = F.cross_entropy(
+            torch.log(p.clamp(min=1e-10)[sup_mask]), 
+            torch.from_numpy(y_lab[sup_mask]).long()
+        )
+        # loss_history.append(loss.item())
+        opt.zero_grad(); loss.backward(); opt.step()
+    
+    # # after training:
+    # plt.figure(figsize=(6,4))
+    # plt.plot(range(1, epochs+1), loss_history, marker='o', linestyle='-')
+    # plt.xlabel("Epoch",  fontsize=12)
+    # plt.ylabel("Training Loss", fontsize=12)
+    # plt.title("Training Loss vs. Epoch", fontsize=14)
+    # plt.grid(True)
+    # plt.tight_layout()
+    # plt.show()
+
+    # 3) Inference
+    model.eval()
+    with torch.no_grad():
+        p = model(data.x, data.edge_index)       # [N,K]
+    # 4) Bridge: weighted sum of centroids
+    Y_pred = p @ torch.from_numpy(centroids).float()  # [N, D_y]
+    return Y_pred.cpu().numpy()
+
+# import skfuzzy as fuzz
+# def fuzzy_cluster(X, n_clusters, m=2.0, error=1e-5, maxiter=1000):
+#     """
+#     Run fuzzy c‑means on X (N×D) and return:
+#       - centers: (n_clusters×D)
+#       - u: membership matrix (n_clusters×N)
+#       - hard_labels: argmax over u (N,)
+#     """
+#     # skfuzzy wants features×samples
+#     X_T = X.T
+#     centers, u, _, _, _, _, _ = fuzz.cluster.cmeans(
+#         X_T, c=n_clusters, m=m,
+#         error=error, maxiter=maxiter
+#     )
+#     hard = np.argmax(u, axis=0)
+#     return centers, u, hard
 
 # Model C: Mean Teacher Model
 ##################################
@@ -1157,7 +1498,7 @@ def agdn_regression(supervised_df, inference_df, K=5, hidden=64, num_layers=2, d
 #############################
 # Single‐trial Experiment
 #############################
-def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters):
+def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters, edge_index, edge_weights):
     Y_true = np.vstack(df['ingredient_vec'].values)               # (N, D)
     rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
     Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
@@ -1204,17 +1545,35 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
     mapping   = learn_bridge(x_lab, y_lab, sup_mask, n_clusters)
     centroids = compute_centroids(Y_true, y_lab, n_clusters)
     Yb_all    = predict_bridge(x_lab, mapping, centroids)
-    # bkm_mae   = mean_absolute_error(Y_inf, Yb_all[inf_mask])
 
+    Y_hard_inf = Yb_all[inf_mask]
+    Y_true_inf = Y_true[inf_mask]
+
+    # # choose tau heuristically
+    # from sklearn.metrics import pairwise_distances
+    # cd   = pairwise_distances(centroids)
+    tau  = 0.2
+
+    # compute Y_soft for the inference set
+    Y_soft_inf = []
+    for yc in Yb_all[inf_mask]:
+        r = responsibilities(yc, centroids, tau)
+        Y_soft_inf.append(r.dot(centroids))
+    Y_soft_inf = np.vstack(Y_soft_inf)
+
+    # - GNN-bridge
+    Y_gnn = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    )
+    Y_gnn_inf = Y_gnn[inf_mask]
     # — KNN
-    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf)
-    # knn_mae   = mean_absolute_error(Y_inf, Yk_inf)
+    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(n_clusters * sup_frac)))
 
     # — Mean Teacher
     mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
 
-    # 3) XGBoost
-    xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
+    # # 3) XGBoost
+    # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
 
     # 4) LapRLS
     lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
@@ -1236,179 +1595,1019 @@ def run_experiment(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, ou
 
     # now compute MAE on each:
     results = {
-      "BKM":       mean_absolute_error(Y_inf,    Yb_all[inf_mask]),
-      "KNN":       mean_absolute_error(Y_true[inf_mask],    Yk_inf),
+      "BKM":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
+      "BKM_soft":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
+      "GNNBridge":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+      "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
       "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
-      "XGBoost":   mean_absolute_error(xgb_y,   xgb_preds),
-      "LapRLS":    mean_absolute_error(lap_y,   lap_preds),
-      "TNNR":      mean_absolute_error(tnnr_y, tnnr_preds),
-      "TSVR":      mean_absolute_error(tsvr_y, tsvr_preds),
-      "UCVME":     mean_absolute_error(ucv_y,  ucv_preds),
-      "RankUp":    mean_absolute_error(rank_y, rank_preds),
-      "AGDN":      mean_absolute_error(agdn_y,agdn_preds),
+    #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
+      "LapRLS":      mean_absolute_error(lap_y,         lap_preds),
+      "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
+      "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
+      "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
+      "RankUp":      mean_absolute_error(rank_y,        rank_preds),
+      "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
     }
 
+    # # GNN‐bridge
+    # Y_gnn = run_gnn_bridged(
+    #     X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, tau=0.5
+    # )
+    # results["GNNBridge"] = mean_absolute_error(Y_true[inf_mask], Y_gnn[inf_mask])
 
+    # # 5) Fuzzy‐bridge (soft)
+    # centers_x, u_x, hard_x = fuzzy_cluster(X, n_clusters, m=2.0)
+    # # re‑use the SAME Y‑centroids above; membership u_x tells us soft weights
+    # # for each sample i, cluster c: u_x[c,i]
+    # # so the soft prediction is ∑₍c₌0→K₋₁₎ u_x[c,i] * centroids[c]
+    # Y_soft = u_x.T.dot(centroids)
+
+    # results["FuzzyBridge"] = mean_absolute_error(Y_true[inf_mask], Y_soft[inf_mask])
 
     return results, sup_mask
 
 #############################
+# Single‐trial Experiment
+#############################
+def run_experiment_constrained(df, model, tfm, recipes, ing2idx, vocab_size, X, sup_frac, out_frac, n_clusters, edge_index, edge_weights):
+    Y_true = np.vstack(df['ingredient_vec'].values)               # (N, D)
+    rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+    Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
+
+    # 1) stratify & split
+    x_lab  = cluster_features_constrained(X, n_clusters)
+    sup_mask, out_mask, inf_mask = stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters)
+
+    # true_labels = df['cuisine_type'].values
+    # fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+    #     X, true_labels, n_clusters, x_lab
+    # )
+
+    # 2) cluster Y only on sup+out
+    y_lab = np.empty(len(Y_proj), int)
+    y_lab[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+
+    # 3) prepare supervised/inference sets for Mean Teacher
+    X_sup = X[sup_mask];    Y_sup = Y_true[sup_mask]
+    X_inf = X[inf_mask];    Y_inf = Y_true[inf_mask]
+
+    true = df['cuisine_type'].values
+
+    # 1) Purity of X-clusters (on *all* samples)
+    x_p = purity_score(true, x_lab)
+    nmi_x = normalized_mutual_info_score(true, x_lab)
+
+    # 2) Purity of Y-clusters (only on sup+out)
+    mask = sup_mask | out_mask
+    true_y = true[mask]
+    y_p   = purity_score(true_y, y_lab[mask])
+    nmi_y = normalized_mutual_info_score(true_y, y_lab[mask])
+
+    print(f"  → X-cluster purity (constrained): {x_p:.3f},  NMI: {nmi_x:.3f}")
+    print(f"  → Y-cluster purity (constrained): {y_p:.3f},  NMI: {nmi_y:.3f}")
+
+    # wrap into the small DataFrames MT expects
+    df_sup = pd.DataFrame({
+        'image_coordinates': list(X_sup),
+        'ingredient_coordinates' : list(Y_sup)
+    })
+    df_inf = pd.DataFrame({
+        'image_coordinates': list(X_inf),
+        'ingredient_coordinates' : list(Y_inf)
+    })
+
+    # 4) compute our three baselines
+    # — BKM (Majority Vote)
+    mapping   = learn_bridge(x_lab, y_lab, sup_mask, n_clusters)
+    centroids = compute_centroids(Y_true, y_lab, n_clusters)
+    Yb_all    = predict_bridge(x_lab, mapping, centroids)
+
+    Y_hard_inf = Yb_all[inf_mask]
+    Y_true_inf = Y_true[inf_mask]
+
+    # # choose tau heuristically
+    # from sklearn.metrics import pairwise_distances
+    # cd   = pairwise_distances(centroids)
+    tau  = 1
+
+    # compute Y_soft for the inference set
+    Y_soft_inf = []
+    for yc in Yb_all[inf_mask]:
+        r = responsibilities(yc, centroids, tau)
+        Y_soft_inf.append(r.dot(centroids))
+    Y_soft_inf = np.vstack(Y_soft_inf)
+
+    # - GNN-bridge
+    Y_gnn = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    )
+    Y_gnn_inf = Y_gnn[inf_mask]
+    ######
+    # # - BKM (Hungarian)
+    # mapping_h = learn_bridge_hungarian(x_lab, y_lab, sup_mask, n_clusters)
+    # centroids_h = compute_centroids(Y_true, y_lab, n_clusters)
+
+    # Yb_all_h    = predict_bridge(x_lab, mapping_h, centroids_h)
+
+    # Y_hard_inf_h = Yb_all_h[inf_mask]
+    # Y_true_inf_h = Y_true[inf_mask]
+
+    # # # choose tau heuristically
+    # # from sklearn.metrics import pairwise_distances
+    # # cd   = pairwise_distances(centroids)
+
+
+    # # compute Y_soft for the inference set
+    # Y_soft_inf_h = []
+    # for yc in Yb_all_h[inf_mask]:
+    #     r = responsibilities(yc, centroids_h, tau)
+    #     Y_soft_inf_h.append(r.dot(centroids_h))
+    # Y_soft_inf_h = np.vstack(Y_soft_inf_h)
+
+    # # - GNN-bridge
+    # Y_gnn_h = run_gnn_bridged(
+    #     X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_h, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    # )
+    # Y_gnn_inf_h = Y_gnn_h[inf_mask]
+
+    # # - BKM (Threshold)
+    # mapping_t = learn_bridge_threshold(x_lab, y_lab, sup_mask, n_clusters)
+    # centroids_t = compute_centroids(Y_true, y_lab, n_clusters)
+    # Yb_all_t    = predict_bridge(x_lab, mapping_t, centroids_t)
+    # Y_hard_inf_t = Yb_all_t[inf_mask]
+    # Y_true_inf_t = Y_true[inf_mask]
+    # # compute Y_soft for the inference set
+    # Y_soft_inf_t = []
+    # for yc in Yb_all_t[inf_mask]:
+    #     r = responsibilities(yc, centroids_t, tau)
+    #     Y_soft_inf_t.append(r.dot(centroids_t))
+    # Y_soft_inf_t = np.vstack(Y_soft_inf_t)
+    # # - GNN-bridge
+    # Y_gnn_t = run_gnn_bridged(
+    #     X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_t, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    # )
+    # Y_gnn_inf_t = Y_gnn_t[inf_mask]
+
+    # # - BKM (Margin)
+    # mapping_m = learn_bridge_margin(x_lab, y_lab, sup_mask, n_clusters)
+    # centroids_m = compute_centroids(Y_true, y_lab, n_clusters)
+    # Yb_all_m    = predict_bridge(x_lab, mapping_m, centroids_m)
+    # Y_hard_inf_m = Yb_all_m[inf_mask]
+    # Y_true_inf_m = Y_true[inf_mask]
+    # # compute Y_soft for the inference set
+    # Y_soft_inf_m = []
+    # for yc in Yb_all_m[inf_mask]:
+    #     r = responsibilities(yc, centroids_m, tau)
+    #     Y_soft_inf_m.append(r.dot(centroids_m))
+    # Y_soft_inf_m = np.vstack(Y_soft_inf_m)
+    # # - GNN-bridge
+    # Y_gnn_m = run_gnn_bridged(
+    #     X, y_lab, sup_mask, n_clusters, edge_index, edge_weights, centroids_m, tau=0.5, hidden_dim=128, lr=3e-3, epochs=47
+    # )
+    # Y_gnn_inf_m = Y_gnn_m[inf_mask]
+
+
+
+
+
+
+
+
+
+
+
+    # — KNN
+    Yk_inf    = knn_baseline(X_sup, Y_sup, X_inf, k=max(1, int(len(X) * sup_frac)))
+
+    # # — Mean Teacher
+    # mt_preds, mt_actuals = mean_teacher_regression(df_sup, df_inf)
+
+    # # # 3) XGBoost
+    # # # xgb_preds,   xgb_y = xgboost_regression( df_sup, df_inf )
+
+    # 4) LapRLS
+    lap_preds,   lap_y = laprls_regression( df_sup, df_inf )
+
+    # 5) Twin-NN regressor
+    # tnnr_preds,  tnnr_y = tnnr_regression( df_sup, df_inf )
+
+    # # 6) Transductive SVR
+    # tsvr_preds,  tsvr_y = tsvr_regression( df_sup, df_inf )
+
+    # # 7) UCVME
+    # ucv_preds,   ucv_y  = ucvme_regression( df_sup, df_inf )
+
+    # # 8) RankUp
+    # rank_preds, rank_y  = rankup_regression( df_sup, df_inf )
+
+    # # 9) AGDN
+    # agdn_preds, agdn_y  = agdn_regression( df_sup, df_inf )
+
+    # # now compute MAE on each:
+    results = {
+      "BC":          mean_absolute_error(Y_true_inf,    Y_hard_inf),
+      "Softmax-BC":  mean_absolute_error(Y_true_inf,    Y_soft_inf),
+      "GNN-BC":      mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+      "KNN":         mean_absolute_error(Y_true_inf,    Yk_inf),
+    #   "MeanTeacher": mean_absolute_error(mt_actuals,    mt_preds),
+    # #   "XGBoost":   mean_absolute_error(xgb_y,         xgb_preds),
+      "LapRLS":        mean_absolute_error(lap_y,         lap_preds),
+    #   "TNNR":        mean_absolute_error(tnnr_y,        tnnr_preds),
+    #   "TSVR":        mean_absolute_error(tsvr_y,        tsvr_preds),
+    #   "UCVME":       mean_absolute_error(ucv_y,         ucv_preds),
+    #   "RankUp":      mean_absolute_error(rank_y,        rank_preds),
+    #   "AGDN":        mean_absolute_error(agdn_y,        agdn_preds),
+    }
+
+    # results = {
+    #     "BC":         mean_absolute_error(Y_true_inf,    Y_hard_inf),
+    #     "Softmax-BC":    mean_absolute_error(Y_true_inf,    Y_soft_inf),
+    #     "GNN-BC":   mean_absolute_error(Y_true_inf,    Y_gnn_inf),
+    #     "BC_h":    mean_absolute_error(Y_true_inf_h,  Y_hard_inf_h),
+    #     "Softmax-BC_h": mean_absolute_error(Y_true_inf_h,  Y_soft_inf_h),
+    #     "GNN-BC_h": mean_absolute_error(Y_true_inf_h,  Y_gnn_inf_h),
+    #     "BC_t":    mean_absolute_error(Y_true_inf_t,  Y_hard_inf_t),
+    #     "Softmax-BC_t": mean_absolute_error(Y_true_inf_t,  Y_soft_inf_t),
+    #     "GNN-BC_t": mean_absolute_error(Y_true_inf_t,  Y_gnn_inf_t),
+    #     "BC_m":    mean_absolute_error(Y_true_inf_m,  Y_hard_inf_m),
+    #     "Softmax-BC_m": mean_absolute_error(Y_true_inf_m,  Y_soft_inf_m),
+    #     "GNN-BC_m": mean_absolute_error(Y_true_inf_m,  Y_gnn_inf_m),
+    # }
+
+    # # GNN‐bridge
+    # Y_gnn = run_gnn_bridged(
+    #     X, Y_true, y_lab, mask, n_clusters, edge_index, centroids, tau=0.5
+    # )
+    # results["GNNBridge"] = mean_absolute_error(Y_true[inf_mask], Y_gnn[inf_mask])
+
+    # # 5) Fuzzy‐bridge (soft)
+    # centers_x, u_x, hard_x = fuzzy_cluster(X, n_clusters, m=2.0)
+    # # re‑use the SAME Y‑centroids above; membership u_x tells us soft weights
+    # # for each sample i, cluster c: u_x[c,i]
+    # # so the soft prediction is ∑₍c₌0→K₋₁₎ u_x[c,i] * centroids[c]
+    # Y_soft = u_x.T.dot(centroids)
+
+    # results["FuzzyBridge"] = mean_absolute_error(Y_true[inf_mask], Y_soft[inf_mask])
+
+    return results, sup_mask, nmi_x
+
+#############################
 # Multi‐trial Evaluation
 #############################
-def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters):
-    # summary of all the models for this cluster number
-    # 1) initialize an empty DataFrame
-    summary = {}
-    X       = encode_images(df, IMAGE_FOLDER, model, tfm)
+# def run_all_trials(df, model, tfm, recipes, ing2idx, vocab_size, n_clusters, edge_index, X_all):
+#     # summary of all the models for this cluster number
+#     # 1) initialize an empty DataFrame
+#     summary = {}
+#     # X       = encode_images(df, IMAGE_FOLDER, model, tfm)
+#     X     = X_all
 
+#     model_names = [
+#       "BKM",
+#       "BKM_soft",
+#       "KNN",
+#       "MeanTeacher",
+#       "XGBoost",
+#       "LapRLS",
+#       "TSVR",
+#       "TNNR",
+#       "UCVME",
+#       "RankUp",
+#       "AGDN",
+#       "GNNBridge",
+
+#     ]
+
+#     for sup_frac in SUP_FRACS:
+#             # summary keys look like "sup=2.05%, out=55.00%"
+#             key    = f"sup={sup_frac:.2%}, out={OUT_FRAC:.2%}"
+#             # 2) initialize an empty list for each model
+#             errors = { name: [] for name in model_names }
+
+#             print(f"\n=== Supervised {sup_frac:.2%} / Output-only {OUT_FRAC:.2%} ===")
+#             # run N_TRIALS trials
+#             for t in range(N_TRIALS):
+#                 # 3) run your experiment; assume it now returns (results_dict, sup_mask)
+#                 results, sup_mask = run_experiment(
+#                     df, model, tfm, recipes, ing2idx, vocab_size,
+#                     X, sup_frac, OUT_FRAC, n_clusters, edge_index
+#                 )
+#                 # results is a dict: {"BKM":0.01, "KNN":0.02, ...}
+
+#                 # collect each MAE into its list
+#                 for name in model_names:
+#                     errors[name].append(results[name])
+
+#                 # print them per‐trial
+#                 print(f"--- Trial {t+1} ---")
+#                 for name in model_names:
+#                     print(f"{name:12s} MAE = {results[name]:.4f}")
+#                 print()
+
+#             # 4) compute & print averages
+#             print("=== Averages ===")
+#             avg_errors = {}
+#             for name in model_names:
+#                 avg = np.mean(errors[name])
+#                 avg_errors[name] = avg
+#                 print(f"{name:12s} avg MAE = {avg:.4f}")
+
+#             # stash into summary
+#             summary[key] = { f"{name}_MAE": avg for name, avg in avg_errors.items() }
+
+#     return summary
+
+def collect_mae_trials(df, model, tfm, recipes, ing2idx, D,
+                       cluster_vals, sup_fracs, out_frac, n_trials):
+    """
+    Runs `run_experiment` n_trials times for every (n_clusters, sup_frac) combo,
+    returns:
+      - loss_data: shape (len(cluster_vals), len(sup_fracs), num_models, n_trials)
+      - model_names: the list of model keys, in the order used in loss_data
+    """
     model_names = [
-      "BKM",
+      "BC",
+      "Softmax-BC",
+      "GNN-BC",
       "KNN",
-      "MeanTeacher",
-      "XGBoost",
+    #   "MeanTeacher",
+    # #   "XGBoost",
       "LapRLS",
-      "TSVR",
-      "TNNR",
-      "UCVME",
-      "RankUp",
-      "AGDN",
+    #   "TSVR",
+    #   "TNNR",
+    #   "UCVME",
+    #   "RankUp",
+    #   "AGDN",
     ]
+    # model_names = [
+    #     "BC",
+    #     # "Softmax-BC",
+    #     # "GNN-BC",
+    #     # "BC_h",
+    #     # "Softmax-BC_h",
+    #     # "GNN-BC_h",
+    #     # "BC_t",
+    #     # "Softmax-BC_t",
+    #     # "GNN-BC_t",
+    #     # "BC_m",
+    #     # "Softmax-BC_m",
+    #     # "GNN-BC_m",
+    # ]
+    num_h1 = len(cluster_vals)
+    num_h2 = len(sup_fracs)
+    num_m  = len(model_names)
+    # loss_data = np.zeros((num_h1, num_h2, num_m, n_trials), float)
+    loss_data_constrained = np.zeros((num_h1, num_h2, num_m, n_trials), float)
 
-    for sup_frac in SUP_FRACS:
-            # summary keys look like "sup=2.05%, out=55.00%"
-            key    = f"sup={sup_frac:.2%}, out={OUT_FRAC:.2%}"
-            # 2) initialize an empty list for each model
-            errors = { name: [] for name in model_names }
+    nmi_list   = []
+    mae_bc_list = []    
 
-            print(f"\n=== Supervised {sup_frac:.2%} / Output-only {OUT_FRAC:.2%} ===")
-            # run N_TRIALS trials
-            for t in range(N_TRIALS):
-                # 3) run your experiment; assume it now returns (results_dict, sup_mask)
-                results, sup_mask = run_experiment(
-                    df, model, tfm, recipes, ing2idx, vocab_size,
-                    X, sup_frac, OUT_FRAC, n_clusters
+    for i, n_clusters in enumerate(cluster_vals):
+        print(f"\n=== RUNNING for {n_clusters} clusters ===")
+        # pick cuisines at random (or deterministic if you prefer)
+        all_cuisines = df['cuisine_type'].unique()
+        cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False)
+        df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+        print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+        # pre‐encode once per df_run
+        X_all = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+        # build your GNN graph once
+        from sklearn.neighbors import NearestNeighbors
+        knn = NearestNeighbors(n_neighbors=22, algorithm="auto").fit(X_all)
+        adj = knn.kneighbors_graph(X_all, mode="distance").tocoo()
+        edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
+        edge_weights = torch.tensor(adj.data, dtype=torch.float)
+        # edge_weights = None  # not used in this experiment
+        # sigma = adj.data.mean()
+        # sim   = np.exp(- (adj.data**2) / (2 * sigma**2))
+        # edge_weights = torch.tensor(sim, dtype=torch.float)
+        # print(f"→ Edge index shape: {edge_index.shape}, weights: {edge_weights is not None}")
+
+        for j, sup_frac in enumerate(sup_fracs):
+            print(f"\n-- Supervision = {sup_frac:.2%} --")
+            # constrained version
+            # Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+            # rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+            # Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
+
+            # # 1) stratify & split
+            # x_lab  = cluster_features_constrained(X_all, n_clusters)
+            # sup_mask, out_mask,_ = stratified_split_masks(x_lab, sup_frac, out_frac, n_clusters)
+
+            # true_labels = df_run['cuisine_type'].values
+            # fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+            #     X_all, true_labels, n_clusters, x_lab
+            # )
+
+            # # 2) cluster Y only on sup+out
+            # y_lab = np.empty(len(Y_proj), int)
+            # y_lab[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+            # fig, axes, kmeans_labels, X_2d = plot_kmeans_constrained_vs_truth(
+            #     Y_proj[sup_mask | out_mask], true_labels[sup_mask | out_mask], n_clusters, y_lab[sup_mask | out_mask]
+            # )
+            for t in range(n_trials):
+                print(f" Trial {t+1}/{n_trials}:")
+                # results, _ = run_experiment(
+                #     df_run, model, tfm, recipes, ing2idx, D,
+                #     X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
+                # )
+                # constrained version
+                results_constrained, _, nmi_x = run_experiment_constrained(
+                    df_run, model, tfm, recipes, ing2idx, D,
+                    X_all, sup_frac, out_frac, n_clusters, edge_index, edge_weights
                 )
-                # results is a dict: {"BKM":0.01, "KNN":0.02, ...}
+                mae_bc = results_constrained["BC"]
+                nmi_list.append(nmi_x)
+                mae_bc_list.append(mae_bc)
 
-                # collect each MAE into its list
-                for name in model_names:
-                    errors[name].append(results[name])
+                for m, name in enumerate(model_names):
+                    # mae = results[name]
+                    mae_constrained = results_constrained[name]
+                    # loss_data[i, j, m, t] = mae
+                    loss_data_constrained[i, j, m, t] = mae_constrained
+                    # print(f"    {name:12s} MAE = {mae:.4f} (constrained: {mae_constrained:.4f})")
+                    print(f"    {name:12s} MAE (constrained) = {mae_constrained:.4f}")
+                    
+            # after all trials for this sup_frac, print the averages
+            print(f" → AVERAGES for {sup_frac:.2%}:")
+            for m, name in enumerate(model_names):
+                # avg = loss_data[i,j,m,:].mean()
+                avg_constrained = loss_data_constrained[i,j,m,:].mean()
+                # print(f"    {name:12s} avg MAE = {avg:.4f} (constrained: {avg_constrained:.4f})")
+                print(f"    {name:12s} avg MAE (constrained) = {avg_constrained:.4f}")
 
-                # print them per‐trial
-                print(f"--- Trial {t+1} ---")
-                for name in model_names:
-                    print(f"{name:12s} MAE = {results[name]:.4f}")
-                print()
+        print(f"\n=== SUMMARY TABLE for {n_clusters} clusters ===")
+        # shape (sup_fracs × models)
+        # rows = []
+        rows_constrained = []
+        for j, sup_frac in enumerate(sup_fracs):
+            # row = {'sup_frac': f"{sup_frac:.2%}"}
+            row_constrained = {'sup_frac': f"{sup_frac:.2%} (constrained)"}
+            for m, name in enumerate(model_names):
+                # row[name] = loss_data[i,j,m,:].mean()
+                row_constrained[name] = loss_data_constrained[i,j,m,:].mean()
+            # rows.append(row)
+            rows_constrained.append(row_constrained)
+        # summary_df = pd.DataFrame(rows).set_index('sup_frac')
+        summary_df_constrained = pd.DataFrame(rows_constrained).set_index('sup_frac')
+        # print(summary_df)
+        print(summary_df_constrained)
+    output_dir = "pierre_results/finalized_results"
+    os.makedirs(output_dir, exist_ok=True)
 
-            # 4) compute & print averages
-            print("=== Averages ===")
-            avg_errors = {}
-            for name in model_names:
-                avg = np.mean(errors[name])
-                avg_errors[name] = avg
-                print(f"{name:12s} avg MAE = {avg:.4f}")
+    for j, sup_frac in enumerate(sup_fracs):
+        # build a dict of “cluster size → average MAE per method”
+        table_data = {
+            str(c): loss_data_constrained[i, j].mean(axis=1)
+            for i, c in enumerate(cluster_vals)
+        }
+        df = pd.DataFrame(table_data, index=model_names)
+        df.insert(0, "Method", df.index)  # add the “Method” column
+        for col in df.columns.drop("Method"):
+            df[col] = df[col].map(lambda x: f"{x:.6f}")
+        # render with matplotlib
+        fig, ax = plt.subplots(
+            figsize=(len(cluster_vals)*1.2 + 2, len(model_names)*0.4 + 1)
+        )
+        ax.axis("off")
+        tbl = ax.table(
+            cellText=df.values,
+            colLabels=df.columns,
+            cellLoc="center",
+            loc="center"
+        )
+        tbl.auto_set_font_size(False)
+        tbl.set_fontsize(10)
+        tbl.scale(1, 1.5)
+        fig.tight_layout()
+        
+        # save it
+        pct = int(sup_frac * 100)
+        fname = os.path.join(output_dir, f"experiments_100trials_summary_supervised_{pct}pct.png")
+        fig.savefig(fname, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        
+        # also print it out here in the notebook
+        print(f"\nSupervision = {pct}%")
+        print(df)
 
-            # stash into summary
-            summary[key] = { f"{name}_MAE": avg for name, avg in avg_errors.items() }
-
-    return summary
+    return loss_data_constrained, model_names, np.array(nmi_list), np.array(mae_bc_list)
 
 #############################
 # Plot
 #############################
-def bubble_plot(df_results,
-                model_order=None,
-                bubble_scale=2000,
-                offset_radius=0.15):
+# def bubble_plot(df_results,
+#                             model_order=None,
+#                             desired_max_area=2000,
+#                             offset_radius=0.15,
+#                             alpha=3.0):
+#     """
+#     Exponential‐scaled bubble plot:
+#       size ∝ (exp(alpha*norm_mae) - 1)/(exp(alpha) - 1) * desired_max_area
+#     where norm_mae = (MAE - min_mae)/(max_mae - min_mae).
+#     """
+#     xf = sorted(df_results['sup_frac'].unique())
+#     yf = sorted(df_results['n_clusters'].unique())
+#     if model_order is None:
+#         model_order = df_results['model'].unique()
+#     colors = plt.cm.tab10(np.linspace(0,1,len(model_order)))
+
+#     # normalize MAE to [0,1]
+#     maes = df_results["MAE"].values
+#     min_mae, max_mae = maes.min(), maes.max()
+#     df_results = df_results.assign(
+#         norm_mae = (df_results["MAE"] - min_mae) / (max_mae - min_mae)
+#     )
+
+#     fig, ax = plt.subplots(figsize=(8,6))
+#     for mi, model_name in enumerate(model_order):
+#         sub = df_results[df_results['model'] == model_name]
+#         xs, ys, ss = [], [], []
+#         for _, row in sub.iterrows():
+#             x0 = xf.index(row.sup_frac)
+#             y0 = yf.index(row.n_clusters)
+#             angle = 2*np.pi * mi/len(model_order)
+#             dx, dy = offset_radius*np.cos(angle), offset_radius*np.sin(angle)
+#             xs.append(x0 + dx)
+#             ys.append(y0 + dy)
+
+#             # exponential scaling
+#             e = np.exp(alpha * row.norm_mae) - 1
+#             scale = (np.exp(alpha) - 1)
+#             area = (e / scale) * desired_max_area
+#             ss.append(area)
+
+#         ax.scatter(xs, ys, s=ss,
+#                    color=colors[mi], alpha=0.7,
+#                    label=model_name, edgecolor='k', linewidth=0.5)
+
+#     # axis formatting
+#     ax.set_xticks(range(len(xf)))
+#     ax.set_xticklabels([f"{f*100:.2f}%" for f in xf])
+#     ax.set_yticks(range(len(yf)))
+#     ax.set_yticklabels([str(c) for c in yf])
+#     ax.set_xlabel("Supervision fraction")
+#     ax.set_ylabel("Number of clusters")
+#     ax.set_title("MAE of models over clusters & supervision\n(exponential bubble‐size scaling)")
+#     ax.legend(bbox_to_anchor=(1.05,1), loc="upper left")
+#     plt.tight_layout()
+#     plt.show()
+
+# def bubble_plot_for_fraction(df_subset,
+#                              model_order=None,
+#                              desired_max_area=2000,
+#                              offset_radius=0.15,
+#                              alpha=3.0):
+#     """
+#     Plot just one sup_frac slice of your results.
+#     df_subset: filtered DataFrame where all rows share the same sup_frac.
+#     """
+#     # extract the single fraction and cast to string for the title
+#     sup_frac = df_subset['sup_frac'].iloc[0]
+#     title_frac = f"{sup_frac*100:.2f}% supervision"
+
+#     # keep n_clusters variety on y
+#     yf = sorted(df_subset['n_clusters'].unique())
+#     model_order = model_order or df_subset['model'].unique()
+#     colors = plt.cm.tab10(np.linspace(0,1,len(model_order)))
+
+#     # normalize MAE to [0,1] *within this slice*
+#     maes = df_subset["MAE"].values
+#     min_mae, max_mae = maes.min(), maes.max()
+#     df_subset = df_subset.assign(
+#         norm_mae = (df_subset["MAE"] - min_mae) / (max_mae - min_mae + 1e-12)
+#     )
+
+#     fig, ax = plt.subplots(figsize=(6,4))
+#     for mi, model_name in enumerate(model_order):
+#         sub = df_subset[df_subset['model'] == model_name]
+#         xs, ys, ss = [], [], []
+#         for _, row in sub.iterrows():
+#             # x fixed at 0 (only one column)
+#             x0 = 0
+#             # y index of cluster count
+#             y0 = yf.index(row.n_clusters)
+#             angle = 2*np.pi * mi/len(model_order)
+#             dx, dy = offset_radius*np.cos(angle), offset_radius*np.sin(angle)
+#             xs.append(x0 + dx)
+#             ys.append(y0 + dy)
+
+#             # exponential sizing
+#             e = np.exp(alpha * row.norm_mae) - 1
+#             scale = (np.exp(alpha) - 1)
+#             area = (e / scale) * desired_max_area
+#             ss.append(area)
+
+#         ax.scatter(xs, ys, s=ss,
+#                    color=colors[mi], alpha=0.7,
+#                    label=model_name, edgecolor='k', linewidth=0.5)
+
+#     # axis formatting: only one x‐label
+#     ax.set_xticks([0])
+#     ax.set_xticklabels([title_frac])
+#     ax.set_yticks(range(len(yf)))
+#     ax.set_yticklabels([str(c) for c in yf])
+#     ax.set_xlabel("Supervision fraction")
+#     ax.set_ylabel("Number of clusters")
+#     ax.set_title(f"MAE bubbles @ {title_frac}")
+#     ax.legend(bbox_to_anchor=(1.05,1), loc="upper left", fontsize="small", ncol=1)
+#     plt.tight_layout()
+#     plt.show()
+
+
+# def plot_one_per_fraction(df_results, model_order=None,
+#                           desired_max_area=2000,
+#                           offset_radius=0.15,
+#                           alpha=3.0):
+#     """
+#     Loop over each sup_frac and plot its own bubble‐chart.
+#     """
+#     for sup_frac in sorted(df_results['sup_frac'].unique()):
+#         subset = df_results[df_results['sup_frac'] == sup_frac]
+#         bubble_plot_for_fraction(
+#             subset,
+#             model_order=model_order,
+#             desired_max_area=desired_max_area,
+#             offset_radius=offset_radius,
+#             alpha=alpha
+#         )
+
+# def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
+#     all_rows = []
+#     # if want to do randomization:
+#     all_cuisines = df['cuisine_type'].unique()
+#     for n_clusters in N_CLUSTERS:
+#         # select exactly the cuisines you want for this number of clusters
+#         # determinstic
+#         cuisines = []
+#         # if n_clusters == 3:
+#         #     cuisines = ['beef_tacos', 'pizza', 'ramen']
+#         # elif n_clusters == 4:
+#         #     cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie']
+#         # else:  # n_clusters == 5
+#         #     cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie', 'strawberry_shortcake']
+#         # or randomize
+#         cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
+#         print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+
+#         # create a fresh DataFrame for this run
+#         df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+
+#         X_all = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+#         knn = NearestNeighbors(n_neighbors=10, algorithm="auto").fit(X_all)
+#         adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
+#         edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
+        
+#         print(f"Running with {n_clusters} clusters on {len(df_run)} recipes")
+
+#         summary = run_all_trials(df_run, model, tfm, recipes, ing2idx, D, n_clusters, edge_index, X_all)
+        
+#         print(f"\n=== Summary for all proportions ({n_clusters} clusters) ===")
+#         print(pd.DataFrame(summary).T)
+#         # summary keys look like "sup=2.05%, out=55.00%"
+#         for key, metrics in summary.items():
+#             sup_frac = float(key.split(",")[0].split("=")[1].strip("%"))/100
+#             for metric_name, mae in metrics.items():
+#                 all_rows.append({
+#                     "n_clusters": n_clusters,
+#                     "sup_frac":   sup_frac,
+#                     "model":      metric_name.replace("_MAE",""),
+#                     "MAE":        mae
+#                 })
+
+#     df_results = pd.DataFrame(all_rows)
+#     plot_one_per_fraction(df_results,
+#                 model_order=["BKM","BKM_soft","GNNBridge","KNN","MeanTeacher","XGBoost","LapRLS","TSVR","TNNR","UCVME","RankUp","AGDN"])
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def plot_boxplots_by_hyper1(loss_data: np.ndarray,
+                            hyperparam1_labels=["30", "60", "90", "120", "150"],
+                            hyperparam2_labels=["1% supervision", "5% supervision", "10% supervision", "15% supervision"],
+                            model_labels=["Bridged Clustering", "KNN", "Mean Teacher", "GCN", "AGDN", "Bridged AGDN"],
+                            log_scale=False):
     """
-    df_results: DataFrame with columns
-      ['n_clusters','sup_frac','model','MAE']
+    Create a figure with 5 subplots (one for each value of hyperparameter 1).
+    In each subplot the loss distributions are shown as grouped boxplots for the
+    4 hyperparameter 2 configurations. Within each group, the 5 boxplots correspond
+    to the 5 models.
+
+    Parameters:
+      - loss_data: NumPy array of shape (1, 5, 4, 5, 20) or (5, 4, 5, 20).
+                   Each entry represents the loss for a particular trial.
+      - hyperparam1_labels: List of labels for hyperparameter 1 (default: "H1-0", "H1-1", ...).
+      - hyperparam2_labels: List of labels for hyperparameter 2 (default: "H2-0", "H2-1", ...).
+      - model_labels: List of labels for models (default: "Model 1", "Model 2", ...).
+      - log_scale: Boolean, if True the y-axis will be set to a logarithmic scale.
     """
-    # convert sup_frac back to % strings for tick labels
-    xf = sorted(df_results['sup_frac'].unique())
-    yf = sorted(df_results['n_clusters'].unique())
-    if model_order is None:
-        model_order = df_results['model'].unique()
+    # # Remove the wrapper dimension, if present.
+    # if loss_data.shape[0] == 1:
+    #     loss_data = loss_data[0]  # Now shape should be (5, 4, 5, 20)
+        
+    # Unpack shape
+    num_h1, num_h2, num_models, num_trials = loss_data.shape  # 5,4,5,20
 
-    # prepare color map
-    colors = plt.cm.tab10(np.linspace(0,1,len(model_order)))
+    # Set default labels if needed.
+    if hyperparam1_labels is None:
+        hyperparam1_labels = [f'H1-{i}' for i in range(num_h1)]
+    if hyperparam2_labels is None:
+        hyperparam2_labels = [f'H2-{i}' for i in range(num_h2)]
+    if model_labels is None:
+        model_labels = [f'Model {i+1}' for i in range(num_models)]
+    
+    # Define a color for each model (consistent across all subplots)
+    colors = [
+        'lightblue', 
+        'lightgreen', 
+        'salmon', 
+        'violet', 
+        'wheat', 
+        'lightgrey', 
+        'lightpink', 
+        'lightyellow', 
+        'lightcyan', 
+        'lightcoral', 
+        'lightsteelblue', 
+        'lightgoldenrodyellow', 
+        'lightseagreen', 
+        'lightsalmon', 
+        'lightblue', 
+        'lightgreen'
+    ]
 
-    fig, ax = plt.subplots(figsize=(8,6))
-    max_mae  = df_results["MAE"].max()
-    desired_max_area = 2000    # or 3000, whatever fits your figure
-    bubble_scale = desired_max_area / max_mae
-    # for each model, plot its bubbles
-    for mi, model_name in enumerate(model_order):
-        sub = df_results[df_results['model']==model_name]
-        xs, ys, ss = [], [], []
-        for _, row in sub.iterrows():
-            # base coords: index into lists
-            x0 = xf.index(row.sup_frac)
-            y0 = yf.index(row.n_clusters)
-            # small radial offset
-            angle = 2*np.pi * mi/len(model_order)
-            dx = offset_radius*np.cos(angle)
-            dy = offset_radius*np.sin(angle)
-            xs.append(x0 + dx)
-            ys.append(y0 + dy)
-            # scale MAE -> bubble area
-            ss.append(row.MAE * bubble_scale)
-        ax.scatter(xs, ys, s=ss, color=colors[mi],
-                   alpha=0.7, label=model_name, edgecolor='k', linewidth=0.5)
+    # Create the figure with one subplot per hyperparameter 1 value.
+    fig, axes = plt.subplots(nrows=num_h1, ncols=1, figsize=(12, 4 * num_h1), sharex=False)
+    
+    # In case there is only one subplot (num_h1==1), force axes to be iterable.
+    if num_h1 == 1:
+        axes = [axes]
 
-    # axis ticks
-    ax.set_xticks(range(len(xf)))
-    ax.set_xticklabels([f"{f*100:.2f}%" for f in xf])
-    ax.set_yticks(range(len(yf)))
-    ax.set_yticklabels([str(c) for c in yf])
-    ax.set_xlabel("Supervision fraction")
-    ax.set_ylabel("Number of clusters")
-    ax.set_title("MAE of models over clusters & supervision")
-    ax.legend(bbox_to_anchor=(1.05,1), loc="upper left")
-    plt.tight_layout()
+    # Loop over hyperparameter 1 values, each gets its own subplot.
+    for i in range(num_h1):
+        ax = axes[i]
+        data_all = []    # to collect the loss arrays for each group/model
+        positions = []   # the x positions at which to put each boxplot
+        group_centers = []  # to mark center of each hyperparam2 group for labeling
+        
+        gap = 1  # gap between groups (in x-axis units)
+        # Loop over the 4 hyperparameter 2 values for this hyperparameter 1 configuration.
+        for j in range(num_h2):
+            base = j * (num_models + gap)  # starting position for this group
+            # positions for each of the 5 models within this group.
+            pos = list(range(base + 1, base + 1 + num_models))
+            # For each model in this hyper 2 group, extract the 20 loss values.
+            for m in range(num_models):
+                data_all.append(loss_data[i, j, m, :])
+                positions.append(pos[m])
+            group_centers.append(np.mean(pos))
+        
+        # Create the boxplots for this subplot.
+        bp = ax.boxplot(data_all, positions=positions, widths=0.6,
+                        patch_artist=True, showfliers=True,  medianprops=dict(color="black", linewidth=2))
+        
+        # Color each box based on its model. Since for each group the boxes
+        # appear in order (model 0 through model 4), we use modulo arithmetic.
+        for idx, box in enumerate(bp['boxes']):
+            model_idx = idx % num_models  # cycles from 0 to 4
+            box.set(facecolor=colors[model_idx])
+        
+        # Set the x-axis ticks at the centers of each hyperparam2 group.
+        ax.set_xticks(group_centers)
+        ax.set_xticklabels(hyperparam2_labels, fontsize=12)
+        ax.set_ylabel("Log MAE", fontsize=14)
+        ax.set_title(f"Log MAE Distributions for {hyperparam1_labels[i]}", fontsize=14)
+        if log_scale:
+            ax.set_yscale("log")
+    
+    # Create a custom legend for the models (appears outside the subplots)
+    # from matplotlib.patches import Patch
+    legend_handles = [Patch(facecolor=colors[i], edgecolor='k', label=model_labels[i])
+                      for i in range(num_models)]
+    # Place legend to the right of the plots.
+    plt.legend(handles=legend_handles, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=12)
+    
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on the right for the legend
     plt.show()
 
-def run_and_plot_all(df, model, tfm, recipes, ing2idx, D):
-    all_rows = []
-    # if want to do randomization:
-    # all_cuisines = df['cuisine_type'].unique()
-    for n_clusters in N_CLUSTERS:
-        # select exactly the cuisines you want for this number of clusters
-        # determinstic
-        cuisines = []
-        if n_clusters == 3:
-            cuisines = ['beef_tacos', 'pizza', 'ramen']
-        elif n_clusters == 4:
-            cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie']
-        else:  # n_clusters == 5
-            cuisines = ['beef_tacos', 'pizza', 'ramen', 'apple_pie', 'strawberry_shortcake']
-        # or randomize
-        # cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
-        print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+# def plot_clusters_with_shapes(
+#     data_2d: np.ndarray,
+#     cluster_ids: np.ndarray,
+#     true_labels: np.ndarray,
+#     n_clusters: int,
+#     title: str
+# ):
+#     """
+#     Scatter‐plot `data_2d` (N×2) coloring by `cluster_ids` (integers in [0..n_clusters-1]),
+#     and using different marker‐shapes for each unique value in `true_labels`.
 
-        # create a fresh DataFrame for this run
-        df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
-        
-        print(f"Running with {n_clusters} clusters on {len(df_run)} recipes")
+#     - data_2d:    shape (N,2), the 2D PCA projection of either X or Y_proj.
+#     - cluster_ids: length‐N array of ints ∈ [0..n_clusters-1].
+#     - true_labels: length‐N array of strings (e.g. cuisine names).
+#     - n_clusters: how many clusters you ran (here 3).
+#     - title:      figure title.
+#     """
+#     # pick one color per cluster
+#     cmap = plt.get_cmap("tab10")
+#     cluster_colors = [cmap(i) for i in range(n_clusters)]
 
-        summary = run_all_trials(df_run, model, tfm, recipes, ing2idx, D, n_clusters)
-        
-        print(f"\n=== Summary for all proportions ({n_clusters} clusters) ===")
-        print(pd.DataFrame(summary).T)
-        # summary keys look like "sup=2.05%, out=55.00%"
-        for key, metrics in summary.items():
-            sup_frac = float(key.split(",")[0].split("=")[1].strip("%"))/100
-            for metric_name, mae in metrics.items():
-                all_rows.append({
-                    "n_clusters": n_clusters,
-                    "sup_frac":   sup_frac,
-                    "model":      metric_name.replace("_MAE",""),
-                    "MAE":        mae
-                })
+#     # assign a marker‐shape to each distinct cuisine in true_labels
+#     unique_cuisines = np.unique(true_labels)
+#     # Choose as many markers as needed (assuming no more than ~10 cuisines here).
+#     marker_list = ["o", "s", "X", "D", "v", "^", "<", ">", "p", "*"]
+#     if len(unique_cuisines) > len(marker_list):
+#         raise ValueError(f"Too many unique true_labels ({len(unique_cuisines)}) for marker_list.")
+#     cuisine_to_marker = {cuisine: marker_list[i] for i, cuisine in enumerate(unique_cuisines)}
 
-    df_results = pd.DataFrame(all_rows)
-    bubble_plot(df_results,
-                model_order=["BKM","KNN","MeanTeacher","XGBoost","LapRLS","TSVR","TNNR","UCVME","RankUp","AGDN"])
+#     fig, ax = plt.subplots(figsize=(6, 6))
+
+#     # For each cuisine, plot only the points belonging to that cuisine,
+#     # coloring by cluster_id
+#     for cuisine in unique_cuisines:
+#         mask = (true_labels == cuisine)
+#         xs = data_2d[mask, 0]
+#         ys = data_2d[mask, 1]
+#         cs = cluster_ids[mask]
+#         m = cuisine_to_marker[cuisine]
+
+#         # scatter these points, colored by cs, but all with the same marker=m
+#         sc = ax.scatter(
+#             xs, ys,
+#             c=cs,
+#             cmap="tab10",
+#             vmin=0,
+#             vmax=n_clusters - 1,
+#             marker=m,
+#             edgecolor="k",
+#             linewidth=0.5,
+#             s=40,
+#             alpha=0.8
+#         )
+
+#     ax.set_title(title, fontsize=14)
+#     ax.set_xlabel("PCA 1")
+#     ax.set_ylabel("PCA 2")
+
+#     # Build a legend for cluster‐colors
+#     cluster_handles = []
+#     for c in range(n_clusters):
+#         patch = plt.Line2D(
+#             [], [], linestyle="none", marker="o",
+#             color=cluster_colors[c], markeredgecolor="k",
+#             markersize=8, label=f"cluster={c}"
+#         )
+#         cluster_handles.append(patch)
+#     leg1 = ax.legend(
+#         handles=cluster_handles,
+#         title="Cluster ID",
+#         bbox_to_anchor=(1.02, 1),
+#         loc="upper left"
+#     )
+
+#     # Build a legend for cuisine‐markers
+#     cuisine_handles = []
+#     for cuisine in unique_cuisines:
+#         marker = cuisine_to_marker[cuisine]
+#         patch = plt.Line2D(
+#             [], [], linestyle="none", marker=marker,
+#             color="lightgray", markeredgecolor="k",
+#             markersize=8, label=cuisine
+#         )
+#         cuisine_handles.append(patch)
+#     leg2 = ax.legend(
+#         handles=cuisine_handles,
+#         title="True cuisine",
+#         bbox_to_anchor=(1.02, 0.5),
+#         loc="center left"
+#     )
+
+#     # Make sure the first legend (cluster) stays on the axes:
+#     ax.add_artist(leg1)
+#     plt.tight_layout()
+#     plt.show()
+
+#############################
+# Fine-Tuning
+#############################
+def train_and_eval_gnn(
+    X, y_lab, sup_mask,
+    edge_index,
+    centroids,
+    n_clusters=5,
+    tau=0.5,
+    hidden_dim=64,
+    lr=0.01,
+    epochs=1000
+):
+    # 1) train the GNN
+    Y_gnn = run_gnn_bridged(
+        X, y_lab, sup_mask, n_clusters,
+        edge_index, centroids,
+        tau=tau,
+        hidden_dim=hidden_dim,
+        lr=lr,
+        epochs=epochs
+    )
+
+    return Y_gnn
+
+def eval_one_config(
+    X, Y_true, Y_proj, x_lab, y_lab,
+    n_clusters, sup_frac, out_frac,
+    edge_index, tau,
+    hidden_dim, lr, epochs
+):
+    # replicate exactly your stratified / clustering / centroids logic
+    sup_mask, out_mask, inf_mask = stratified_split_masks(
+        x_lab, sup_frac, out_frac, n_clusters
+    )
+    # cluster Y on sup+out
+    y_lab[sup_mask|out_mask] = cluster_ingredients(
+        Y_proj[sup_mask|out_mask], n_clusters
+    )
+    centroids = compute_centroids(Y_true, y_lab, n_clusters)
+
+    # train & eval the GNN for this config
+    Y_pred = train_and_eval_gnn(
+        X, y_lab, sup_mask,
+        edge_index,
+        centroids,
+        n_clusters=n_clusters,
+        tau=tau,
+        hidden_dim=hidden_dim,
+        lr=lr,
+        epochs=epochs
+    )
+    return mean_absolute_error(Y_true[inf_mask], Y_pred[inf_mask])
+
+def find_general_gnn_hyperparams(
+    df,                    # your DataFrame for one dataset
+    param_grid,                # dict of lists for tau, hidden_dim, lr, epochs
+    model, tfm, recipes, ing2idx, D,
+        cluster_vals, sup_fracs, out_frac, n_trials
+):
+
+    best = None
+    for tau, hidden_dim, lr, n_neighbors, epochs in itertools.product(
+        param_grid['tau'],
+        param_grid['hidden_dim'],
+        param_grid['lr'],
+        param_grid['n_neighbors'],
+        param_grid['epochs']
+    ):
+        maes = []
+        print(f"\n=== RUNNING for tau={tau}, hidden_dim={hidden_dim}, lr={lr}, n_neighbors={n_neighbors}, epochs={epochs} ===")
+        # pick cuisines at random (or deterministic if you prefer)
+        for i, n_clusters in enumerate(cluster_vals):
+            print(f"\n=== RUNNING for {n_clusters} clusters ===")
+            # pick cuisines at random (or deterministic if you prefer)
+            all_cuisines = df['cuisine_type'].unique()
+            cuisines = np.random.choice(all_cuisines, size=n_clusters, replace=False).tolist()
+            df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+            print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+
+            # pre‐encode once per df_run
+            X_all = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+            # build your GNN graph once
+            from sklearn.neighbors import NearestNeighbors
+            knn = NearestNeighbors(n_neighbors=n_neighbors, algorithm="auto").fit(X_all)
+            adj = knn.kneighbors_graph(X_all, mode="connectivity").tocoo()
+            edge_index = torch.tensor([adj.row, adj.col], dtype=torch.long)
+
+            Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+            rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+            Y_proj = rp.fit_transform(Y_true)                             # (N, D′)
+            y_lab  = np.empty(len(Y_proj), int)
+            # 1) stratify & split
+            x_lab  = cluster_features(X_all, n_clusters)
+
+            for j, sup_frac in enumerate(sup_fracs):
+                print(f"\n-- Supervision = {sup_frac:.2%} --")
+                mae = eval_one_config(
+                    X_all, Y_true,
+                    Y_proj, x_lab, y_lab,
+                    n_clusters=n_clusters,
+                    sup_frac=sup_frac,
+                    out_frac=OUT_FRAC,
+                    edge_index=edge_index,
+                    tau=tau,
+                    hidden_dim=hidden_dim,
+                    lr=lr,
+                    epochs=epochs
+                )
+                maes.append(mae)
+                print(f"    MAE = {mae:.4f}")
+        avg_mae = np.mean(maes)
+        print(f"→ AVERAGE MAE = {avg_mae:.4f}")
+        if best is None or avg_mae < best[0]:
+            best = (avg_mae, dict(
+                tau=tau, hidden_dim=hidden_dim,
+                lr=lr, n_neighbors=n_neighbors, epochs=epochs
+            ))
+
+    return best  # (best_avg_mae, best_config)
+    
+
+
 #############################
 # Main
 #############################
@@ -1428,4 +2627,192 @@ if __name__ == '__main__':
     # summary = run_all_trials(df, model, tfm, recipes, ing2idx, D)
     # print("\n=== Summary for all proportions ===")
     # print(pd.DataFrame(summary).T)
-    run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
+
+     # collect
+    cluster_vals = N_CLUSTERS              # [3,4,5]
+    sup_fracs    = SUP_FRACS               # [0.0205,0.05,0.1]
+    out_frac     = OUT_FRAC
+    n_trials     = N_TRIALS                # e.g. 3 or bump to 20 for nicer boxes
+    n_clusters = 3
+    all_cuisines = df['cuisine_type'].unique()
+    # cuisines = ['red_velvet_cake', 'chicken_curry', 'caprese_salad']
+    cuisines = ['pizza', 'ramen', 'sashimi']  # deterministic example
+    df_run = df[df['cuisine_type'].isin(cuisines)].reset_index(drop=True)
+    print(f"→ Using cuisines for {n_clusters} clusters:", cuisines)
+    # pre‐encode once per df_run
+    X = encode_images(df_run, IMAGE_FOLDER, model, tfm)
+    Y_true = np.vstack(df_run['ingredient_vec'].values)               # (N, D)
+    rp     = GaussianRandomProjection(n_components=Y_DIM_REDUCED, random_state=42)
+    Y_proj = rp.fit_transform(Y_true)   
+    true_labels = df_run['cuisine_type'].values
+
+    # 1) Run KMeans (or KMeansConstrained) on X:
+    x_labels= cluster_features_constrained(X, n_clusters)
+
+    # 1.5) Stratify & split
+    sup_mask, out_mask, inf_mask = stratified_split_masks(x_labels, sup_fracs[0], out_frac, n_clusters)
+
+    # 2) Run KMeans (or KMeansConstrained) on Y_proj:
+    # y_km = KMeans(n_clusters=n_clusters, random_state=42).fit(Y_proj)
+    # y_labels = y_km.labels_    # shape (N,)
+    y_labels = np.empty(len(Y_proj), int)
+    y_labels[sup_mask | out_mask] = cluster_ingredients_constrained(Y_proj[sup_mask | out_mask], n_clusters)
+    mask_y = sup_mask | out_mask
+    # (a) Gather the list of unique cuisines in df_run, in some fixed order:
+    cuisine_names = cuisines  # e.g. array(['caprese_salad', 'chicken_curry', 'red_velvet_cake'], dtype=object)
+    # abbr = {
+    # 'red_velvet_cake': 'RV',
+    # 'chicken_curry':   'CC',
+    # 'caprese_salad':   'CS'
+    # }
+    abbr = {
+        'pizza': 'PZ',
+        'ramen': 'RM',
+        'sashimi': 'SM'
+    }
+    short_labels = [abbr[c] for c in cuisine_names]
+    num_cuisines = len(cuisine_names)
+
+    # Build a map from cuisine‐name → row index 0..(num_cuisines-1)
+    cuisine_to_idx = {cuisine: idx for idx, cuisine in enumerate(cuisine_names)}
+
+    # (b) Prepare two count‐matrices, shape (num_cuisines, n_clusters):
+    #     x_count[c, k] = number of recipes of cuisine c assigned to X-cluster k
+    #     y_count[c, k] = number of recipes of cuisine c assigned to Y-cluster k (only sup+out)
+    x_count = np.zeros((num_cuisines, n_clusters), dtype=int)
+    y_count = np.zeros((num_cuisines, n_clusters), dtype=int)
+
+    # Fill x_count by iterating over all N samples:
+    for i in range(len(X)):
+        c_idx = cuisine_to_idx[ true_labels[i] ]
+        kx = int(x_labels[i])
+        x_count[c_idx, kx] += 1
+
+    # Fill y_count by iterating only over sup+out indices:
+    supout_indices = np.where(mask_y)[0]
+    for i in supout_indices:
+        c_idx = cuisine_to_idx[ true_labels[i] ]
+        ky = int(y_labels[i])
+        y_count[c_idx, ky] += 1
+
+    # (c) (Optional) Convert to fractions (so each cuisine’s bar sums to 1.0):
+    #     If you prefer absolute counts, you can skip this step and plot x_count / y_count directly.
+    x_frac = x_count.astype(float) / (x_count.sum(axis=1, keepdims=True) + 1e-12)
+    y_frac = y_count.astype(float) / (y_count.sum(axis=1, keepdims=True) + 1e-12)
+
+    # Step 3) Plot two side‐by‐side stacked‐bar charts:
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+
+    ind = np.arange(num_cuisines)    # x positions for each cuisine
+    width = 0.6
+
+    # Choose one distinct color per cluster:
+    # colors = plt.cm.tab10(np.linspace(0, 1, n_clusters))
+    colors = ["crimson", "goldenrod", "teal"]  # or use any other color palette you like
+    # 3a) Left plot = X‐clustering (all samples)
+    bottom = np.zeros(num_cuisines)
+    for k in range(n_clusters):
+        ax1.bar(
+            ind,
+            x_frac[:, k],                # stack the fraction for cluster k
+            width,
+            bottom=bottom,
+            color=colors[k],
+            label=f"Cluster {k}"
+        )
+        bottom += x_frac[:, k]
+
+    ax1.set_xticks(ind)
+    ax1.set_xticklabels(short_labels, fontsize=14, ha="right")
+    ax1.set_ylabel("Fraction of samples", fontsize=14)
+    ax1.set_title("Food‐Image (X) Clustering", fontsize=14)
+    ax1.grid(axis="y", linestyle="--", alpha=0.3)
+
+    # 3b) Right plot = Y‐clustering (only sup+out samples)
+    bottom = np.zeros(num_cuisines)
+    for k in range(n_clusters):
+        ax2.bar(
+            ind,
+            y_frac[:, k],
+            width,
+            bottom=bottom,
+            color=colors[k],
+            label=f"Cluster {k}"
+        )
+        bottom += y_frac[:, k]
+
+    ax2.set_xticks(ind)
+    ax2.set_xticklabels(short_labels, fontsize=14, ha="right")
+    ax2.set_title("Ingredient (Y) Clustering ", fontsize=14)
+    ax2.grid(axis="y", linestyle="--", alpha=0.3)
+
+    # Step 4) Shared legend (one legend for both subplots)
+    handles, labels = ax1.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=n_clusters, frameon=False, fontsize=14)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.92])  # leave top space for legend
+    plt.show()
+    # # 3) Reduce X and Y_proj to 2D via PCA
+    # pca_x = PCA(n_components=2, random_state=42).fit(X)
+    # X_2d = pca_x.transform(X)         # (N,2)
+
+    # pca_y = PCA(n_components=2, random_state=42).fit(Y_proj[sup_mask | out_mask])
+    # Y_2d = pca_y.transform(Y_proj[sup_mask | out_mask])    # (N,2)
+
+    # # 4) Now call the plotting function twice:
+    # plot_clusters_with_shapes(
+    #     data_2d=X_2d,
+    #     cluster_ids=x_labels,
+    #     true_labels=true_labels,
+    #     n_clusters=n_clusters,
+    #     title="X‐features clustered into 3, True cuisine as marker"
+    # )
+
+    # plot_clusters_with_shapes(
+    #     data_2d=Y_2d,
+    #     cluster_ids=y_labels,
+    #     true_labels=true_labels,
+    #     n_clusters=n_clusters,
+    #     title="Y‐features (projected) clustered into 3, True cuisine as marker"
+    # )
+
+    # loss_data, model_labels, nmi_arr, mae_arr = collect_mae_trials(
+    #     df, model, tfm, recipes, ing2idx, D,
+    #     cluster_vals, sup_fracs, out_frac, n_trials
+    # )
+
+    # # labels for the axes
+    # hyperparam1_labels = [f"{c} clusters"    for c in cluster_vals]
+    # hyperparam2_labels = [f"{int(s*100)}% sup" for s in sup_fracs]
+    # print(hyperparam1_labels)
+    # print(hyperparam2_labels)
+
+    # plt.figure(figsize=(6,4))
+    # plt.scatter(nmi_arr, mae_arr, color="tab:blue", edgecolor="k", alpha=0.7)
+    # plt.xlabel("NMI of X‐clustering", fontsize=12)
+    # plt.ylabel("BC MAE",             fontsize=12)
+    # # plt.yscale("log")
+    # plt.title("BC MAE vs. NMI of X clustering", fontsize=14)
+    # plt.grid(True, linestyle="--", alpha=0.5)
+    # plt.tight_layout()
+    # plt.show()
+
+    # # # finally, plot
+    # plot_boxplots_by_hyper1(
+    #     loss_data,
+    #     hyperparam1_labels=hyperparam1_labels,
+    #     hyperparam2_labels=hyperparam2_labels,
+    #     model_labels=model_labels,
+    #     log_scale=False
+    # )
+    # run_and_plot_all(df, model, tfm, recipes, ing2idx, D)
+    # param_grid = {
+    # 'tau':        [0.4, 0.5, 0.75],
+    # 'hidden_dim': [64, 128, 256],
+    # 'lr':         [1e-4, 5e-4, 1e-5],
+    # 'n_neighbors': [5, 10, 20],
+    # 'epochs':     [100]
+    # }
+    # best_mae, best_cfg = find_general_gnn_hyperparams(df, param_grid, model, tfm, recipes, ing2idx, D,
+    #     cluster_vals, sup_fracs, out_frac, n_trials)
+    # print("GENERAL GNN hyperparams →", best_cfg, "avg MAE =", best_mae)
