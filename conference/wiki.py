@@ -21,7 +21,7 @@ from tqdm import tqdm
 from scipy.stats import gaussian_kde
 import os
 from collections import Counter
-from bioscan_copy import (
+from baseline import (
     mean_teacher_regression,
     gcn_regression,
     fixmatch_regression,
@@ -40,103 +40,107 @@ from bioscan_copy import (
 # 'zv' - page embedding (numpy array, for generating clusters only)
 
 
-df = pd.read_csv("wiki_df.csv")
+df = pd.read_csv("data/wiki_df.csv")
 df['x'] = df['x'].apply(lambda x: np.fromstring(x[1:-1], sep=',')).tolist()  # Convert string back to numpy array
 df['yv'] = df['yv'].apply(lambda x: np.fromstring(x[1:-1], sep=',')).tolist()  # Convert string back to numpy array
 df['zv'] = df['zv'].apply(lambda x: np.fromstring(x[1:-1], sep=',')).tolist()  # Convert string back to numpy array
 
 X = np.vstack(df['zv'].values)  # shape: (n_samples, embedding_dim)
-db = DBSCAN(eps=0.35, min_samples=5, metric='cosine').fit(X)
+db = DBSCAN(eps=0.36, min_samples=12, metric='cosine').fit(X)
 labels = db.labels_
 df = df.assign(cluster=labels)
 df_valid = df[df['cluster'] != -1].copy()
 cluster_sizes = df_valid['cluster'].value_counts()
 eligible = cluster_sizes[cluster_sizes >= 12].index
 
+# define a set of stopwords to ignore
+stop_words = {
+    'on','in','of','to','for','with','a','an','the','and','or','but',
+    'is','are','be','as','by','at','from','that','this','these','those',
+    # add more as needed...
+}
+
 pruned_clusters = []
 for cl in eligible:
     sub = df_valid[df_valid['cluster'] == cl]
-    # build list of word lists: split by ',' then by whitespace
+    # split z into words, lowercase, filter out stopwords & non-alpha tokens
     word_lists = sub['z'].str.split(',').apply(
-        lambda shards: [w for shard in shards for w in shard.strip().split()]
+        lambda shards: [
+            w.lower()
+            for shard in shards
+            for w in shard.strip().split()
+            if w.isalpha() and w.lower() not in stop_words
+        ]
     )
-    # count all words across the cluster
+    # count only the filtered words
     word_counts = Counter(w for words in word_lists for w in words)
+    if not word_counts:
+        # no valid words in this cluster
+        continue
+
     most_common_word, count = word_counts.most_common(1)[0]
-    print(f"Most common word in cluster {cl}: {most_common_word} (count: {count})")
-    
-    # keep only those rows whose z contains this word
+    print(f"Most common non-stopword in cluster {cl}: {most_common_word} (count: {count})")
+
+    # keep only rows containing that word
     mask = word_lists.apply(lambda words: most_common_word in words)
     pruned = sub[mask]
     if len(pruned) >= 12:
         pruned_clusters.append(pruned)
 
-df_pruned = pd.concat(pruned_clusters, ignore_index=True)
+# concatenate and re-compute eligibility
+df_pruned       = pd.concat(pruned_clusters, ignore_index=True)
+pruned_counts   = df_pruned['cluster'].value_counts()
 
-
-def get_data(df, supervised_ratio, output_only_ratio, K=3, seed=None):
-
-
+def get_data(df, supervised_ratio, output_only_ratio, K=None, seed=None):
     """
-    Split df into supervised, inference, and output-only subsets.
-    - Supervised points: equally sampled (w/o replacement) from K contiguous chunks.
-    - Inference and output-only: sampled at random from the remainder.
-    Ensures no overlap and that supervised_ratio + inference_ratio + output_only_ratio == 1.0.
+    Split each 'cluster' (family/chunk) in df into supervised/inference/output-only
+    according to the fixed ratios. Guarantees at least one supervised sample per cluster.
+    Returns:
+      sup_df, inf_df, out_df, X_for_clustering, Y_for_clustering
     """
-    N = len(df)
-    inference_ratio = 1.0 - supervised_ratio - output_only_ratio
+    import numpy as np
+    import pandas as pd
+
     rng = np.random.default_rng(seed)
 
-    # total supervised count
-    n_sup = int(supervised_ratio * N)
-    if n_sup < K:
-        raise ValueError(f"Need at least K={K} supervised points, but got n_sup={n_sup}")
+    sup_list, inf_list, out_list = [], [], []
 
-    # how many per chunk (distribute the remainder across the first `extra` chunks)
-    base = n_sup // K
-    extra = n_sup % K
+    # For each cluster value, shuffle & slice by ratios
+    for cluster_val, group in df.groupby('cluster'):
+        n = len(group)
+        # compute counts
+        n_sup = max(1, int(np.floor(supervised_ratio * n)))
+        n_out = int(np.floor(output_only_ratio   * n))
+        # avoid overshoot
+        if n_sup + n_out >= n:
+            n_sup = max(1, n - 2)
+            n_out = 1
+        n_inf = n - n_sup - n_out
 
-    # build supervised index list
-    supervised_idx = []
-    # compute chunk boundaries
-    chunk_sizes = [N // K + (1 if i < (N % K) else 0) for i in range(K)]
-    starts = np.cumsum([0] + chunk_sizes[:-1])
-    ends   = np.cumsum(chunk_sizes)
+        # shuffle once
+        subseed = int(rng.integers(0, 2**32))
+        perm = group.sample(frac=1, random_state=subseed).reset_index(drop=True)
+        # slice
+        sup = perm.iloc[       : n_sup          ]
+        inf = perm.iloc[n_sup  : n_sup + n_inf  ]
+        out = perm.iloc[n_sup + n_inf :           ]
 
-    for i, (start, end) in enumerate(zip(starts, ends)):
-        chunk_inds = np.arange(start, end)
-        m = base + (1 if i < extra else 0)
-        chosen = rng.choice(chunk_inds, size=m, replace=False)
-        supervised_idx.append(chosen)
-    supervised_idx = np.concatenate(supervised_idx)
+        sup_list.append(sup)
+        inf_list.append(inf)
+        out_list.append(out)
 
-    # remaining indices for inference + output-only
-    all_idx = np.arange(N)
-    remaining = np.setdiff1d(all_idx, supervised_idx, assume_unique=True)
+    # concatenate all clusters back together
+    sup_df = pd.concat(sup_list, ignore_index=True)
+    inf_df = pd.concat(inf_list, ignore_index=True)
+    out_df = pd.concat(out_list, ignore_index=True)
 
-    # inference
-    n_inf = int(inference_ratio * N)
-    inf_idx = rng.choice(remaining, size=n_inf, replace=False)
+    # for clustering, inputs = inference + supervised; outputs = output-only + supervised
+    X_for_clustering = pd.concat([inf_df, sup_df], ignore_index=True)
+    Y_for_clustering = pd.concat([out_df, sup_df], ignore_index=True)
 
-    # output-only = whatever is left
-    out_idx = np.setdiff1d(remaining, inf_idx, assume_unique=True)
+    return sup_df, inf_df, out_df, X_for_clustering, Y_for_clustering
 
-    # build DataFrames
-    supervised_df  = df.iloc[supervised_idx].reset_index(drop=True)
-    inference_df   = df.iloc[inf_idx].reset_index(drop=True)
-    output_only_df = df.iloc[out_idx].reset_index(drop=True)
 
-    # for clustering inputs
-    X_for_clustering = pd.concat([inference_df, supervised_df], ignore_index=True)
-    Y_for_clustering = pd.concat([output_only_df, supervised_df], ignore_index=True)
-
-    # summary
-    # print(f"Total samples:         {N}")
-    # print(f"  Supervised set:      {len(supervised_df)}")
-    # print(f"  Inference set:       {len(inference_df)}")
-    # print(f"  Output-only set:     {len(output_only_df)}")
-
-    return supervised_df, inference_df, output_only_df, X_for_clustering, Y_for_clustering
 
 def perform_clustering(X_for_clustering, Y_for_clustering, K):
     """
@@ -367,7 +371,33 @@ def _wrap_text_baseline(baseline_fn, sup_df, inf_df):
     inf = inf_df.rename(columns={'x':'morph_coordinates', 'yv':'gene_coordinates'})
 
     # 2) run the numeric regressor
-    preds, actuals = baseline_fn(sup, inf)
+    mt_preds, mt_actuals = mean_teacher_regression(sup, inf, lr=0.001, w_max=0.5,alpha=0.95,ramp_len=10)
+    gc_preds, gc_actuals = gcn_regression       (sup, inf,dropout=0.3, hidden=32,lr=0.001)
+    fx_preds, fx_actuals = fixmatch_regression  (sup, inf,alpha_ema=0.99,batch_size=64,conf_threshold=0.05,lambda_u_max=0.5,lr=0.0003,rampup_length=30)
+    lp_preds, lp_actuals = laprls_regression    (sup, inf,gamma=0.001,k=5,lam=0.1,sigma=0.5)
+    ts_preds, ts_actuals = tsvr_regression      (sup, inf, C=1.0, epsilon=0.01, gamma='scale', self_training_frac=0.2)
+    tn_preds, tn_actuals = tnnr_regression     (sup, inf, beta=0.1,lr=0.001, rep_dim=128)
+    uv_preds, uv_actuals = ucvme_regression    (sup, inf,lr=0.001,mc_T=10,w_unl=1)
+    ru_preds, ru_actuals = rankup_regression   (sup, inf, alpha_rda=0.05, hidden_dim=128, lr=0.0001, tau=0.9, temperature=0.5)
+
+    if baseline_fn.__name__ == 'mean_teacher_regression':
+        preds, actuals = mt_preds, mt_actuals
+    elif baseline_fn.__name__ == 'gcn_regression':
+        preds, actuals = gc_preds, gc_actuals
+    elif baseline_fn.__name__ == 'fixmatch_regression':
+        preds, actuals = fx_preds, fx_actuals
+    elif baseline_fn.__name__ == 'laprls_regression':
+        preds, actuals = lp_preds, lp_actuals
+    elif baseline_fn.__name__ == 'tsvr_regression':
+        preds, actuals = ts_preds, ts_actuals
+    elif baseline_fn.__name__ == 'tnnr_regression':
+        preds, actuals = tn_preds, tn_actuals
+    elif baseline_fn.__name__ == 'ucvme_regression':
+        preds, actuals = uv_preds, uv_actuals
+    elif baseline_fn.__name__ == 'rankup_regression':
+        preds, actuals = ru_preds, ru_actuals
+    else:
+        raise ValueError(f"Unknown baseline function: {baseline_fn.__name__}")
 
     # 3) get actual texts
     actual_texts = inf_df['y'].tolist()
@@ -383,76 +413,347 @@ def _wrap_text_baseline(baseline_fn, sup_df, inf_df):
 
     return preds, actuals, actual_texts, pred_texts
 
-def run_experiment(df, supervised_ratio=0.05, output_only_ratio=0.5,
-                   K=100, knn_neighbors=10, seed=None):
 
+##### KMM Section
+
+from baseline import kernel_mean_matching_regression, reversed_kernel_mean_matching_regression
+
+from baseline import em_regression, reversed_em_regression
+
+
+def run_experiment(
+    df: pd.DataFrame,
+    supervised_ratio: float = 0.05,
+    output_only_ratio: float = 0.5,
+    K: int = 100,
+    knn_neighbors: int = 10,
+    seed: int = None,
+):
+    """
+    Forward pipeline for Wikipedia‐style dataset:
+      • Split into supervised, inference, output‐only
+      • Size‐constrained KMeans on (inference+supervised) for x and (output-only+supervised) for y
+      • Build bridged decision matrix and do Bridged inference
+      • Evaluate BKM, KNN, MeanTeacher, FixMatch, LapRLS, TSVR, TNNR, UCVME, RankUp, GCN, KMM, EM
+      • Returns dict with 'clustering', 'regression', and 'text' metrics
+    """
+    # 1) split
     sup_df, inf_df, out_df, Xc, Yc = get_data(df, supervised_ratio, output_only_ratio, K, seed)
+
+    # 2) clustering
     x_cl, y_cl = perform_clustering(Xc, Yc, K)
 
-    ami_x = adjusted_mutual_info_score(Xc['cluster'], x_cl)
-    ami_y = adjusted_mutual_info_score(Yc['cluster'], y_cl)
+    # 3) clustering quality
+    ami_x = adjusted_mutual_info_score(Xc["cluster"], x_cl)
+    ami_y = adjusted_mutual_info_score(Yc["cluster"], y_cl)
     decision = build_decision_matrix(sup_df, x_cl, y_cl, K)
     true_decision = build_true_decision_vector(Xc, Yc, x_cl, y_cl, K)
     accuracy = np.mean(decision == true_decision)
 
+    # 4) bridged inference
     cents, texts = compute_y_centroids(Yc, y_cl, K)
     inf_res = perform_inference(inf_df, x_cl, decision, cents, texts)
 
-    # BKM baseline metrics
-    bkm_pred_emb = np.vstack(inf_res['predicted_yv'].values)
-    bkm_act_emb = np.vstack(inf_res['yv'].values)
+    # 5) BKM baseline
+    bkm_pred_emb = np.vstack(inf_res["predicted_yv"].values)
+    bkm_act_emb  = np.vstack(inf_res["yv"].values)
     bkm_mae, bkm_mse = evaluate_regression_loss(bkm_pred_emb, bkm_act_emb)
-    text_metrics_bkm = evaluate_text_metrics(inf_res['y'], inf_res['predicted_text'])
-    # KNN baseline metrics
+    text_metrics_bkm = evaluate_text_metrics(inf_res["y"], inf_res["predicted_text"])
+
+    # 6) KNN baseline
     knn_pred_emb, knn_act_emb, knn_pred_texts, knn_act_texts = knn_regression(sup_df, inf_df, knn_neighbors)
     knn_mae, knn_mse = evaluate_regression_loss(knn_pred_emb, knn_act_emb)
     text_metrics_knn = evaluate_text_metrics(knn_act_texts, knn_pred_texts)
-    # Mean Teacher baseline metrics
-    mt_pred, mt_act, mt_text_act, mt_text_pred = _wrap_text_baseline(mean_teacher_regression, sup_df, inf_df)
-    mt_mae, mt_mse = evaluate_regression_loss(mt_pred, mt_act)
-    mt_text_metrics = evaluate_text_metrics(mt_text_act, mt_text_pred)
-    # FixMatch baseline metrics
-    fm_pred, fm_act, fm_text_act, fm_text_pred = _wrap_text_baseline(fixmatch_regression, sup_df, inf_df)
-    fm_mae, fm_mse = evaluate_regression_loss(fm_pred, fm_act)
-    fm_text_metrics = evaluate_text_metrics(fm_text_act, fm_text_pred)
-    # LapRLS baseline metrics
-    laprls_pred, laprls_act, laprls_text_act, laprls_text_pred = _wrap_text_baseline(laprls_regression, sup_df, inf_df)
-    laprls_mae, laprls_mse = evaluate_regression_loss(laprls_pred, laprls_act)
-    laprls_text_metrics = evaluate_text_metrics(laprls_text_act, laprls_text_pred)
-    # TSVR baseline metrics
-    tsvr_pred, tsvr_act, tsvr_text_act, tsvr_text_pred = _wrap_text_baseline(tsvr_regression, sup_df, inf_df)
-    tsvr_mae, tsvr_mse = evaluate_regression_loss(tsvr_pred, tsvr_act)
-    tsvr_text_metrics = evaluate_text_metrics(tsvr_text_act, tsvr_text_pred)
-    # TNNR baseline metrics
-    tnnr_pred, tnnr_act, tnnr_text_act, tnnr_text_pred = _wrap_text_baseline(tnnr_regression, sup_df, inf_df)
-    tnnr_mae, tnnr_mse = evaluate_regression_loss(tnnr_pred, tnnr_act)
-    tnnr_text_metrics = evaluate_text_metrics(tnnr_text_act, tnnr_text_pred)
-    # UCVME baseline metrics
-    ucvme_pred, ucvme_act, ucvme_text_act, ucvme_text_pred = _wrap_text_baseline(ucvme_regression, sup_df, inf_df)
-    ucvme_mae, ucvme_mse = evaluate_regression_loss(ucvme_pred, ucvme_act)
-    ucvme_text_metrics = evaluate_text_metrics(ucvme_text_act, ucvme_text_pred)
-    # RankUp baseline metrics
-    rankup_pred, rankup_act, rankup_text_act, rankup_text_pred = _wrap_text_baseline(rankup_regression, sup_df, inf_df)
-    rankup_mae, rankup_mse = evaluate_regression_loss(rankup_pred, rankup_act)
-    rankup_text_metrics = evaluate_text_metrics(rankup_text_act, rankup_text_pred)
-    # GCN baseline metrics
-    gcn_pred, gcn_act, gcn_text_act, gcn_text_pred = _wrap_text_baseline(gcn_regression, sup_df, inf_df)
-    gcn_mae, gcn_mse = evaluate_regression_loss(gcn_pred, gcn_act)
-    gcn_text_metrics = evaluate_text_metrics(gcn_text_act, gcn_text_pred)
 
+    # 7) _wrap_text_baseline methods
+    mt_pred, mt_act, mt_text_act, mt_text_pred = _wrap_text_baseline(mean_teacher_regression, sup_df, inf_df)
+    fm_pred, fm_act, fm_text_act, fm_text_pred = _wrap_text_baseline(fixmatch_regression, sup_df, inf_df)
+    lap_pred, lap_act, lap_text_act, lap_text_pred = _wrap_text_baseline(laprls_regression, sup_df, inf_df)
+    tsvr_pred, tsvr_act, tsvr_text_act, tsvr_text_pred = _wrap_text_baseline(tsvr_regression, sup_df, inf_df)
+    tnnr_pred, tnnr_act, tnnr_text_act, tnnr_text_pred = _wrap_text_baseline(tnnr_regression, sup_df, inf_df)
+    ucv_pred, ucv_act, ucv_text_act, ucv_text_pred = _wrap_text_baseline(ucvme_regression, sup_df, inf_df)
+    rank_pred, rank_act, rank_text_act, rank_text_pred = _wrap_text_baseline(rankup_regression, sup_df, inf_df)
+    gcn_pred, gcn_act, gcn_text_act, gcn_text_pred = _wrap_text_baseline(gcn_regression, sup_df, inf_df)
+
+    mt_mae, mt_mse       = evaluate_regression_loss(mt_pred, mt_act)
+    fm_mae, fm_mse       = evaluate_regression_loss(fm_pred, fm_act)
+    lap_mae, lap_mse     = evaluate_regression_loss(lap_pred, lap_act)
+    tsvr_mae, tsvr_mse   = evaluate_regression_loss(tsvr_pred, tsvr_act)
+    tnnr_mae, tnnr_mse   = evaluate_regression_loss(tnnr_pred, tnnr_act)
+    ucv_mae, ucv_mse     = evaluate_regression_loss(ucv_pred, ucv_act)
+    rank_mae, rank_mse   = evaluate_regression_loss(rank_pred, rank_act)
+    gcn_mae, gcn_mse     = evaluate_regression_loss(gcn_pred, gcn_act)
+
+    mt_text_metrics   = evaluate_text_metrics(mt_text_act, mt_text_pred)
+    fm_text_metrics   = evaluate_text_metrics(fm_text_act, fm_text_pred)
+    lap_text_metrics  = evaluate_text_metrics(lap_text_act, lap_text_pred)
+    tsvr_text_metrics = evaluate_text_metrics(tsvr_text_act, tsvr_text_pred)
+    tnnr_text_metrics = evaluate_text_metrics(tnnr_text_act, tnnr_text_pred)
+    ucv_text_metrics  = evaluate_text_metrics(ucv_text_act, ucv_text_pred)
+    rank_text_metrics = evaluate_text_metrics(rank_text_act, rank_text_pred)
+    gcn_text_metrics  = evaluate_text_metrics(gcn_text_act, gcn_text_pred)
+
+    # 8) KMM forward on full marginals
+    X_kmm = pd.concat([inf_df, sup_df], ignore_index=True).rename(columns={'x':'morph_coordinates'})
+    Y_kmm = pd.concat([out_df, sup_df], ignore_index=True).rename(columns={'yv':'gene_coordinates'})
+    sup_kmm = sup_df.rename(columns={'x':'morph_coordinates','yv':'gene_coordinates'})
+    inf_kmm = inf_df.rename(columns={'x':'morph_coordinates','yv':'gene_coordinates'})
+    kmm_pred_emb, kmm_act_emb = kernel_mean_matching_regression(
+        image_df      = X_kmm,
+        gene_df       = Y_kmm,
+        supervised_df = sup_kmm,
+        inference_df  = inf_kmm,
+        alpha=0.01,
+        kmm_B=100,
+        kmm_eps=0.001,
+        sigma=0.5
+    )
+    kmm_mae, kmm_mse = evaluate_regression_loss(kmm_pred_emb, kmm_act_emb)
+    train_embs, train_texts = np.vstack(sup_df['yv']), sup_df['y'].tolist()
+    kmm_pred_texts = [train_texts[np.argmin(np.linalg.norm(train_embs - e,axis=1))] for e in kmm_pred_emb]
+    kmm_text_metrics = evaluate_text_metrics(inf_df['y'], kmm_pred_texts)
+
+    # 9) EM forward on full marginals
+    em_pred_emb, em_act_emb = em_regression(
+        supervised_df = sup_kmm,
+        image_df      = X_kmm,
+        gene_df       = Y_kmm,
+        inference_df  = inf_kmm,
+        n_components  = K,
+        eps=0.001,
+        max_iter= 100,
+        tol= 1e-4
+    )
+    em_mae, em_mse = evaluate_regression_loss(em_pred_emb, em_act_emb)
+    em_pred_texts = [train_texts[np.argmin(np.linalg.norm(train_embs - e,axis=1))] for e in em_pred_emb]
+    em_text_metrics = evaluate_text_metrics(inf_df['y'], em_pred_texts)
+
+    # 10) package metrics
     metrics = {
-        'clustering': {"AMI_X": ami_x, "AMI_Y": ami_y, "Bridging Accuracy": accuracy},
-        'regression': {'BKM': {'MAE': bkm_mae, 'MSE': bkm_mse}, 'KNN': {'MAE': knn_mae, 'MSE': knn_mse}, 'MeanTeacher': {'MAE': mt_mae, 'MSE': mt_mse},
-                      'FixMatch': {'MAE': fm_mae, 'MSE': fm_mse}, 'LapRLS': {'MAE': laprls_mae, 'MSE': laprls_mse},
-                      'TSVR': {'MAE': tsvr_mae, 'MSE': tsvr_mse}, 'TNNR': {'MAE': tnnr_mae, 'MSE': tnnr_mse},
-                      'UCVME': {'MAE': ucvme_mae, 'MSE': ucvme_mse}, 'RankUp': {'MAE': rankup_mae, 'MSE': rankup_mse},
-                      'GCN': {'MAE': gcn_mae, 'MSE': gcn_mse}},
-        'text': {'BKM': text_metrics_bkm, 'KNN': text_metrics_knn, 'MeanTeacher': mt_text_metrics,
-                 'FixMatch': fm_text_metrics, 'LapRLS': laprls_text_metrics, 'TSVR': tsvr_text_metrics,
-                 'TNNR': tnnr_text_metrics, 'UCVME': ucvme_text_metrics, 'RankUp': rankup_text_metrics,
-                 'GCN': gcn_text_metrics},
+        'clustering': {
+            'AMI_X': ami_x,
+            'AMI_Y': ami_y,
+            'Bridging Accuracy': accuracy
+        },
+        'regression': {
+            'BKM':        {'MAE': bkm_mae,  'MSE': bkm_mse},
+            'KNN':        {'MAE': knn_mae,  'MSE': knn_mse},
+            'MeanTeacher':{'MAE': mt_mae,   'MSE': mt_mse},
+            'FixMatch':   {'MAE': fm_mae,   'MSE': fm_mse},
+            'LapRLS':     {'MAE': lap_mae,  'MSE': lap_mse},
+            'TSVR':       {'MAE': tsvr_mae,'MSE': tsvr_mse},
+            'TNNR':       {'MAE': tnnr_mae,'MSE': tnnr_mse},
+            'UCVME':      {'MAE': ucv_mae, 'MSE': ucv_mse},
+            'RankUp':     {'MAE': rank_mae,'MSE': rank_mse},
+            'GCN':        {'MAE': gcn_mae, 'MSE': gcn_mse},
+            'KMM':        {'MAE': kmm_mae, 'MSE': kmm_mse},
+            'EM':         {'MAE': em_mae,  'MSE': em_mse},
+        },
+        'text': {
+            'BKM':         text_metrics_bkm,
+            'KNN':         text_metrics_knn,
+            'MeanTeacher': mt_text_metrics,
+            'FixMatch':    fm_text_metrics,
+            'LapRLS':      lap_text_metrics,
+            'TSVR':        tsvr_text_metrics,
+            'TNNR':        tnnr_text_metrics,
+            'UCVME':       ucv_text_metrics,
+            'RankUp':      rank_text_metrics,
+            'GCN':         gcn_text_metrics,
+            'KMM':         kmm_text_metrics,
+            'EM':          em_text_metrics,
+        }
     }
+    # print the bleu scores
+    bleu_scores = {k: v['BLEU'] for k, v in metrics['text'].items()}
+    print('**********************************')
+    print("BLEU scores:")
+    for model, score in bleu_scores.items():
+        print(f"{model}: {score:.4f}")
     return metrics
+
+
+def run_reversed_experiment(
+    df: pd.DataFrame,
+    supervised_ratio: float = 0.05,
+    output_only_ratio: float = 0.5,
+    K: int = 100,
+    knn_neighbors: int = 10,
+    seed: int = None,
+):
+    """
+    Mirror of run_experiment:
+      • Supervised, inference, input-only (images) via get_data()
+      • Cluster on text (yv) then on image (x)
+      • Build decision vector from text→image clusters
+      • Predict image embeddings from text
+      • Evaluate Bridged + KNN + MeanTeacher + GCN + FixMatch + LapRLS + TSVR + TNNR + UCVME + RankUp + KMM + EM
+
+    Returns a dict with:
+      - 'clustering': {'AMI_text', 'AMI_image', 'Bridging Accuracy'}
+      - 'regression': { ... all MAE/MSE for each model ... }
+    """
+    from collections import Counter
+
+    # 1) split
+    sup_df, inf_df, input_only_df, Xc, Yc = get_data(
+        df, supervised_ratio, output_only_ratio, K, seed
+    )
+
+    # 2) build clustering sets
+    Xc_rev = pd.concat([inf_df, sup_df], ignore_index=True)        # text‐only + supervised
+    Yc_rev = pd.concat([input_only_df, sup_df], ignore_index=True) # image‐only + supervised
+
+    # 3) cluster on text (yv)
+    T = np.vstack(Xc_rev["yv"].values)
+    size_min_t = len(T) // K
+    size_max_t = int(np.ceil(len(T) / K))
+    km_text = KMeansConstrained(n_clusters=K, size_min=size_min_t, size_max=size_max_t, random_state=42).fit(T)
+    text_clusters = km_text.labels_
+
+    # 4) cluster on image (x)
+    I = np.vstack(Yc_rev["x"].values)
+    size_min_i = len(I) // K
+    size_max_i = int(np.ceil(len(I) / K))
+    km_img = KMeansConstrained(n_clusters=K, size_min=size_min_i, size_max=size_max_i, random_state=42).fit(I)
+    img_clusters = km_img.labels_
+
+    # 5) cluster quality
+    ami_text  = adjusted_mutual_info_score(Xc_rev["cluster"], text_clusters)
+    ami_image = adjusted_mutual_info_score(Yc_rev["cluster"], img_clusters)
+
+    # 6) build text→image decision vector
+    sup_block = sup_df.copy()
+    sup_block["text_cluster"] = text_clusters[-len(sup_df):]
+    sup_block["img_cluster"]  = img_clusters[-len(sup_df):]
+    decision_vec = decisionVector(sup_block, "text_cluster", "img_cluster", dim=K)
+
+    # 7) oracle for reversed mapping
+    true_vec  = build_true_decision_vector(Xc_rev, Yc_rev, text_clusters, img_clusters, K)
+    oracle_rev = np.full(K, -1, dtype=int)
+    for img_c, txt_c in enumerate(true_vec):
+        if txt_c >= 0:
+            oracle_rev[txt_c] = img_c
+    decision_acc = (decision_vec == oracle_rev).mean()
+
+    # 8) compute image‐cluster centroids
+    Yc_rev = Yc_rev.copy()
+    Yc_rev["img_cluster"] = img_clusters
+    Yc_rev["x"]           = np.vstack(Yc_rev["x"].values).tolist()
+    img_cents = []
+    for c in range(K):
+        pts = (
+            np.stack(Yc_rev[Yc_rev["img_cluster"] == c]["x"].values)
+            if (Yc_rev["img_cluster"] == c).any()
+            else np.zeros(I.shape[1])
+        )
+        img_cents.append(pts.mean(axis=0))
+    img_cents = np.vstack(img_cents)
+
+    # 9) bridged‐reversed inference
+    inf = inf_df.copy()
+    inf["text_cluster"]        = text_clusters[: len(inf)]
+    inf["predicted_img_cluster"] = inf["text_cluster"].map(lambda t: decision_vec[t])
+    inf["pred_x"]              = inf["predicted_img_cluster"].map(lambda c: img_cents[c])
+    bridged_preds  = np.vstack(inf["pred_x"].values)
+    bridged_actual = np.vstack(inf["x"].values)
+
+    # 10) prepare marginals for KMM & EM
+    gene_df_rev  = Xc_rev.rename(columns={'yv': 'gene_coordinates'}).copy()  # text→ gene_coordinates
+    image_df_rev = Yc_rev.rename(columns={'x':  'morph_coordinates'}).copy() # image→ morph_coordinates
+
+    sup_rev_reg = sup_df.rename(columns={'yv': 'gene_coordinates',
+                                         'x':  'morph_coordinates'}).copy()
+    inf_rev_reg = inf_df.rename(columns={'yv': 'gene_coordinates',
+                                         'x':  'morph_coordinates'}).copy()
+
+    # ── reversed KMM ──
+    kmm_rev_pred_emb, kmm_rev_act_emb = reversed_kernel_mean_matching_regression(
+        gene_df       = gene_df_rev,
+        image_df      = image_df_rev,
+        supervised_df = sup_rev_reg,
+        inference_df  = inf_rev_reg,
+        random_state  = 0,
+    )
+
+    # ── reversed EM ──
+    em_rev_pred_emb, em_rev_act_emb = reversed_em_regression(
+        gene_df       = gene_df_rev,
+        image_df      = image_df_rev,
+        supervised_df = sup_rev_reg,
+        inference_df  = inf_rev_reg,
+        n_components  = K,
+    )
+
+    # 11) prepare sup/inf for other baselines (text→image)
+    sup_rev = sup_df.rename(columns={'yv': 'morph_coordinates',
+                                     'x':  'gene_coordinates'}).copy()
+    inf_rev = inf_df.rename(columns={'yv': 'morph_coordinates',
+                                     'x':  'gene_coordinates'}).copy()
+
+    # KNN
+    knn = KNeighborsRegressor(n_neighbors=knn_neighbors)
+    knn.fit(np.vstack(sup_rev["morph_coordinates"]), np.vstack(sup_rev["gene_coordinates"]))
+    knn_preds = knn.predict(np.vstack(inf_rev["morph_coordinates"]))
+    y_te       = np.vstack(inf_rev["gene_coordinates"])
+
+    # other baselines
+    mt_preds, mt_actuals = mean_teacher_regression(sup_rev, inf_rev, lr=0.001, w_max=0.1,alpha=0.95,ramp_len=10)
+    gc_preds, gc_actuals = gcn_regression       (sup_rev, inf_rev,dropout=0.0, hidden=32,lr=0.003)
+    fx_preds, fx_actuals = fixmatch_regression  (sup_rev, inf_rev,alpha_ema=0.999,batch_size=64,conf_threshold=0.1,lambda_u_max=1.0,lr=0.0003,rampup_length=30)
+    lp_preds, lp_actuals = laprls_regression    (sup_rev, inf_rev,gamma=1,k=10,lam=0.1,sigma=2.0)
+    ts_preds, ts_actuals = tsvr_regression      (sup_rev, inf_rev, C=10, epsilon=0.1, gamma='scale', self_training_frac=0.5)
+    tn_preds, tn_actuals = tnnr_regression     (sup_rev, inf_rev, beta=1.0,lr=0.001, rep_dim=128)
+    uv_preds, uv_actuals = ucvme_regression    (sup_rev, inf_rev,lr=0.001,mc_T=10,w_unl=10)
+    ru_preds, ru_actuals = rankup_regression   (sup_rev, inf_rev, alpha_rda=0.05, hidden_dim=256, lr=0.001, tau=0.95, temperature=0.7)
+
+
+    # 12) collect errors
+    def eval_(p, a):
+        return mean_absolute_error(a, p), mean_squared_error(a, p)
+
+    errors = {}
+    mses   = {}
+
+    errors["BKM"],         mses["BKM"]         = eval_(bridged_preds,  bridged_actual)
+    errors["KNN"],         mses["KNN"]         = eval_(knn_preds,      y_te)
+    errors["MeanTeacher"], mses["MeanTeacher"] = eval_(mt_preds,       mt_actuals)
+    errors["GCN"],         mses["GCN"]         = eval_(gc_preds,       gc_actuals)
+    errors["FixMatch"],    mses["FixMatch"]    = eval_(fx_preds,       fx_actuals)
+    errors["LapRLS"],      mses["LapRLS"]      = eval_(lp_preds,       lp_actuals)
+    errors["TSVR"],        mses["TSVR"]        = eval_(ts_preds,       ts_actuals)
+    errors["TNNR"],        mses["TNNR"]        = eval_(tn_preds,       tn_actuals)
+    errors["UCVME"],       mses["UCVME"]       = eval_(uv_preds,       uv_actuals)
+    errors["RankUp"],      mses["RankUp"]      = eval_(ru_preds,       ru_actuals)
+    errors["KMM"],         mses["KMM"]         = eval_(kmm_rev_pred_emb, kmm_rev_act_emb)
+    errors["EM"],          mses["EM"]          = eval_(em_rev_pred_emb,  em_rev_act_emb)
+
+    #print errors per model
+    print("Errors per model:")
+    for model, error in errors.items():
+        print(f"{model}: MAE={error:.4f}, MSE={mses[model]:.4f}")
+
+    return {
+        "clustering": {
+            "AMI_X":           ami_text,
+            "AMI_Y":          ami_image,
+            "Bridging Accuracy":  decision_acc,
+        },
+        "regression": {
+            "BKM":        {"MAE": errors["BKM"],   "MSE": mses["BKM"]},
+            "KNN":        {"MAE": errors["KNN"],   "MSE": mses["KNN"]},
+            "MeanTeacher":{"MAE": errors["MeanTeacher"], "MSE": mses["MeanTeacher"]},
+            "GCN":        {"MAE": errors["GCN"],   "MSE": mses["GCN"]},
+            "FixMatch":   {"MAE": errors["FixMatch"],  "MSE": mses["FixMatch"]},
+            "LapRLS":     {"MAE": errors["LapRLS"],   "MSE": mses["LapRLS"]},
+            "TSVR":       {"MAE": errors["TSVR"],   "MSE": mses["TSVR"]},
+            "TNNR":       {"MAE": errors["TNNR"],   "MSE": mses["TNNR"]},
+            "UCVME":      {"MAE": errors["UCVME"],  "MSE": mses["UCVME"]},
+            "RankUp":     {"MAE": errors["RankUp"], "MSE": mses["RankUp"]},
+            "KMM":        {"MAE": errors["KMM"],   "MSE": mses["KMM"]},
+            "EM":         {"MAE": errors["EM"],    "MSE": mses["EM"]},
+        },
+    }
 
 
 
@@ -460,23 +761,37 @@ if __name__ == '__main__':
     import os
     import numpy as np
     import pandas as pd
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Run experiments (forward or reversed)"
+    )
+    parser.add_argument(
+        '--reversed',
+        action='store_true',
+        help='If set, run run_reversed_experiments instead of run_experiments'
+    )
+    args = parser.parse_args()
+    runner = run_reversed_experiment if args.reversed else run_experiment
+    experiment_key = "073_wiki_reversed" if args.reversed else "072_wiki"
 
     # Experiment grid
-    K_values   = [3, 4, 5]
+    K_values   = [3, 4, 5, 6, 7]
     sup_values = [1, 2, 3, 4]            # sup_per_cluster
     out_only   = 0.5
-    cluster_sz = 12
-    seeds      = list(range(100))
+    cluster_sz = 25
+    seeds = list(range(30))  # 10 trials
 
-    pruned_counts    = df_pruned['cluster'].value_counts()
-    eligible_pruned  = pruned_counts[pruned_counts >= cluster_sz].index
+    eligible_pruned = pruned_counts[pruned_counts >= cluster_sz].index
+
+    print(f"Eligible clusters are those: {eligible_pruned.tolist()}")
 
     # Which models to record (must match keys in run_experiment’s metrics)
     models = [
       'BKM', 'KNN',
       'MeanTeacher', 'GCN', 'FixMatch',
       'LapRLS', 'TSVR', 'TNNR', 'UCVME',
-      'RankUp'
+      'RankUp', 'KMM', 'EM'
     ]
     nK      = len(K_values)
     nSup    = len(sup_values)
@@ -500,22 +815,30 @@ if __name__ == '__main__':
     for i, K in enumerate(K_values):
         for j, sup_per in enumerate(sup_values):
             for t, s in enumerate(seeds):
+                seed = s + i * nK + j * nK * nSup  # unique seed per (K, sup_per, trial)
                 # ── sample K clusters from pruned set ──
-                chosen = np.random.choice(eligible_pruned, size=K, replace=False)
-                sample = pd.concat([
-                    df_pruned[df_pruned['cluster']==c]
-                              .sample(cluster_sz, random_state=s)
-                    for c in chosen
-                ]).reset_index(drop=True)
+                            # initialize a per-trial RNG
+                rng = np.random.default_rng(seed)
+
+                # choose clusters
+                chosen = rng.choice(eligible_pruned, size=K, replace=False)
+
+                # sample each cluster independently
+                samples = []
+                for c in chosen:
+                    sub = df_pruned[df_pruned['cluster'] == c]
+                    subseed = int(rng.integers(0, 2**32))
+                    samples.append(sub.sample(cluster_sz, random_state=subseed))
+                sample = pd.concat(samples, ignore_index=True)
 
                 # ── 2) run holistic experiment ──
-                metrics = run_experiment(
+                metrics = runner(
                     sample,
                     supervised_ratio   = sup_per/cluster_sz,
                     output_only_ratio  = out_only,
                     K                   = K,
                     knn_neighbors      = sup_per,
-                    seed                = s
+                    seed                = seed
                 )
 
                 # store clustering AMI
@@ -526,21 +849,23 @@ if __name__ == '__main__':
                 # store regression & text metrics for each model
                 for m_idx, m in enumerate(models):
                     reg = metrics['regression'][m]
-                    txt = metrics['text'][m]
+                    txt = metrics['text'][m] if 'text' in metrics else {}
                     mae [i, j, m_idx, t] = reg['MAE']
                     mse [i, j, m_idx, t] = reg['MSE']
-                    bleu[i, j, m_idx, t] = txt['BLEU']
-                    chrf[i, j, m_idx, t] = txt['chrF']
+                    bleu[i, j, m_idx, t] = txt['BLEU'] if 'text' in metrics else 0.0
+                    chrf[i, j, m_idx, t] = txt['chrF'] if 'text' in metrics else 0.0
 
             print(f"Finished K={K}, sup={sup_per}")
 
+
+    os.makedirs(f'results/{experiment_key}', exist_ok=True)
     # ── save everything ──
-    np.save("results/ami_x.npy",    ami_x)
-    np.save("results/ami_y.npy",    ami_y)
-    np.save("results/accuracy.npy", accuracy)
-    np.save("results/mae.npy",      mae)
-    np.save("results/mse.npy",      mse)
-    np.save("results/bleu.npy",     bleu)
-    np.save("results/chrf.npy",     chrf)
+    np.save(f"results/{experiment_key}/ami_x.npy", ami_x)
+    np.save(f"results/{experiment_key}/ami_y.npy", ami_y)
+    np.save(f"results/{experiment_key}/accuracy.npy", accuracy)
+    np.save(f"results/{experiment_key}/mae.npy", mae)
+    np.save(f"results/{experiment_key}/mse.npy", mse)
+    np.save(f"results/{experiment_key}/bleu.npy", bleu)
+    np.save(f"results/{experiment_key}/chrf.npy", chrf)
 
     print("All done! Results are in the `results/` folder.")

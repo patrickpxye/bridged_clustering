@@ -1,3 +1,6 @@
 neurips/bioscan_new/test_images/
 neurips/bioscan_new/test_data.csv
 **/.DS_Store
+conference/baseline_search
+conference/data
+conference/results
